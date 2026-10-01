@@ -1,0 +1,253 @@
+<div class="users-page">
+
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">ADMINISTRATION</div>
+
+      <h1>User Accounts</h1>
+
+      <p>Manage users, roles and access to the Sipafin platform.</p>
+    </div>
+
+    <button type="button" class="create-button" (click)="createUser()">
+      <i class="bi bi-plus-lg"></i>
+
+      <span> Create User </span>
+    </button>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-people"></i>
+      </div>
+
+      <div>
+        <span>Total Users</span>
+
+        <strong>
+          {{ users().length }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-person-check"></i>
+      </div>
+
+      <div>
+        <span>Active Users</span>
+
+        <strong>
+          {{ users().filter((user) => user.enabled).length }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon orange">
+        <i class="bi bi-person-x"></i>
+      </div>
+
+      <div>
+        <span>Inactive Users</span>
+
+        <strong>
+          {{ users().filter((user) => !user.enabled).length }}
+        </strong>
+      </div>
+    </div>
+  </div>
+
+  <section class="table-card">
+    <!-- Toolbar -->
+
+    <div class="table-toolbar">
+      <div>
+        <h2>System Users</h2>
+
+        <p>View and manage all registered Sipafin accounts.</p>
+      </div>
+
+      <div class="table-actions">
+        <div class="search-wrapper">
+          <i class="bi bi-search"></i>
+
+          <input
+            type="text"
+            placeholder="Search users..."
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
+          />
+        </div>
+
+        <button type="button" class="filter-button">
+          <i class="bi bi-funnel"></i>
+
+          <span> Filter </span>
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Branch</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th class="actions-heading">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (user of filteredUsers(); track user.id) {
+            <tr>
+              <!-- User -->
+
+              <td>
+                <div class="user-cell">
+                  <div class="avatar">
+                    {{ getInitials(user.fullName) }}
+                  </div>
+
+                  <div class="user-details">
+                    <strong>
+                      {{ user.fullName }}
+                    </strong>
+
+                    <span>
+                      {{ user.username }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Role -->
+
+              <td>
+                <span
+                  class="role-badge"
+                  [class.admin]="user.role === 'ADMIN'"
+                  [class.manager]="user.role === 'MANAGER'"
+                  [class.user]="user.role === 'USER'"
+                >
+                  {{ user.role }}
+                </span>
+              </td>
+
+              <!-- Branch -->
+
+              <td>
+                <div class="branch-cell">
+                  <i class="bi bi-building"></i>
+
+                  <span>
+                    {{ user.branchName || 'Not Assigned' }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- Status -->
+
+              <td>
+                <span
+                  class="status-badge"
+                  [class.active]="user.enabled"
+                  [class.inactive]="!user.enabled"
+                >
+                  <span class="status-dot"></span>
+
+                  {{ user.enabled ? 'Enabled' : 'Disabled' }}
+                </span>
+              </td>
+
+              <!-- Created -->
+
+              <td>
+                <span class="created-date">
+                  {{ user.createdAt || '-' }}
+                </span>
+              </td>
+
+              <!-- Actions -->
+
+              <td>
+                <div class="row-actions">
+                  <button
+                    type="button"
+                    class="action-button"
+                    title="View user"
+                    (click)="viewUser(user)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-button"
+                    title="Edit user"
+                    (click)="editUser(user)"
+                  >
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-button"
+                    [class.activate]="!user.enabled"
+                    [class.deactivate]="user.enabled"
+                    [title]="user.enabled ? 'Disable user' : 'Enable user'"
+                    (click)="toggleStatus(user)"
+                  >
+                    @if (user.enabled) {
+                      <i class="bi bi-person-dash"></i>
+                    } @else {
+                      <i class="bi bi-person-check"></i>
+                    }
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-button delete"
+                    title="Delete user"
+                    (click)="deleteUser(user)"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-cell">
+                <div class="empty-state">
+                  <div class="empty-icon">
+                    <i class="bi bi-people"></i>
+                  </div>
+
+                  <h3>No users found</h3>
+
+                  <p>No user accounts match your current search.</p>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <span>
+        Showing
+        <strong>{{ filteredUsers().length }}</strong>
+        of
+        <strong>{{ users().length }}</strong>
+        users
+      </span>
+    </div>
+  </section>
+</div>

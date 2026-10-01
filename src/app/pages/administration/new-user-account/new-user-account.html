@@ -1,0 +1,253 @@
+<div class="page-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <button type="button" class="back-button" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i>
+        Back to Users
+      </button>
+
+      <div class="title-row">
+        <div class="title-icon">
+          <i class="bi bi-person-plus"></i>
+        </div>
+
+        <div>
+          <h1>Create User Account</h1>
+          <p>Create a new user and assign their branch and role.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-card">
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-person"></i>
+        </div>
+
+        <div>
+          <h2>Account Information</h2>
+          <p>Enter the user's basic account details.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <!-- FULL NAME -->
+        <div class="form-group full-width">
+          <label for="fullName">
+            Full Name
+            <span>*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-person"></i>
+
+            <input
+              id="fullName"
+              type="text"
+              [(ngModel)]="fullName"
+              placeholder="Enter user's full name"
+              autocomplete="name"
+            />
+          </div>
+        </div>
+
+        <!-- USERNAME -->
+        <div class="form-group">
+          <label for="username">
+            Username
+            <span>*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-at"></i>
+
+            <input
+              id="username"
+              type="text"
+              [(ngModel)]="username"
+              placeholder="Enter username"
+              autocomplete="username"
+            />
+          </div>
+
+          <small> The username will be used to sign in. </small>
+        </div>
+
+        <!-- PASSWORD -->
+        <div class="form-group">
+          <label for="password">
+            Password
+            <span>*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-lock"></i>
+
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              [(ngModel)]="password"
+              placeholder="Enter password"
+              autocomplete="new-password"
+            />
+
+            <button type="button" class="password-toggle" (click)="togglePassword()">
+              <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+            </button>
+          </div>
+
+          <small> Password must be at least 6 characters. </small>
+        </div>
+
+        <!-- ROLE -->
+        <div class="form-group">
+          <label for="role">
+            Role
+            <span>*</span>
+          </label>
+
+          <div class="input-wrapper select-wrapper">
+            <i class="bi bi-shield-check"></i>
+
+            <select id="role" [(ngModel)]="role">
+              <option value="">Select user role</option>
+              <option value="ADMIN">Administrator</option>
+              <option value="MANAGER">Manager</option>
+              <option value="ACCOUNTANT">Accountant</option>
+              <option value="BRANCH_USER">Teller</option>
+              <option value="AUDITOR">Auditor</option>
+            </select>
+
+            <i class="bi bi-chevron-down select-arrow"></i>
+          </div>
+        </div>
+
+        <!-- BRANCH SEARCH -->
+        <div class="form-group">
+          <label for="branch">
+            Branch
+            <span>*</span>
+          </label>
+
+          <div class="branch-search-wrapper">
+            <div class="input-wrapper">
+              <i class="bi bi-building"></i>
+
+              <input
+                id="branch"
+                type="text"
+                [(ngModel)]="branchSearch"
+                (input)="onBranchSearch()"
+                (focus)="onBranchFocus()"
+                (blur)="onBranchBlur()"
+                placeholder="Search branch..."
+                autocomplete="off"
+              />
+
+              @if (branchId) {
+                <button
+                  type="button"
+                  class="clear-button"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="clearBranch()"
+                >
+                  <i class="bi bi-x"></i>
+                </button>
+              } @else {
+                <i class="bi bi-search search-icon"></i>
+              }
+            </div>
+
+            <!-- SEARCH RESULTS -->
+            @if (showBranchResults()) {
+              <div class="branch-results">
+                @if (filteredBranches().length > 0) {
+                  @for (branch of filteredBranches(); track branch.id) {
+                    <button
+                      type="button"
+                      class="branch-option"
+                      (mousedown)="$event.preventDefault()"
+                      (click)="selectBranch(branch)"
+                    >
+                      <div class="branch-avatar">
+                        <i class="bi bi-building"></i>
+                      </div>
+
+                      <div class="branch-info">
+                        <div class="branch-name">
+                          {{ branch.name }}
+                        </div>
+
+                        <div class="branch-meta">
+                          <span>
+                            {{ branch.code }}
+                          </span>
+
+                          <span class="dot">•</span>
+
+                          <span>
+                            {{ branch.location }}
+                          </span>
+
+                          <span class="branch-status"> Active </span>
+                        </div>
+                      </div>
+
+                      <i class="bi bi-chevron-right branch-arrow"></i>
+                    </button>
+                  }
+                } @else {
+                  <div class="no-branches">
+                    <i class="bi bi-search"></i>
+
+                    <span> No branches found </span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          @if (branchId) {
+            <small class="selected-branch">
+              <i class="bi bi-check-circle-fill"></i>
+              Branch selected successfully
+            </small>
+          } @else {
+            <small> Search by branch name, code or location. </small>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM FOOTER -->
+    <div class="form-footer">
+      <div class="required-note">
+        <span>*</span>
+        Required fields
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="goBack()">Cancel</button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="loading || !fullName || !username || !password || !role"
+          (click)="createUser()"
+        >
+          @if (loading) {
+            <span class="spinner"></span>
+            Creating...
+          } @else {
+            <i class="bi bi-person-plus"></i>
+            Create User
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

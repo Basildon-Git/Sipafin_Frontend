@@ -1,0 +1,231 @@
+:host {
+  display: block;
+
+  --primary-blue: #0756b8;
+  --primary-dark: #063b80;
+  --primary-light: #eaf3ff;
+  --accent-gold: #f2a71b;
+
+  --gray-500: #64748b;
+  --gray-900: #0f172a;
+
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--primary-blue);
+}
+
+.gallery-showcase {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.section-head.centered {
+  max-width: 480px;
+  margin: 0 auto 44px;
+  text-align: center;
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.7px;
+  color: var(--gray-900);
+}
+
+.section-head p {
+  margin-top: 12px;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--gray-500);
+}
+
+/* ---------- Grid ---------- */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 220px;
+  gap: 18px;
+}
+
+.gallery-card--tall {
+  grid-row: span 2;
+}
+
+/* ---------- Card ---------- */
+.gallery-card {
+  position: relative;
+  margin: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  cursor: default;
+}
+
+/* Placeholder imagery — replace with real photography via background-image: url(...) */
+.photo-phones {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.18), transparent 55%),
+    linear-gradient(150deg, #0b6ed1, #063b80);
+}
+
+.photo-agency {
+  background:
+    radial-gradient(circle at 70% 30%, rgba(242, 167, 27, 0.35), transparent 55%),
+    linear-gradient(150deg, #063b80, #0f172a);
+}
+
+.photo-carhire {
+  background:
+    radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.16), transparent 55%),
+    linear-gradient(150deg, #0756b8, #0b6ed1);
+}
+
+.photo-team {
+  background:
+    radial-gradient(circle at 60% 40%, rgba(242, 167, 27, 0.28), transparent 55%),
+    linear-gradient(150deg, #0f172a, #063b80);
+}
+
+.gallery-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 22px;
+  background: linear-gradient(180deg, transparent 40%, rgba(6, 20, 46, 0.75) 100%);
+  transition: background 0.35s ease;
+}
+
+.gallery-overlay i {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 16px;
+  backdrop-filter: blur(6px);
+}
+
+.gallery-overlay figcaption {
+  color: #fff;
+}
+
+.gallery-overlay strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  transform: translateY(0);
+  transition: transform 0.35s ease;
+}
+
+.gallery-overlay span {
+  display: block;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.8);
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height 0.35s ease,
+    opacity 0.35s ease,
+    margin-top 0.35s ease;
+}
+
+/* Hover: reveal supporting line, gentle zoom on the panel itself */
+.gallery-card {
+  transition: transform 0.4s ease;
+}
+
+.gallery-card:hover {
+  transform: translateY(-4px);
+}
+
+.gallery-card:hover .gallery-overlay {
+  background: linear-gradient(180deg, transparent 15%, rgba(6, 20, 46, 0.85) 100%);
+}
+
+.gallery-card:hover .gallery-overlay span {
+  max-height: 40px;
+  opacity: 1;
+  margin-top: 6px;
+}
+
+/* ---------- Scroll reveal: staggered, fires once ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.gallery-grid .reveal:nth-child(1) {
+  transition-delay: 0s;
+}
+.gallery-grid .reveal:nth-child(2) {
+  transition-delay: 0.1s;
+}
+.gallery-grid .reveal:nth-child(3) {
+  transition-delay: 0.2s;
+}
+.gallery-grid .reveal:nth-child(4) {
+  transition-delay: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .gallery-card,
+  .gallery-overlay,
+  .gallery-overlay span,
+  .gallery-overlay strong {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+  .gallery-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 200px;
+  }
+
+  .gallery-card--tall {
+    grid-row: span 1;
+  }
+}
+
+@media (max-width: 560px) {
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+}

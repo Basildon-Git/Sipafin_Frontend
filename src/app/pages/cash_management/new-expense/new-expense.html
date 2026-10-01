@@ -1,0 +1,387 @@
+<div class="page-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="header-left">
+      <button type="button" class="back-button" (click)="cancel()">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+
+      <div class="title-icon">
+        <i class="bi bi-wallet2"></i>
+      </div>
+
+      <div>
+        <h1>New Expense</h1>
+        <p>Record a new business expense</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+    <form #expenseForm="ngForm" (ngSubmit)="saveExpense()">
+      <!-- =====================================================
+           EXPENSE DETAILS
+           ===================================================== -->
+
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-icon">
+            <i class="bi bi-receipt"></i>
+          </div>
+
+          <div>
+            <h2>Expense Details</h2>
+            <p>Enter the basic information for this expense.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <!-- BRANCH -->
+          <div class="form-group">
+            <label>
+              Branch
+              <span class="required">*</span>
+            </label>
+
+            <div class="search-select">
+              <div class="input-wrapper">
+                <i class="bi bi-building input-icon"></i>
+
+                <input
+                  type="text"
+                  name="branchSearch"
+                  [(ngModel)]="branchSearch"
+                  placeholder="Search branch..."
+                  autocomplete="off"
+                  (focus)="onBranchFocus()"
+                  (blur)="onBranchBlur()"
+                />
+
+                @if (branchSelected) {
+                  <button
+                    type="button"
+                    class="clear-button"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="clearBranch()"
+                  >
+                    <i class="bi bi-x"></i>
+                  </button>
+                }
+              </div>
+
+              <!-- DROPDOWN ONLY AFTER FOCUS -->
+              @if (branchSearchFocused) {
+                <div class="search-dropdown">
+                  @if (filteredBranches().length > 0) {
+                    @for (branch of filteredBranches(); track branch.id) {
+                      <button
+                        type="button"
+                        class="dropdown-item"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="selectBranch(branch)"
+                      >
+                        <div class="item-icon">
+                          <i class="bi bi-building"></i>
+                        </div>
+
+                        <div class="item-content">
+                          <strong>
+                            {{ branch.name }}
+                          </strong>
+
+                          <span>
+                            {{ branch.code }}
+
+                            @if (branch.location) {
+                              · {{ branch.location }}
+                            }
+                          </span>
+                        </div>
+                      </button>
+                    }
+                  } @else {
+                    <div class="no-results">
+                      <i class="bi bi-search"></i>
+
+                      <span> No branches found </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- CATEGORY -->
+          <div class="form-group">
+            <label>
+              Category
+              <span class="required">*</span>
+            </label>
+
+            <div class="select-wrapper">
+              <i class="bi bi-tags input-icon"></i>
+
+              <select name="category" [(ngModel)]="category">
+                <option value="FUEL">Fuel</option>
+
+                <option value="TRANSPORT">Transport</option>
+
+                <option value="UTILITIES">Utilities</option>
+
+                <option value="RENT">Rent</option>
+
+                <option value="SALARIES">Salaries</option>
+
+                <option value="OFFICE_SUPPLIES">Office Supplies</option>
+
+                <option value="MAINTENANCE">Maintenance</option>
+
+                <option value="MARKETING">Marketing</option>
+
+                <option value="BANK_CHARGES">Bank Charges</option>
+
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- AMOUNT -->
+          <div class="form-group">
+            <label>
+              Expense Amount
+              <span class="required">*</span>
+            </label>
+
+            <div class="input-wrapper">
+              <span class="currency-prefix">$</span>
+
+              <input
+                type="number"
+                name="amount"
+                [(ngModel)]="amount"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <!-- EXPENSE DATE -->
+          <div class="form-group">
+            <label>
+              Expense Date
+              <span class="required">*</span>
+            </label>
+
+            <div class="input-wrapper">
+              <i class="bi bi-calendar3 input-icon"></i>
+
+              <input type="date" name="expenseDate" [(ngModel)]="expenseDate" />
+            </div>
+          </div>
+
+          <!-- PAYMENT SOURCE -->
+          <div class="form-group">
+            <label>
+              Payment Source
+              <span class="required">*</span>
+            </label>
+
+            <div class="select-wrapper">
+              <i class="bi bi-wallet2 input-icon"></i>
+
+              <select
+                name="paymentSource"
+                [(ngModel)]="paymentSource"
+                (change)="onPaymentSourceChange()"
+              >
+                <option value="PETTY_CASH">Petty Cash</option>
+
+                <option value="BANK_ACCOUNT">Bank Account</option>
+
+                <option value="CASH">Cash</option>
+
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- STATUS -->
+          <div class="form-group">
+            <label>
+              Status
+              <span class="required">*</span>
+            </label>
+
+            <div class="select-wrapper">
+              <i class="bi bi-check-circle input-icon"></i>
+
+              <select name="status" [(ngModel)]="status">
+                <option value="POSTED">Posted</option>
+
+                <option value="PENDING">Pending</option>
+
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- REFERENCE -->
+          <div class="form-group">
+            <label> Reference </label>
+
+            <div class="input-wrapper">
+              <i class="bi bi-hash input-icon"></i>
+
+              <input
+                type="text"
+                name="reference"
+                [(ngModel)]="reference"
+                placeholder="e.g. EXP-2026-0006"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           BANK ACCOUNT
+           ===================================================== -->
+
+      @if (paymentSource === 'BANK_ACCOUNT') {
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">
+              <i class="bi bi-bank"></i>
+            </div>
+
+            <div>
+              <h2>Bank Account</h2>
+              <p>Select the account from which the expense was paid.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>
+                Bank Account
+                <span class="required">*</span>
+              </label>
+
+              <div class="search-select">
+                <div class="input-wrapper">
+                  <i class="bi bi-wallet2 input-icon"></i>
+
+                  <input
+                    type="text"
+                    name="bankAccountSearch"
+                    [(ngModel)]="bankAccountSearch"
+                    placeholder="Search bank account..."
+                    autocomplete="off"
+                    (focus)="onBankAccountFocus()"
+                    (blur)="onBankAccountBlur()"
+                  />
+
+                  @if (bankAccountSelected) {
+                    <button
+                      type="button"
+                      class="clear-button"
+                      (mousedown)="$event.preventDefault()"
+                      (click)="clearBankAccount()"
+                    >
+                      <i class="bi bi-x"></i>
+                    </button>
+                  }
+                </div>
+
+                <!-- DROPDOWN ONLY AFTER FOCUS -->
+                @if (bankAccountSearchFocused) {
+                  <div class="search-dropdown">
+                    @if (filteredBankAccounts().length > 0) {
+                      @for (account of filteredBankAccounts(); track account.id) {
+                        <button
+                          type="button"
+                          class="dropdown-item"
+                          (mousedown)="$event.preventDefault()"
+                          (click)="selectBankAccount(account)"
+                        >
+                          <div class="item-icon">
+                            <i class="bi bi-bank"></i>
+                          </div>
+
+                          <div class="item-content">
+                            <strong>
+                              {{ account.accountName }}
+                            </strong>
+
+                            <span>
+                              {{ account.bank.name }}
+                              ·
+                              {{ maskAccountNumber(account.accountNumber) }}
+                              ·
+                              {{ account.currency }}
+                            </span>
+                          </div>
+                        </button>
+                      }
+                    } @else {
+                      <div class="no-results">
+                        <i class="bi bi-search"></i>
+
+                        <span> No bank accounts found </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- =====================================================
+           DESCRIPTION
+           ===================================================== -->
+
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-icon">
+            <i class="bi bi-card-text"></i>
+          </div>
+
+          <div>
+            <h2>Additional Information</h2>
+            <p>Add a reference or description for this expense.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label> Description </label>
+
+            <textarea
+              name="description"
+              [(ngModel)]="description"
+              rows="4"
+              placeholder="Enter expense description..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          <i class="bi bi-x-lg"></i>
+          Cancel
+        </button>
+
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg"></i>
+          Save Expense
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

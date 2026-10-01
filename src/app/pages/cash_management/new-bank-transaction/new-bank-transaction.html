@@ -1,0 +1,369 @@
+<div class="page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="title-icon">
+        <i class="bi bi-bank"></i>
+      </div>
+
+      <div>
+        <h1>New Bank Transaction</h1>
+        <p>Record a transaction against a bank account.</p>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-secondary" (click)="cancel()">
+      <i class="bi bi-arrow-left"></i>
+      Back
+    </button>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+    <!-- BANKING DETAILS -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-bank2"></i>
+        </div>
+
+        <div>
+          <h2>Banking Details</h2>
+          <p>Select the account and branch for this transaction.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <!-- BANK ACCOUNT -->
+        <div class="form-group full-width">
+          <label>
+            Bank Account
+            <span class="required">*</span>
+          </label>
+
+          <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+
+            <input
+              type="text"
+              class="form-control search-input"
+              placeholder="Search bank account..."
+              [(ngModel)]="bankAccountSearch"
+              (ngModelChange)="onBankAccountSearchChange()"
+              (focus)="onBankAccountFocus()"
+              (blur)="onBankAccountBlur()"
+              autocomplete="off"
+            />
+
+            @if (bankAccountSelected) {
+              <i class="bi bi-check-circle-fill selected-icon"></i>
+            }
+
+            @if (bankAccountSearchFocused) {
+              <div class="search-dropdown">
+                @if (filteredBankAccounts().length > 0) {
+                  @for (account of filteredBankAccounts(); track account.id) {
+                    <div
+                      class="search-option"
+                      (mousedown)="$event.preventDefault()"
+                      (click)="selectBankAccount(account)"
+                    >
+                      <div class="option-icon">
+                        <i class="bi bi-bank"></i>
+                      </div>
+
+                      <div class="option-content">
+                        <div class="option-title">
+                          {{ account.accountName }}
+                        </div>
+
+                        <div class="option-meta">
+                          {{ account.bank.name }}
+                          <span>•</span>
+                          {{ account.bank.code }}
+                          <span>•</span>
+                          {{ maskAccountNumber(account.accountNumber) }}
+                        </div>
+                      </div>
+
+                      <div class="option-balance">
+                        {{ account.currency }}
+                        {{ account.currentBalance | number: '1.2-2' }}
+                      </div>
+                    </div>
+                  }
+                } @else {
+                  <div class="no-results">
+                    <i class="bi bi-search"></i>
+                    <span>No bank accounts found</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <small class="form-hint"> Only active bank accounts are available. </small>
+        </div>
+
+        <!-- BRANCH -->
+        <div class="form-group">
+          <label>Branch</label>
+
+          <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+
+            <input
+              type="text"
+              class="form-control search-input"
+              placeholder="Search branch..."
+              [(ngModel)]="branchSearch"
+              (ngModelChange)="onBranchSearchChange()"
+              (focus)="onBranchFocus()"
+              (blur)="onBranchBlur()"
+              autocomplete="off"
+            />
+
+            @if (branchSelected) {
+              <i class="bi bi-check-circle-fill selected-icon"></i>
+            }
+
+            @if (branchSearchFocused) {
+              <div class="search-dropdown">
+                @if (filteredBranches().length > 0) {
+                  @for (branch of filteredBranches(); track branch.id) {
+                    <div
+                      class="search-option"
+                      (mousedown)="$event.preventDefault()"
+                      (click)="selectBranch(branch)"
+                    >
+                      <div class="option-icon">
+                        <i class="bi bi-building"></i>
+                      </div>
+
+                      <div class="option-content">
+                        <div class="option-title">
+                          {{ branch.name }}
+                        </div>
+
+                        <div class="option-meta">
+                          {{ branch.code }}
+                          @if (branch.location) {
+                            <span>•</span>
+                            {{ branch.location }}
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                } @else {
+                  <div class="no-results">
+                    <i class="bi bi-search"></i>
+                    <span>No branches found</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <small class="form-hint">
+            Optional. Leave blank for a transaction not tied to a specific branch.
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTION DETAILS -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-arrow-left-right"></i>
+        </div>
+
+        <div>
+          <h2>Transaction Details</h2>
+          <p>Enter the financial movement information.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <!-- TRANSACTION TYPE -->
+        <div class="form-group">
+          <label>
+            Transaction Type
+            <span class="required">*</span>
+          </label>
+
+          <select
+            class="form-control"
+            [(ngModel)]="transactionType"
+            (ngModelChange)="onTransactionTypeChange()"
+          >
+            <option value="BANK_DEPOSIT">Bank Deposit</option>
+            <option value="BANK_WITHDRAWAL">Bank Withdrawal</option>
+            <option value="LOAN_RECEIVED">Loan Received</option>
+            <option value="LOAN_REPAYMENT">Loan Repayment</option>
+            <option value="COMMISSION_RECEIVED">Commission Received</option>
+            <option value="EXPENSE">Expense</option>
+            <option value="CASH_DISBURSEMENT">Cash Disbursement</option>
+            <option value="BRANCH_TRANSFER_IN">Branch Transfer In</option>
+            <option value="BRANCH_TRANSFER_OUT">Branch Transfer Out</option>
+            <option value="ADJUSTMENT">Adjustment</option>
+            <option value="REVERSAL">Reversal</option>
+          </select>
+        </div>
+
+        <!-- DIRECTION -->
+        <div class="form-group">
+          <label>
+            Direction
+            <span class="required">*</span>
+          </label>
+
+          <div class="direction-selector">
+            <label class="direction-option" [class.active-in]="direction === 'IN'">
+              <input type="radio" name="direction" value="IN" [(ngModel)]="direction" />
+
+              <span class="direction-content">
+                <i class="bi bi-arrow-down-left"></i>
+
+                <span>
+                  <strong>Money In</strong>
+                  <small>Credit</small>
+                </span>
+              </span>
+            </label>
+
+            <label class="direction-option" [class.active-out]="direction === 'OUT'">
+              <input type="radio" name="direction" value="OUT" [(ngModel)]="direction" />
+
+              <span class="direction-content">
+                <i class="bi bi-arrow-up-right"></i>
+
+                <span>
+                  <strong>Money Out</strong>
+                  <small>Debit</small>
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- AMOUNT -->
+        <div class="form-group">
+          <label>
+            Amount
+            <span class="required">*</span>
+          </label>
+
+          <div class="amount-wrapper">
+            <span class="currency-prefix">USD</span>
+
+            <input
+              type="number"
+              class="form-control amount-input"
+              placeholder="0.00"
+              min="0.01"
+              step="0.01"
+              [(ngModel)]="amount"
+            />
+          </div>
+        </div>
+
+        <!-- DATE -->
+        <div class="form-group">
+          <label>
+            Transaction Date
+            <span class="required">*</span>
+          </label>
+
+          <input type="date" class="form-control" [(ngModel)]="transactionDate" />
+        </div>
+
+        <!-- REFERENCE -->
+        <div class="form-group">
+          <label>Reference</label>
+
+          <input
+            type="text"
+            class="form-control"
+            placeholder="e.g. BANK-2026-0001"
+            maxlength="100"
+            [(ngModel)]="reference"
+          />
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="form-group">
+          <label>Description</label>
+
+          <textarea
+            class="form-control textarea"
+            rows="4"
+            maxlength="255"
+            placeholder="Enter transaction description..."
+            [(ngModel)]="description"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTION PREVIEW -->
+    @if (bankAccountId && amount && amount > 0) {
+      <div class="preview-card">
+        <div class="preview-header">
+          <div>
+            <span class="preview-label">Transaction Preview</span>
+            <span class="preview-reference">
+              {{ reference || 'No reference' }}
+            </span>
+          </div>
+
+          <span
+            class="direction-badge"
+            [class.in]="direction === 'IN'"
+            [class.out]="direction === 'OUT'"
+          >
+            <i
+              class="bi"
+              [class.bi-arrow-down-left]="direction === 'IN'"
+              [class.bi-arrow-up-right]="direction === 'OUT'"
+            ></i>
+
+            {{ direction === 'IN' ? 'Money In' : 'Money Out' }}
+          </span>
+        </div>
+
+        <div class="preview-body">
+          <div class="preview-item">
+            <span>Transaction</span>
+            <strong>
+              {{ formatTransactionType(transactionType) }}
+            </strong>
+          </div>
+
+          <div class="preview-item">
+            <span>Amount</span>
+            <strong class="preview-amount">
+              {{ amount | number: '1.2-2' }}
+            </strong>
+          </div>
+
+          <div class="preview-item">
+            <span>Date</span>
+            <strong>{{ transactionDate }}</strong>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- FORM ACTIONS -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+
+      <button type="button" class="btn btn-primary" (click)="save()">
+        <i class="bi bi-check-lg"></i>
+        Save Transaction
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,338 @@
+<div class="commissions-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="title-section">
+      <div class="title-icon">
+        <i class="bi bi-percent"></i>
+      </div>
+
+      <div>
+        <h1>Commissions</h1>
+        <p>Manage commissions received through banking channels.</p>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="createCommission()">
+      <i class="bi bi-plus-lg"></i>
+      New Commission
+    </button>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-percent"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Total Commissions </span>
+
+        <strong>
+          {{ totalCommissions() }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-check-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Received </span>
+
+        <strong>
+          {{ receivedCommissions() }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon orange">
+        <i class="bi bi-clock"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Pending </span>
+
+        <strong>
+          {{ pendingCommissions() }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon purple">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Total Amount </span>
+
+        <strong> ${{ totalAmount() | number: '1.2-2' }} </strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <!-- Toolbar -->
+    <div class="table-toolbar">
+      <div>
+        <h2>Commission Records</h2>
+
+        <p>View and manage all commission transactions.</p>
+      </div>
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input
+          type="text"
+          placeholder="Search commissions..."
+          [value]="searchTerm()"
+          (input)="onSearch($event)"
+        />
+
+        @if (searchTerm()) {
+          <button type="button" class="clear-search" (click)="searchTerm.set('')">
+            <i class="bi bi-x"></i>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Branch</th>
+
+            <th>Bank</th>
+
+            <th>Bank Account</th>
+
+            <th>Amount</th>
+
+            <th>Commission Date</th>
+
+            <th>Destination</th>
+
+            <th>Status</th>
+
+            <th>Reference</th>
+
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (commission of filteredCommissions(); track commission.id) {
+            <tr>
+              <!-- Branch -->
+              <td>
+                <div class="branch-cell">
+                  <div class="branch-icon">
+                    <i class="bi bi-building"></i>
+                  </div>
+
+                  <div>
+                    <span class="branch-name">
+                      {{ commission.branch.name }}
+                    </span>
+
+                    <span class="branch-code">
+                      {{ commission.branch.code }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Bank -->
+              <td>
+                <div class="bank-cell">
+                  <div class="bank-icon">
+                    <i class="bi bi-bank"></i>
+                  </div>
+
+                  <div>
+                    <span class="bank-name">
+                      {{ commission.bank.name }}
+                    </span>
+
+                    <span class="bank-code">
+                      {{ commission.bank.code }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Bank Account -->
+              <td>
+                @if (commission.bankAccount) {
+                  <div class="account-cell">
+                    <div class="account-icon">
+                      <i class="bi bi-wallet2"></i>
+                    </div>
+
+                    <div>
+                      <span class="account-name">
+                        {{ commission.bankAccount.accountName }}
+                      </span>
+
+                      <span class="account-number">
+                        {{ maskAccountNumber(commission.bankAccount.accountNumber) }}
+
+                        <span class="currency">
+                          {{ commission.bankAccount.currency }}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                } @else {
+                  <span class="not-provided">
+                    <i class="bi bi-dash-circle"></i>
+                    No bank account
+                  </span>
+                }
+              </td>
+
+              <!-- Amount -->
+              <td>
+                <span class="amount"> ${{ commission.amount | number: '1.2-2' }} </span>
+              </td>
+
+              <!-- Date -->
+              <td>
+                <span class="date-value">
+                  <i class="bi bi-calendar3"></i>
+
+                  {{ commission.commissionDate }}
+                </span>
+              </td>
+
+              <!-- Destination -->
+              <td>
+                <span class="destination-badge">
+                  @if (commission.destination === 'BANK_ACCOUNT') {
+                    <i class="bi bi-bank"></i>
+                  } @else if (commission.destination === 'CASH') {
+                    <i class="bi bi-cash"></i>
+                  } @else {
+                    <i class="bi bi-arrow-right-circle"></i>
+                  }
+
+                  {{ getDestinationLabel(commission.destination) }}
+                </span>
+              </td>
+
+              <!-- Status -->
+              <td>
+                <span class="status-badge" [class]="getStatusClass(commission.status)">
+                  @if (commission.status === 'RECEIVED') {
+                    <i class="bi bi-check-circle-fill"></i>
+                  } @else if (commission.status === 'PENDING') {
+                    <i class="bi bi-clock-fill"></i>
+                  } @else if (commission.status === 'PROCESSED') {
+                    <i class="bi bi-check2-all"></i>
+                  } @else {
+                    <i class="bi bi-x-circle-fill"></i>
+                  }
+
+                  {{ commission.status }}
+                </span>
+              </td>
+
+              <!-- Reference -->
+              <td>
+                @if (commission.reference) {
+                  <span class="reference">
+                    {{ commission.reference }}
+                  </span>
+                } @else {
+                  <span class="not-provided"> No reference </span>
+                }
+              </td>
+
+              <!-- Actions -->
+              <td>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="action-btn view"
+                    title="View"
+                    (click)="viewCommission(commission)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-btn edit"
+                    title="Edit"
+                    (click)="editCommission(commission)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-btn delete"
+                    title="Delete"
+                    (click)="deleteCommission(commission)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9">
+                <div class="empty-state">
+                  <div class="empty-icon">
+                    <i class="bi bi-percent"></i>
+                  </div>
+
+                  <h3>No commissions found</h3>
+
+                  <p>
+                    @if (searchTerm()) {
+                      No commissions match your search criteria.
+                    } @else {
+                      There are no commission records yet.
+                    }
+                  </p>
+
+                  @if (!searchTerm()) {
+                    <button type="button" class="btn-primary" (click)="createCommission()">
+                      <i class="bi bi-plus-lg"></i>
+                      Create First Commission
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="table-footer">
+      <span>
+        Showing
+        <strong>
+          {{ filteredCommissions().length }}
+        </strong>
+        of
+        <strong>
+          {{ commissions().length }}
+        </strong>
+        commissions
+      </span>
+    </div>
+  </div>
+</div>

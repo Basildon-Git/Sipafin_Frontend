@@ -1,0 +1,301 @@
+<div class="page-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="title-icon">
+        <i class="bi bi-arrow-left-right"></i>
+      </div>
+
+      <div>
+        <h1>New Loan Transaction</h1>
+        <p>Record a repayment against a loan account.</p>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-secondary" (click)="cancel()">
+      <i class="bi bi-arrow-left"></i>
+      Back
+    </button>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-card">
+    <!-- LOAN DETAILS -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-credit-card"></i>
+        </div>
+
+        <div>
+          <h2>Loan Details</h2>
+          <p>Select the loan account for the repayment.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <!-- LOAN ACCOUNT -->
+        <div class="form-group full-width">
+          <label>
+            Loan Account
+            <span class="required">*</span>
+          </label>
+
+          <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+
+            <input
+              type="text"
+              class="form-control search-input"
+              placeholder="Search investor or loan..."
+              [(ngModel)]="loanAccountSearch"
+              (ngModelChange)="onLoanAccountSearchChange()"
+              (focus)="onLoanAccountFocus()"
+              (blur)="onLoanAccountBlur()"
+              autocomplete="off"
+            />
+
+            @if (loanAccountSelected) {
+              <i class="bi bi-check-circle-fill selected-icon"></i>
+            }
+
+            @if (loanAccountSearchFocused) {
+              <div class="search-dropdown">
+                @if (loadingLoans) {
+                  <div class="no-results">
+                    <i class="bi bi-hourglass-split"></i>
+                    <span>Loading loan accounts...</span>
+                  </div>
+                } @else if (filteredLoans().length > 0) {
+                  @for (loan of filteredLoans(); track loan.id) {
+                    <div
+                      class="search-option"
+                      (mousedown)="$event.preventDefault()"
+                      (click)="selectLoan(loan)"
+                    >
+                      <div class="option-icon">
+                        <i class="bi bi-credit-card"></i>
+                      </div>
+
+                      <div class="option-content">
+                        <div class="option-title">
+                          {{ loan.investorName }}
+                        </div>
+
+                        <div class="option-meta">
+                          <span> Loan #{{ loan.id }} </span>
+
+                          <span>•</span>
+
+                          <span>
+                            {{ loan.branchName }}
+                          </span>
+
+                          <span>•</span>
+
+                          <span>
+                            {{ loan.currency }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="option-balance">
+                        <small>Outstanding</small>
+
+                        <strong>
+                          {{ getCurrencySymbol(loan.currency) }}
+                          {{ loan.outstandingBalance | number: '1.2-2' }}
+                        </strong>
+                      </div>
+                    </div>
+                  }
+                } @else {
+                  <div class="no-results">
+                    <i class="bi bi-search"></i>
+                    <span>No loan accounts found</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <small class="form-hint">
+            Only active and partially paid loans are available for repayment.
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTION DETAILS -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-arrow-left-right"></i>
+        </div>
+
+        <div>
+          <h2>Transaction Details</h2>
+          <p>Enter the loan repayment information.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <!-- TRANSACTION TYPE -->
+        <div class="form-group">
+          <label>
+            Transaction Type
+            <span class="required">*</span>
+          </label>
+
+          <select class="form-control" [(ngModel)]="transactionType" disabled>
+            <option value="LOAN_REPAYMENT">Loan Repayment</option>
+          </select>
+
+          <small class="form-hint">
+            {{ getTransactionDescription() }}
+          </small>
+        </div>
+
+        <!-- AMOUNT -->
+        <div class="form-group">
+          <label>
+            Amount
+            <span class="required">*</span>
+          </label>
+
+          <div class="amount-wrapper">
+            <span class="currency-prefix">
+              @if (selectedLoan) {
+                {{ getCurrencySymbol(selectedLoan.currency) }}
+              } @else {
+                USD
+              }
+            </span>
+
+            <input
+              type="number"
+              class="form-control amount-input"
+              placeholder="0.00"
+              min="0.01"
+              step="0.01"
+              [max]="selectedLoan?.outstandingBalance ?? null"
+              [(ngModel)]="amount"
+            />
+          </div>
+
+          @if (selectedLoan) {
+            <small class="form-hint">
+              Outstanding balance:
+              <strong>
+                {{ getCurrencySymbol(selectedLoan.currency) }}
+                {{ selectedLoan.outstandingBalance | number: '1.2-2' }}
+              </strong>
+            </small>
+          }
+        </div>
+
+        <!-- DATE -->
+        <div class="form-group">
+          <label>
+            Transaction Date
+            <span class="required">*</span>
+          </label>
+
+          <input type="date" class="form-control" [(ngModel)]="transactionDate" />
+        </div>
+
+        <!-- REFERENCE -->
+        <div class="form-group">
+          <label> Reference </label>
+
+          <input
+            type="text"
+            class="form-control"
+            placeholder="e.g. LN-REP-0001"
+            maxlength="100"
+            [(ngModel)]="reference"
+          />
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="form-group full-width">
+          <label> Description </label>
+
+          <textarea
+            class="form-control textarea"
+            rows="4"
+            maxlength="255"
+            placeholder="Enter repayment description..."
+            [(ngModel)]="description"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    @if (loanAccountId && branchId && amount && amount > 0 && selectedLoan) {
+      <div class="preview-card">
+        <div class="preview-header">
+          <div>
+            <span class="preview-label"> Transaction Preview </span>
+
+            <span class="preview-reference">
+              {{ reference || 'No reference' }}
+            </span>
+          </div>
+
+          <span class="transaction-badge repayment">
+            <i class="bi bi-arrow-up-right"></i>
+
+            {{ formatTransactionType(transactionType) }}
+          </span>
+        </div>
+
+        <div class="preview-body">
+          <div class="preview-item">
+            <span> Loan Account </span>
+
+            <strong>
+              {{ selectedLoan.investorName }}
+              - Loan #{{ selectedLoan.id }}
+            </strong>
+          </div>
+
+          <div class="preview-item">
+            <span> Amount </span>
+
+            <strong class="preview-amount">
+              {{ getCurrencySymbol(selectedLoan.currency) }}
+              {{ amount | number: '1.2-2' }}
+            </strong>
+          </div>
+
+          <div class="preview-item">
+            <span> Date </span>
+
+            <strong>
+              {{ transactionDate }}
+            </strong>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ACTIONS -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="saving">
+        Cancel
+      </button>
+
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="saving">
+        @if (saving) {
+          <i class="bi bi-hourglass-split"></i>
+          Saving...
+        } @else {
+          <i class="bi bi-check-lg"></i>
+          Save Transaction
+        }
+      </button>
+    </div>
+  </div>
+</div>

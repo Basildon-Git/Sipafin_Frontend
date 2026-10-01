@@ -1,0 +1,467 @@
+<div class="page-container">
+  <!-- ==========================================================
+       PAGE HEADER
+       ========================================================== -->
+
+  <div class="page-header">
+    <div class="header-top">
+      <!-- <button type="button" class="back-button" (click)="back()">
+        <i class="bi bi-arrow-left"></i>
+        <span>Back to Financial Transactions</span>
+      </button> -->
+
+      <button type="button" class="btn-primary" (click)="addCashFloat()">
+        <i class="bi bi-plus-lg"></i>
+        New Float Account
+      </button>
+    </div>
+
+    <div class="title-row">
+      <div class="title-icon">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+
+      <div>
+        <h1>Cash Float Accounts</h1>
+
+        <p>View and manage branch petty cash float accounts.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       BRANCH INFORMATION
+       ========================================================== -->
+
+  <!-- @if (branchId) {
+    <div class="branch-card">
+      <div class="branch-card-left">
+        <div class="branch-icon">
+          <i class="bi bi-building"></i>
+        </div>
+
+        <div class="branch-details">
+          <span class="detail-label"> BRANCH </span>
+
+          <h2>
+            {{ branchName || 'Branch' }}
+          </h2>
+
+          <div class="branch-meta">
+            <div class="meta-item">
+              <span class="detail-label"> CODE </span>
+
+              <strong>
+                {{ branchCode || '-' }}
+              </strong>
+            </div>
+
+            <div class="meta-divider"></div>
+
+            <div class="meta-item">
+              <span class="detail-label"> BRANCH ID </span>
+
+              <strong>
+                {{ branchId }}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn-primary branch-new-button" (click)="addCashFloat()">
+        <i class="bi bi-plus-circle"></i>
+        New Float Account
+      </button>
+    </div>
+  } -->
+
+  <!-- ==========================================================
+       LOADING
+       ========================================================== -->
+
+  @if (loading) {
+    <div class="loading-card">
+      <i class="bi bi-arrow-repeat spinning"></i>
+
+      <span> Loading float accounts... </span>
+    </div>
+  }
+
+  <!-- ==========================================================
+       SUMMARY CARDS
+       ========================================================== -->
+
+  @if (!loading && accounts().length > 0) {
+    <div class="summary-grid">
+      <!-- TOTAL ACCOUNTS -->
+
+      <div class="summary-card">
+        <div class="summary-card-header">
+          <div>
+            <span class="summary-label"> TOTAL ACCOUNTS </span>
+
+            <span class="summary-description"> Float accounts </span>
+          </div>
+
+          <div class="summary-icon">
+            <i class="bi bi-wallet2"></i>
+          </div>
+        </div>
+
+        <div class="summary-value">
+          {{ totalAccounts() }}
+        </div>
+      </div>
+
+      <!-- ACTIVE ACCOUNTS -->
+
+      <div class="summary-card">
+        <div class="summary-card-header">
+          <div>
+            <span class="summary-label"> ACTIVE ACCOUNTS </span>
+
+            <span class="summary-description"> Currently active </span>
+          </div>
+
+          <div class="summary-icon active-icon">
+            <i class="bi bi-check-circle"></i>
+          </div>
+        </div>
+
+        <div class="summary-value">
+          {{ activeAccounts() }}
+        </div>
+      </div>
+
+      <!-- INACTIVE ACCOUNTS -->
+
+      <div class="summary-card">
+        <div class="summary-card-header">
+          <div>
+            <span class="summary-label"> INACTIVE ACCOUNTS </span>
+
+            <span class="summary-description"> Currently inactive </span>
+          </div>
+
+          <div class="summary-icon inactive-icon">
+            <i class="bi bi-x-circle"></i>
+          </div>
+        </div>
+
+        <div class="summary-value">
+          {{ inactiveAccounts() }}
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ==========================================================
+       CURRENCY BALANCE CARDS
+       ========================================================== -->
+
+  @if (!loading && accounts().length > 0) {
+    <div class="currency-grid">
+      @for (currency of currencies(); track currency) {
+        <div class="currency-card">
+          <div class="currency-card-header">
+            <div>
+              <span class="currency-title"> {{ currency }} FLOAT </span>
+
+              <span class="currency-subtitle"> Current Balance </span>
+            </div>
+
+            <div class="currency-icon" [class]="getCurrencyClass(currency)">
+              {{ currency.charAt(0) }}
+            </div>
+          </div>
+
+          <div class="currency-balance">
+            {{ getBalance(currency) | number: '1.2-2' }}
+          </div>
+
+          <div class="currency-footer">
+            <span>
+              {{ currency }}
+            </span>
+
+            <span> Active balance </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ==========================================================
+       FILTER AND SEARCH
+       ========================================================== -->
+
+  @if (!loading && accounts().length > 0) {
+    <div class="filter-card">
+      <div class="filter-left">
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+
+          <input
+            type="text"
+            placeholder="Search float accounts..."
+            [value]="searchTerm()"
+            (input)="onSearch($event)"
+          />
+        </div>
+      </div>
+
+      <div class="filter-right">
+        <span class="filter-label"> Currency </span>
+
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="selectedCurrency() === 'ALL'"
+          (click)="selectedCurrency.set('ALL')"
+        >
+          All
+        </button>
+
+        @for (currency of currencies(); track currency) {
+          <button
+            type="button"
+            class="filter-btn"
+            [class.active]="selectedCurrency() === currency"
+            (click)="selectedCurrency.set(currency)"
+          >
+            {{ currency }}
+          </button>
+        }
+
+        <span class="filter-divider"></span>
+        <span class="filter-label"> Status </span>
+
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="selectedStatus() === 'ALL'"
+          (click)="selectedStatus.set('ALL')"
+        >
+          All
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="selectedStatus() === 'ACTIVE'"
+          (click)="selectedStatus.set('ACTIVE')"
+        >
+          Active
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="selectedStatus() === 'INACTIVE'"
+          (click)="selectedStatus.set('INACTIVE')"
+        >
+          Inactive
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ==========================================================
+       ACCOUNTS TABLE
+       ========================================================== -->
+
+  @if (!loading && accounts().length > 0) {
+    <div class="table-card">
+      <!-- TABLE HEADER -->
+
+      <div class="table-header">
+        <div>
+          <h2>Branch Float Accounts</h2>
+
+          <p>
+            {{ filteredAccounts().length }}
+            {{ filteredAccounts().length === 1 ? 'account' : 'accounts' }}
+            found
+          </p>
+        </div>
+
+        <button type="button" class="refresh-button" (click)="refresh()" [disabled]="loading">
+          @if (loading) {
+            <i class="bi bi-arrow-repeat spinning"></i>
+          } @else {
+            <i class="bi bi-arrow-clockwise"></i>
+          }
+
+          Refresh
+        </button>
+      </div>
+
+      <!-- TABLE -->
+
+      <div class="table-wrapper">
+        <table class="accounts-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>ACCOUNT</th>
+              <th>CURRENCY</th>
+              <th>CURRENT BALANCE</th>
+              <th>STATUS</th>
+              <!-- <th>ACTIONED BY</th>
+              <th>CREATED</th> -->
+              <!-- <th>ACTIONS</th> -->
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (account of filteredAccounts(); track account.id; let i = $index) {
+              <tr>
+                <!-- NUMBER -->
+
+                <td class="number-cell">
+                  {{ i + 1 }}
+                </td>
+
+                <!-- ACCOUNT -->
+
+                <td>
+                  <div class="account-name">
+                    {{ account.branchName }}
+                  </div>
+
+                  <div class="account-id">Float Account #{{ account.id }}</div>
+                </td>
+
+                <!-- CURRENCY -->
+
+                <td>
+                  <span class="currency-badge" [class]="getCurrencyClass(account.currency)">
+                    {{ account.currency }}
+                  </span>
+                </td>
+
+                <!-- BALANCE -->
+
+                <td class="balance-cell">
+                  {{ account.currentBalance | number: '1.2-2' }}
+                </td>
+
+                <!-- STATUS -->
+
+                <td>
+                  <span class="status-badge" [class]="getStatusClass(account.active)">
+                    <span class="status-dot"></span>
+
+                    @if (account.active) {
+                      Active
+                    } @else {
+                      Inactive
+                    }
+                  </span>
+                </td>
+
+                <!-- ACTIONED BY -->
+
+                <!-- <td class="actioned-by">
+                  {{ account.actionedBy || '-' }}
+                </td> -->
+
+                <!-- CREATED -->
+
+                <!-- <td class="date-cell">
+                  {{ account.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                </td> -->
+
+                <!-- ACTIONS -->
+
+                <!-- <td class="actions-cell">
+                  <button
+                    type="button"
+                    class="table-action view-action"
+                    title="View account"
+                    (click)="viewAccount(account.id)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  @if (account.active) {
+                    <button
+                      type="button"
+                      class="table-action deactivate-action"
+                      title="Deactivate account"
+                      (click)="deactivateAccount(account)"
+                    >
+                      <i class="bi bi-toggle-off"></i>
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="table-action activate-action"
+                      title="Activate account"
+                      (click)="activateAccount(account)"
+                    >
+                      <i class="bi bi-toggle-on"></i>
+                    </button>
+                  }
+                </td> -->
+              </tr>
+            }
+          </tbody>
+
+          <!-- ====================================================
+               EMPTY FILTER RESULT
+               ==================================================== -->
+
+          @if (filteredAccounts().length === 0) {
+            <tbody>
+              <tr>
+                <td colspan="8" class="no-results">
+                  <i class="bi bi-search"></i>
+
+                  <span> No float accounts match your search or filters. </span>
+                </td>
+              </tr>
+            </tbody>
+          }
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- ==========================================================
+       EMPTY STATE
+       ========================================================== -->
+
+  @if (!loading && accounts().length === 0) {
+    <div class="empty-card">
+      <div class="empty-icon">
+        <i class="bi bi-wallet2"></i>
+      </div>
+
+      <h2>No Float Accounts</h2>
+
+      <p>No petty cash float accounts have been created for this branch.</p>
+
+      <button type="button" class="btn-primary" (click)="addCashFloat()">
+        <i class="bi bi-plus-lg"></i>
+
+        New Float Account
+      </button>
+    </div>
+  }
+
+  <!-- ==========================================================
+       FOOTER
+       ========================================================== -->
+
+  @if (!loading && accounts().length > 0) {
+    <div class="page-footer">
+      <div class="footer-info">
+        <span class="info-icon"> i </span>
+
+        <span> Float account balances are retrieved directly from the branch float service. </span>
+      </div>
+    </div>
+  }
+</div>

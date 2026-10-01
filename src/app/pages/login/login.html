@@ -1,0 +1,197 @@
+<div class="login-page">
+  <!-- Decorative background -->
+  <div class="background-shape shape-one"></div>
+  <div class="background-shape shape-two"></div>
+
+  <div class="login-container">
+    <!-- Left branding section -->
+    <section class="brand-section">
+      <div class="brand-content">
+        <div class="logo">
+          <div class="logo-mark">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          <span class="logo-text">Sipafin</span>
+        </div>
+
+        <div class="brand-message">
+          <span class="eyebrow">SMARTER FINANCE</span>
+
+          <h1>
+            Your money.
+            <span>Made simpler.</span>
+          </h1>
+
+          <p>
+            Securely manage your finances, monitor your transactions and make smarter financial
+            decisions with Sipafin.
+          </p>
+        </div>
+
+        <!-- Feature cards -->
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">
+              <i class="bi bi-shield-check"></i>
+            </div>
+
+            <div>
+              <strong>Secure</strong>
+              <span>Your financial data stays protected.</span>
+            </div>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">
+              <i class="bi bi-lightning-charge"></i>
+            </div>
+
+            <div>
+              <strong>Fast</strong>
+              <span>Simple and seamless financial management.</span>
+            </div>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">
+              <i class="bi bi-graph-up-arrow"></i>
+            </div>
+
+            <div>
+              <strong>Insightful</strong>
+              <span>Understand your finances at a glance.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="brand-footer">© 2026 Sipafin. All rights reserved.</div>
+    </section>
+
+    <!-- Login section -->
+    <section class="login-section">
+      <div class="login-card">
+        <!-- Mobile logo -->
+        <div class="mobile-logo">
+          <div class="logo">
+            <div class="logo-mark">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+
+            <span class="logo-text">Sipafin</span>
+          </div>
+        </div>
+
+        <div class="login-header">
+          <div class="welcome-icon">
+            <i class="bi bi-person"></i>
+          </div>
+
+          <div>
+            <h2>Welcome back</h2>
+
+            <p>Sign in to your Sipafin account</p>
+          </div>
+        </div>
+
+        <form class="login-form" (ngSubmit)="onLogin()">
+          <!-- Username -->
+          <div class="form-group">
+            <label for="username"> Username </label>
+
+            <div class="input-wrapper">
+              <i class="bi bi-person input-icon"></i>
+
+              <input
+                id="username"
+                name="username"
+                type="text"
+                [(ngModel)]="username"
+                placeholder="Your username"
+                autocomplete="username"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="form-group">
+            <div class="password-label">
+              <label for="password"> Password </label>
+
+              <a href="#" class="forgot-link"> Forgot password? </a>
+            </div>
+
+            <div class="input-wrapper">
+              <i class="bi bi-lock input-icon"></i>
+
+              <input
+                id="password"
+                name="password"
+                [type]="showPassword ? 'text' : 'password'"
+                [(ngModel)]="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              />
+
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              >
+                <i
+                  class="bi"
+                  [class.bi-eye]="!showPassword"
+                  [class.bi-eye-slash]="showPassword"
+                ></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Remember me -->
+          <div class="form-options">
+            <label class="remember-me">
+              <input type="checkbox" name="rememberMe" [(ngModel)]="rememberMe" />
+
+              <span class="checkmark"></span>
+
+              <span>Remember me</span>
+            </label>
+          </div>
+
+          <!-- Login button -->
+          <button type="submit" class="login-button" [disabled]="loading || !username || !password">
+            @if (loading) {
+              <span class="spinner"></span>
+              <span>Signing in...</span>
+            } @else {
+              <span>Sign in</span>
+              <i class="bi bi-arrow-right"></i>
+            }
+          </button>
+        </form>
+
+        <!-- Security message -->
+        <div class="security-message">
+          <i class="bi bi-shield-lock"></i>
+
+          <span> Your connection is secure and encrypted </span>
+        </div>
+
+        <!-- Footer -->
+        <div class="login-footer">
+          <span>Don't have a Sipafin account?</span>
+
+          <a href="#"> Create account </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

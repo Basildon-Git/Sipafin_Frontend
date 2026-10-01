@@ -1,0 +1,388 @@
+<div class="new-loan-page">
+  <!-- Header -->
+  <div class="page-header">
+    <button type="button" class="back-button" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i>
+      Back to Loans
+    </button>
+
+    <div class="title-section">
+      <div class="title-icon">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+
+      <div>
+        <h1>Create New Loan</h1>
+        <p>Create a new loan for an investor.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-card">
+    <div class="card-header">
+      <h2>Loan Information</h2>
+
+      <p>Select the investor and branch, then enter the loan details.</p>
+    </div>
+
+    <form #loanForm="ngForm" (ngSubmit)="createLoan()">
+      <div class="form-grid">
+        <!-- =========================
+             Investor
+        ========================== -->
+
+        <div class="form-group full-width">
+          <label for="investor">
+            Investor
+            <span class="required">*</span>
+          </label>
+
+          <div class="search-select">
+            <div class="input-wrapper">
+              <i class="bi bi-person"></i>
+
+              <input
+                id="investor"
+                type="text"
+                name="investorSearch"
+                [value]="investorSearch"
+                (input)="onInvestorSearch($event)"
+                (focus)="onInvestorFocus()"
+                placeholder="Search investor by name, phone or national ID"
+                autocomplete="off"
+              />
+
+              @if (investorSelected) {
+                <button
+                  type="button"
+                  class="clear-button"
+                  (click)="clearInvestor()"
+                  title="Clear investor"
+                >
+                  <i class="bi bi-x"></i>
+                </button>
+              }
+            </div>
+
+            @if (!investorSelected && investorSearchStarted) {
+              <div class="search-results">
+                @for (investor of filteredInvestors(); track investor.id) {
+                  <button type="button" class="search-result" (click)="selectInvestor(investor)">
+                    <div class="result-avatar">
+                      {{ investor.fullName.charAt(0).toUpperCase() }}
+                    </div>
+
+                    <div class="result-details">
+                      <span class="result-name">
+                        {{ investor.fullName }}
+                      </span>
+
+                      <span class="result-meta">
+                        <i class="bi bi-telephone"></i>
+                        {{ investor.phoneNumber }}
+
+                        @if (investor.nationalId) {
+                          <span class="separator">•</span>
+                          {{ investor.nationalId }}
+                        }
+                      </span>
+                    </div>
+
+                    <i class="bi bi-chevron-right result-arrow"></i>
+                  </button>
+                } @empty {
+                  @if (loadingInvestors) {
+                    <div class="no-results">
+                      <i class="bi bi-hourglass-split"></i>
+                      <span>Loading investors...</span>
+                    </div>
+                  } @else {
+                    <div class="no-results">
+                      <i class="bi bi-person-x"></i>
+                      <span>No active investors found</span>
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+
+          <span class="field-hint"> Only active investors are available for new loans. </span>
+        </div>
+
+        <!-- =========================
+             Branch
+        ========================== -->
+
+        <div class="form-group full-width">
+          <label for="branch">
+            Branch
+            <span class="required">*</span>
+          </label>
+
+          <div class="search-select">
+            <div class="input-wrapper">
+              <i class="bi bi-building"></i>
+
+              <input
+                id="branch"
+                type="text"
+                name="branchSearch"
+                [value]="branchSearch"
+                (input)="onBranchSearch($event)"
+                (focus)="onBranchFocus()"
+                placeholder="Search branch by name, code or location"
+                autocomplete="off"
+              />
+
+              @if (branchSelected) {
+                <button
+                  type="button"
+                  class="clear-button"
+                  (click)="clearBranch()"
+                  title="Clear branch"
+                >
+                  <i class="bi bi-x"></i>
+                </button>
+              }
+            </div>
+
+            @if (!branchSelected && branchSearchStarted) {
+              <div class="search-results">
+                @for (branch of filteredBranches(); track branch.id) {
+                  <button type="button" class="search-result" (click)="selectBranch(branch)">
+                    <div class="branch-result-icon">
+                      <i class="bi bi-building"></i>
+                    </div>
+
+                    <div class="result-details">
+                      <span class="result-name">
+                        {{ branch.name }}
+                      </span>
+
+                      <span class="result-meta">
+                        {{ branch.code }}
+
+                        @if (branch.location) {
+                          <span class="separator">•</span>
+                          {{ branch.location }}
+                        }
+                      </span>
+                    </div>
+
+                    <i class="bi bi-chevron-right result-arrow"></i>
+                  </button>
+                } @empty {
+                  @if (loadingBranches) {
+                    <div class="no-results">
+                      <i class="bi bi-hourglass-split"></i>
+                      <span>Loading branches...</span>
+                    </div>
+                  } @else {
+                    <div class="no-results">
+                      <i class="bi bi-building-x"></i>
+                      <span>No active branches found</span>
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+
+          @if (branchSelected) {
+            <span class="field-hint"> Branch selected from your current branch. </span>
+          } @else {
+            <span class="field-hint"> Select the branch responsible for this loan. </span>
+          }
+        </div>
+
+        <!-- =========================
+             Principal Amount
+        ========================== -->
+        <!-- =========================
+     Currency
+========================== -->
+
+        <div class="form-group">
+          <label for="currency">
+            Currency
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-currency-exchange"></i>
+
+            <select id="currency" name="currency" [(ngModel)]="currency" required>
+              @for (item of currencies; track item) {
+                <option [value]="item">
+                  {{ item }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <span class="field-hint"> Currency in which the loan was received. </span>
+        </div>
+
+        <!-- =========================
+     Principal Amount
+========================== -->
+
+        <div class="form-group">
+          <label for="principalAmount">
+            Principal Amount
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper amount-input">
+            <span class="currency-prefix">{{ currency }}</span>
+
+            <input
+              id="principalAmount"
+              type="number"
+              name="principalAmount"
+              [(ngModel)]="principalAmount"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              required
+            />
+          </div>
+
+          <span class="field-hint"> Original amount issued to the investor. </span>
+        </div>
+
+        <!-- =========================
+     Interest Rate
+========================== -->
+
+        <div class="form-group">
+          <label for="interestRate">
+            Interest Rate
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper amount-input">
+            <input
+              id="interestRate"
+              type="number"
+              name="interestRate"
+              [(ngModel)]="interestRate"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              required
+            />
+
+            <span class="currency-prefix">%</span>
+          </div>
+
+          <span class="field-hint"> Interest rate applicable to this loan. </span>
+        </div>
+
+        <!-- =========================
+             Date Received
+        ========================== -->
+
+        <div class="form-group">
+          <label for="dateReceived">
+            Date Received
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-calendar3"></i>
+
+            <input
+              id="dateReceived"
+              type="date"
+              name="dateReceived"
+              [(ngModel)]="dateReceived"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- =========================
+             Due Date
+        ========================== -->
+
+        <div class="form-group">
+          <label for="dueDate"> Due Date </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-calendar-event"></i>
+
+            <input id="dueDate" type="date" name="dueDate" [(ngModel)]="dueDate" />
+          </div>
+
+          <span class="field-hint"> Optional. </span>
+        </div>
+
+        <!-- =========================
+             Reference
+        ========================== -->
+
+        <div class="form-group">
+          <label for="reference"> Reference </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-upc-scan"></i>
+
+            <input
+              id="reference"
+              type="text"
+              name="reference"
+              [(ngModel)]="reference"
+              placeholder="Enter loan reference"
+            />
+          </div>
+
+          <span class="field-hint"> Optional reference for this loan. </span>
+        </div>
+
+        <!-- =========================
+             Description
+        ========================== -->
+
+        <div class="form-group full-width">
+          <label for="description"> Description </label>
+
+          <div class="input-wrapper textarea-wrapper">
+            <i class="bi bi-card-text"></i>
+
+            <textarea
+              id="description"
+              name="description"
+              [(ngModel)]="description"
+              rows="4"
+              placeholder="Enter a description for this loan..."
+            ></textarea>
+          </div>
+
+          <span class="field-hint"> Optional. Add notes or the purpose of the loan. </span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="goBack()">Cancel</button>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="loading || !investorId || !branchId || principalAmount <= 0 || !dateReceived"
+        >
+          @if (loading) {
+            <span class="spinner"></span>
+            Creating...
+          } @else {
+            <i class="bi bi-check-lg"></i>
+            Create Loan
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,178 @@
+<div class="page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <button type="button" class="back-button" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Petty Cash Accounts</span>
+    </button>
+
+    <div class="title-row">
+      <div class="title-icon">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+
+      <div>
+        <h1>Create Float Account</h1>
+
+        <p>Add a petty cash float account for a branch.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+    <div class="form-section">
+      <div class="section-header">
+        <h2>Float Account Information</h2>
+
+        <p>Enter the branch, currency and opening balance below.</p>
+      </div>
+
+      <!-- BRANCH -->
+      <div class="form-group">
+        <label for="branch">
+          Branch
+          <span class="required">*</span>
+        </label>
+
+        <div class="bank-search-wrapper">
+          <div class="bank-search-box" [class.selected]="branchSelected">
+            <i class="bi bi-building"></i>
+
+            <input
+              id="branch"
+              type="text"
+              placeholder="Search branch by name, code or location..."
+              [value]="branchSearch"
+              (input)="onBranchSearch($event)"
+              (focus)="onBranchFocus()"
+              autocomplete="off"
+            />
+
+            @if (branchSelected) {
+              <button type="button" class="clear-bank" title="Clear branch" (click)="clearBranch()">
+                <i class="bi bi-x"></i>
+              </button>
+            }
+          </div>
+
+          @if (!branchSelected && branchSearchStarted) {
+            <div class="bank-results">
+              @if (filteredBranches().length > 0) {
+                @for (branch of filteredBranches(); track branch.id) {
+                  <button type="button" class="bank-result" (click)="selectBranch(branch)">
+                    <div class="result-bank-icon">
+                      <i class="bi bi-building"></i>
+                    </div>
+
+                    <div class="result-bank-details">
+                      <span class="result-bank-name">
+                        {{ branch.name }}
+                      </span>
+
+                      <span class="result-bank-meta">
+                        Code: {{ branch.code }}
+
+                        @if (branch.location) {
+                          · {{ branch.location }}
+                        }
+                      </span>
+                    </div>
+
+                    <i class="bi bi-chevron-right result-arrow"></i>
+                  </button>
+                }
+              } @else {
+                <div class="no-banks">
+                  <i class="bi bi-search"></i>
+
+                  <span>
+                    @if (loadingBranches) {
+                      Loading branches...
+                    } @else {
+                      No active branches found
+                    }
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <span class="field-hint">
+          Your assigned branch is selected automatically when available.
+        </span>
+      </div>
+
+      <!-- TWO COLUMNS -->
+      <div class="form-grid">
+        <!-- CURRENCY -->
+        <div class="form-group">
+          <label for="currency">
+            Currency
+            <span class="required">*</span>
+          </label>
+
+          <select id="currency" class="form-control" [(ngModel)]="currency">
+            @for (currencyOption of currencies; track currencyOption) {
+              <option [value]="currencyOption">
+                {{ currencyOption }}
+              </option>
+            }
+          </select>
+
+          <span class="field-hint"> Currency used for this float account. </span>
+        </div>
+
+        <!-- OPENING BALANCE -->
+        <div class="form-group">
+          <label for="openingBalance">
+            Opening Balance
+            <span class="required">*</span>
+          </label>
+
+          <div class="amount-input">
+            <span class="currency-prefix">
+              {{ currency }}
+            </span>
+
+            <input
+              id="openingBalance"
+              type="number"
+              step="0.01"
+              min="0"
+              class="form-control"
+              [(ngModel)]="openingBalance"
+            />
+          </div>
+
+          <span class="field-hint"> Opening balance for this float account. </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="form-footer">
+      <button type="button" class="btn-secondary" (click)="goBack()" [disabled]="loading">
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="createFloatAccount()"
+        [disabled]="loading || !branchId || openingBalance < 0"
+      >
+        @if (loading) {
+          <i class="bi bi-arrow-repeat spinning"></i>
+
+          <span>Creating...</span>
+        } @else {
+          <i class="bi bi-plus-lg"></i>
+
+          <span>Create Float Account</span>
+        }
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,308 @@
+<div class="page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-title">
+      <div class="title-icon">
+        <i class="bi bi-wallet2"></i>
+      </div>
+
+      <div>
+        <h1>Expenses</h1>
+        <p>Manage and track business expenses</p>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="createExpense()">
+      <i class="bi bi-plus-lg"></i>
+      New Expense
+    </button>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <!-- TOTAL -->
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-receipt"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Total Expenses </span>
+
+        <strong>
+          {{ totalExpenses() }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- POSTED -->
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-check-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Posted </span>
+
+        <strong>
+          {{ postedExpenses() }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- PENDING -->
+    <div class="summary-card">
+      <div class="summary-icon orange">
+        <i class="bi bi-clock"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Pending </span>
+
+        <strong>
+          {{ pendingExpenses() }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- TOTAL AMOUNT -->
+    <div class="summary-card">
+      <div class="summary-icon purple">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Total Amount </span>
+
+        <strong> ${{ totalAmount() | number: '1.2-2' }} </strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card">
+    <!-- TOOLBAR -->
+    <div class="table-toolbar">
+      <div class="toolbar-left">
+        <h2>Expense Transactions</h2>
+
+        <span class="record-count">
+          {{ filteredExpenses().length }}
+        </span>
+      </div>
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input type="text" placeholder="Search expenses..." (input)="onSearch($event)" />
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Branch</th>
+
+            <th>Bank Account</th>
+
+            <th>Category</th>
+
+            <th>Amount</th>
+
+            <th>Expense Date</th>
+
+            <th>Payment Source</th>
+
+            <th>Status</th>
+
+            <th>Reference</th>
+
+            <th class="actions-header">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (expense of filteredExpenses(); track expense.id) {
+            <tr>
+              <!-- BRANCH -->
+              <td>
+                <div class="primary-cell">
+                  <span class="cell-title">
+                    {{ expense.branch.name }}
+                  </span>
+
+                  <span class="cell-subtitle">
+                    {{ expense.branch.code }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- BANK ACCOUNT -->
+              <td>
+                @if (expense.bankAccount) {
+                  <div class="primary-cell">
+                    <span class="cell-title">
+                      {{ expense.bankAccount.accountName }}
+                    </span>
+
+                    <span class="cell-subtitle">
+                      {{ maskAccountNumber(expense.bankAccount.accountNumber) }}
+
+                      ·
+
+                      {{ expense.bankAccount.currency }}
+                    </span>
+                  </div>
+                } @else {
+                  <div class="empty-account">
+                    <i class="bi bi-wallet2"></i>
+
+                    <span>Petty Cash</span>
+                  </div>
+                }
+              </td>
+
+              <!-- CATEGORY -->
+              <td>
+                <span class="category-badge">
+                  <i class="bi bi-tag"></i>
+
+                  {{ getCategoryLabel(expense.category) }}
+                </span>
+              </td>
+
+              <!-- AMOUNT -->
+              <td>
+                <span class="amount"> ${{ expense.amount | number: '1.2-2' }} </span>
+              </td>
+
+              <!-- DATE -->
+              <td>
+                <span class="date-cell">
+                  <i class="bi bi-calendar3"></i>
+
+                  {{ expense.expenseDate }}
+                </span>
+              </td>
+
+              <!-- PAYMENT SOURCE -->
+              <td>
+                <span
+                  class="source-badge"
+                  [class.bank]="expense.paymentSource === 'BANK_ACCOUNT'"
+                  [class.cash]="expense.paymentSource === 'PETTY_CASH'"
+                  [class.other]="
+                    expense.paymentSource !== 'BANK_ACCOUNT' &&
+                    expense.paymentSource !== 'PETTY_CASH'
+                  "
+                >
+                  @if (expense.paymentSource === 'BANK_ACCOUNT') {
+                    <i class="bi bi-bank"></i>
+                  } @else if (expense.paymentSource === 'PETTY_CASH') {
+                    <i class="bi bi-cash"></i>
+                  } @else {
+                    <i class="bi bi-three-dots"></i>
+                  }
+
+                  {{ getPaymentSourceLabel(expense.paymentSource) }}
+                </span>
+              </td>
+
+              <!-- STATUS -->
+              <td>
+                <span
+                  class="status-badge"
+                  [class.posted]="expense.status === 'POSTED'"
+                  [class.pending]="expense.status === 'PENDING'"
+                  [class.cancelled]="expense.status === 'CANCELLED'"
+                >
+                  <span class="status-dot"></span>
+
+                  {{ getCategoryLabel(expense.status) }}
+                </span>
+              </td>
+
+              <!-- REFERENCE -->
+              <td>
+                @if (expense.reference) {
+                  <span class="reference">
+                    {{ expense.reference }}
+                  </span>
+                } @else {
+                  <span class="muted"> — </span>
+                }
+              </td>
+
+              <!-- ACTIONS -->
+              <td>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="action-btn"
+                    title="View"
+                    (click)="viewExpense(expense)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-btn"
+                    title="Edit"
+                    (click)="editExpense(expense)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-btn delete"
+                    title="Delete"
+                    (click)="deleteExpense(expense)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+
+          <!-- EMPTY STATE -->
+          @if (filteredExpenses().length === 0) {
+            <tr>
+              <td colspan="9" class="empty-state">
+                <div class="empty-icon">
+                  <i class="bi bi-receipt"></i>
+                </div>
+
+                <h3>No expenses found</h3>
+
+                <p>No expense transactions match your search.</p>
+
+                @if (!searchTerm()) {
+                  <button type="button" class="btn-primary" (click)="createExpense()">
+                    <i class="bi bi-plus-lg"></i>
+                    Add Expense
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="table-footer">
+      <span>
+        Showing
+        <strong>{{ filteredExpenses().length }}</strong>
+        of
+        <strong>{{ totalExpenses() }}</strong>
+        expenses
+      </span>
+    </div>
+  </div>
+</div>

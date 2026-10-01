@@ -1,0 +1,390 @@
+<div class="new-client-loan-page">
+  <!-- Header -->
+  <div class="page-header">
+    <button type="button" class="back-button" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i>
+      Back to Client Loans
+    </button>
+
+    <div class="title-section">
+      <div class="title-icon">
+        <i class="bi bi-person-plus"></i>
+      </div>
+
+      <div>
+        <h1>Create New Client Loan</h1>
+        <p>Issue a new loan to a client.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-card">
+    <div class="card-header">
+      <h2>Client Loan Information</h2>
+
+      <p>Enter the client details, loan information and funding source.</p>
+    </div>
+
+    <form #clientLoanForm="ngForm" (ngSubmit)="createClientLoan()">
+      <div class="form-grid">
+        <!-- =========================
+             Client Name
+        ========================== -->
+
+        <div class="form-group">
+          <label for="clientName">
+            Client Name
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-person"></i>
+
+            <input
+              id="clientName"
+              type="text"
+              name="clientName"
+              [(ngModel)]="clientName"
+              placeholder="Enter client name"
+              autocomplete="off"
+              required
+            />
+          </div>
+
+          <span class="field-hint"> Full name of the client receiving the loan. </span>
+        </div>
+
+        <!-- =========================
+             Client Phone
+        ========================== -->
+
+        <div class="form-group">
+          <label for="clientPhone">
+            Client Phone
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-telephone"></i>
+
+            <input
+              id="clientPhone"
+              type="tel"
+              name="clientPhone"
+              [(ngModel)]="clientPhone"
+              placeholder="Enter client phone number"
+              autocomplete="off"
+              required
+            />
+          </div>
+
+          <span class="field-hint"> Phone number for the client. </span>
+        </div>
+
+        <!-- =========================
+             Branch
+        ========================== -->
+
+        <div class="form-group full-width">
+          <label for="branch">
+            Branch
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-building"></i>
+
+            <input
+              id="branch"
+              type="text"
+              name="branchName"
+              [value]="branchName || 'Branch #' + branchId"
+              readonly
+            />
+          </div>
+
+          <span class="field-hint"> Client loan will be issued from your current branch. </span>
+        </div>
+
+        <!-- =========================
+             Currency
+        ========================== -->
+
+        <div class="form-group">
+          <label for="currency">
+            Currency
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-currency-exchange"></i>
+
+            <select
+              id="currency"
+              name="currency"
+              [(ngModel)]="currency"
+              (ngModelChange)="onCurrencyChange()"
+              required
+            >
+              @for (item of currencies; track item) {
+                <option [value]="item">
+                  {{ item }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <span class="field-hint"> Currency in which the client loan is issued. </span>
+        </div>
+
+        <!-- =========================
+             Principal Amount
+        ========================== -->
+
+        <div class="form-group">
+          <label for="principalAmount">
+            Principal Amount
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper amount-input">
+            <span class="currency-prefix">{{ currency }}</span>
+
+            <input
+              id="principalAmount"
+              type="number"
+              name="principalAmount"
+              [(ngModel)]="principalAmount"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              required
+            />
+          </div>
+
+          <span class="field-hint"> Original amount issued to the client. </span>
+        </div>
+
+        <!-- =========================
+             Interest Rate
+        ========================== -->
+
+        <div class="form-group">
+          <label for="interestRate">
+            Interest Rate
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper amount-input">
+            <input
+              id="interestRate"
+              type="number"
+              name="interestRate"
+              [(ngModel)]="interestRate"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              required
+            />
+
+            <span class="currency-prefix">%</span>
+          </div>
+
+          <span class="field-hint"> Interest rate applicable to this client loan. </span>
+        </div>
+
+        <!-- =========================
+             Funding Source
+        ========================== -->
+
+        <div class="form-group">
+          <label for="fundingSource">
+            Funding Source
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-wallet2"></i>
+
+            <select
+              id="fundingSource"
+              name="fundingSource"
+              [(ngModel)]="fundingSource"
+              (ngModelChange)="onFundingSourceChange()"
+              required
+            >
+              @for (item of fundingSources; track item) {
+                <option [value]="item">
+                  {{ item.replace('_', ' ') }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <span class="field-hint"> Source from which the client loan will be funded. </span>
+        </div>
+
+        <!-- =========================
+             Funding Bank Account
+        ========================== -->
+
+        @if (fundingSource === 'BANK_ACCOUNT') {
+          <div class="form-group">
+            <label for="fundingBankAccountId">
+              Funding Bank Account
+              <span class="required">*</span>
+            </label>
+
+            <div class="input-wrapper">
+              <i class="bi bi-bank"></i>
+
+              <select
+                id="fundingBankAccountId"
+                name="fundingBankAccountId"
+                [(ngModel)]="fundingBankAccountId"
+                required
+              >
+                <option [ngValue]="null">
+                  @if (bankAccountsLoading) {
+                    Loading bank accounts...
+                  } @else {
+                    Select bank account
+                  }
+                </option>
+
+                @for (account of bankAccounts; track account.id) {
+                  <option [ngValue]="account.id">
+                    {{ account.bankName }}
+                    -
+                    {{ account.accountName }}
+                    -
+                    {{ account.accountNumber }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            @if (bankAccountsLoading) {
+              <span class="field-hint"> Loading {{ currency }} bank accounts... </span>
+            } @else if (bankAccounts.length === 0) {
+              <span class="field-hint"> No bank accounts available for {{ currency }}. </span>
+            } @else {
+              <span class="field-hint">
+                Select the bank account used to fund this client loan.
+              </span>
+            }
+          </div>
+        }
+        <!-- =========================
+             Date Issued
+        ========================== -->
+
+        <div class="form-group">
+          <label for="dateIssued">
+            Date Issued
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-calendar3"></i>
+
+            <input
+              id="dateIssued"
+              type="date"
+              name="dateIssued"
+              [(ngModel)]="dateIssued"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- =========================
+             Due Date
+        ========================== -->
+
+        <div class="form-group">
+          <label for="dueDate"> Due Date </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-calendar-event"></i>
+
+            <input id="dueDate" type="date" name="dueDate" [(ngModel)]="dueDate" />
+          </div>
+
+          <span class="field-hint"> Optional repayment due date. </span>
+        </div>
+
+        <!-- =========================
+             Reference
+        ========================== -->
+
+        <div class="form-group">
+          <label for="reference"> Reference </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-upc-scan"></i>
+
+            <input
+              id="reference"
+              type="text"
+              name="reference"
+              [(ngModel)]="reference"
+              placeholder="Enter loan reference"
+            />
+          </div>
+
+          <span class="field-hint"> Optional reference for this client loan. </span>
+        </div>
+
+        <!-- =========================
+             Description
+        ========================== -->
+
+        <div class="form-group full-width">
+          <label for="description"> Description </label>
+
+          <div class="input-wrapper textarea-wrapper">
+            <i class="bi bi-card-text"></i>
+
+            <textarea
+              id="description"
+              name="description"
+              [(ngModel)]="description"
+              rows="4"
+              placeholder="Enter a description for this client loan..."
+            ></textarea>
+          </div>
+
+          <span class="field-hint"> Optional. Add notes or the purpose of the client loan. </span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="goBack()">Cancel</button>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="
+            loading ||
+            !branchId ||
+            !clientName.trim() ||
+            !clientPhone.trim() ||
+            principalAmount <= 0 ||
+            !dateIssued
+          "
+        >
+          @if (loading) {
+            <span class="spinner"></span>
+            Issuing...
+          } @else {
+            <i class="bi bi-check-lg"></i>
+            Issue Client Loan
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

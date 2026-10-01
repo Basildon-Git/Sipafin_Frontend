@@ -1,0 +1,235 @@
+<div class="page-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="title-section">
+      <button type="button" class="back-btn" (click)="cancel()">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+
+      <div class="title-icon">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+
+      <div>
+        <h1>New Petty Cash Transaction</h1>
+        <p>Record a petty cash movement for a branch.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+    <div class="form-header">
+      <div>
+        <h2>Transaction Details</h2>
+        <p>Enter the details of the petty cash transaction.</p>
+      </div>
+    </div>
+
+    <div class="form-body">
+      <!-- BRANCH -->
+      <div class="form-group">
+        <label>
+          Branch
+          <span class="required">*</span>
+        </label>
+
+        <div class="search-field">
+          <i class="bi bi-building"></i>
+
+          <input
+            type="text"
+            placeholder="Search branch..."
+            [(ngModel)]="branchSearch"
+            (input)="onBranchSearchChange()"
+            (focus)="onBranchFocus()"
+            (blur)="onBranchBlur()"
+            autocomplete="off"
+          />
+
+          @if (branchSelected) {
+            <i class="bi bi-check-circle selected-icon"></i>
+          }
+
+          @if (branchSearchFocused) {
+            <div class="search-dropdown">
+              @if (filteredBranches.length > 0) {
+                @for (branch of filteredBranches; track branch.id) {
+                  <div
+                    class="dropdown-option"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="selectBranch(branch)"
+                  >
+                    <div class="option-icon">
+                      <i class="bi bi-building"></i>
+                    </div>
+
+                    <div class="option-content">
+                      <strong>{{ branch.name }}</strong>
+
+                      <span>
+                        {{ branch.code }}
+                        @if (branch.location) {
+                          · {{ branch.location }}
+                        }
+                      </span>
+                    </div>
+                  </div>
+                }
+              } @else {
+                <div class="no-results">
+                  <i class="bi bi-search"></i>
+                  <span>No active branches found</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        @if (!branchId && branchSearch) {
+          <small class="error-text"> Please select a branch from the list. </small>
+        }
+      </div>
+
+      <!-- TRANSACTION TYPE -->
+      <div class="form-group">
+        <label>
+          Transaction Type
+          <span class="required">*</span>
+        </label>
+
+        <div class="select-wrapper">
+          <i class="bi bi-arrow-left-right"></i>
+
+          <select [(ngModel)]="transactionType" (ngModelChange)="onTransactionTypeChange()">
+            @for (type of transactionTypes; track type.value) {
+              <option [value]="type.value">
+                {{ type.label }}
+              </option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- DIRECTION -->
+      <div class="form-group">
+        <label>
+          Cash Direction
+          <span class="required">*</span>
+        </label>
+
+        <div class="direction-options">
+          <button
+            type="button"
+            class="direction-option"
+            [class.active-in]="direction === 'IN'"
+            (click)="direction = 'IN'"
+          >
+            <i class="bi bi-arrow-down-left"></i>
+
+            <div>
+              <strong>Cash In</strong>
+              <span>Increases petty cash</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="direction-option"
+            [class.active-out]="direction === 'OUT'"
+            (click)="direction = 'OUT'"
+          >
+            <i class="bi bi-arrow-up-right"></i>
+
+            <div>
+              <strong>Cash Out</strong>
+              <span>Decreases petty cash</span>
+            </div>
+          </button>
+        </div>
+
+        <small class="help-text">
+          Direction is automatically selected based on the transaction type.
+        </small>
+      </div>
+
+      <!-- AMOUNT -->
+      <div class="form-group">
+        <label>
+          Amount
+          <span class="required">*</span>
+        </label>
+
+        <div class="input-with-prefix">
+          <span class="prefix">$</span>
+
+          <input type="number" min="0.01" step="0.01" placeholder="0.00" [(ngModel)]="amount" />
+        </div>
+      </div>
+
+      <!-- DATE -->
+      <div class="form-group">
+        <label>
+          Transaction Date
+          <span class="required">*</span>
+        </label>
+
+        <div class="input-icon">
+          <i class="bi bi-calendar3"></i>
+
+          <input type="date" [(ngModel)]="transactionDate" />
+        </div>
+      </div>
+
+      <!-- REFERENCE -->
+      <div class="form-group">
+        <label>
+          Reference
+          <span class="optional">Optional</span>
+        </label>
+
+        <div class="input-icon">
+          <i class="bi bi-hash"></i>
+
+          <input
+            type="text"
+            placeholder="e.g. PC-2026-0001"
+            maxlength="100"
+            [(ngModel)]="reference"
+          />
+        </div>
+      </div>
+
+      <!-- DESCRIPTION -->
+      <div class="form-group full-width">
+        <label>
+          Description
+          <span class="optional">Optional</span>
+        </label>
+
+        <textarea
+          rows="4"
+          maxlength="255"
+          placeholder="Enter a description..."
+          [(ngModel)]="description"
+        >
+        </textarea>
+      </div>
+    </div>
+
+    <!-- FORM FOOTER -->
+    <div class="form-footer">
+      <button type="button" class="cancel-btn" (click)="cancel()">Cancel</button>
+
+      <button type="button" class="save-btn" [disabled]="saving || !isFormValid()" (click)="save()">
+        @if (saving) {
+          <span class="spinner"></span>
+          Saving...
+        } @else {
+          <i class="bi bi-check-lg"></i>
+          Save Transaction
+        }
+      </button>
+    </div>
+  </div>
+</div>

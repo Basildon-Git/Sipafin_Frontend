@@ -1,0 +1,113 @@
+<div class="page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <button type="button" class="back-button" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Banks</span>
+    </button>
+
+    <div class="title-row">
+      <div class="title-icon">
+        <i class="bi bi-bank"></i>
+      </div>
+
+      <div>
+        <h1>Create New Bank</h1>
+        <p>Add a bank to the Sipafin banking directory.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+    <div class="form-section">
+      <div class="section-header">
+        <div>
+          <h2>Bank Information</h2>
+          <p>Enter the basic information for this bank.</p>
+        </div>
+      </div>
+
+      <!-- BANK NAME -->
+      <div class="form-group">
+        <label for="bankName">
+          Bank Name
+          <span class="required">*</span>
+        </label>
+
+        <input
+          id="bankName"
+          type="text"
+          class="form-control"
+          placeholder="e.g. CBZ Bank"
+          [(ngModel)]="name"
+          maxlength="150"
+        />
+
+        <span class="field-hint"> Enter the official name of the bank. </span>
+      </div>
+
+      <!-- BANK CODE -->
+      <div class="form-group">
+        <label for="bankCode">
+          Bank Code
+          <span class="required">*</span>
+        </label>
+
+        <input
+          id="bankCode"
+          type="text"
+          class="form-control code-input"
+          placeholder="e.g. CBZ"
+          [(ngModel)]="code"
+          (input)="onCodeInput()"
+          maxlength="50"
+        />
+
+        <span class="field-hint"> A unique short code used to identify the bank. </span>
+      </div>
+
+      <!-- STATUS
+      <div class="status-section">
+        <div class="status-info">
+          <div class="status-icon">
+            <i class="bi bi-toggle-on"></i>
+          </div>
+
+          <div>
+            <h3>Bank Status</h3>
+            <p>Inactive banks cannot be used when creating new bank accounts.</p>
+          </div>
+        </div>
+
+        <label class="switch">
+          <input type="checkbox" [(ngModel)]="active" />
+
+          <span class="slider"></span>
+        </label>
+      </div> -->
+    </div>
+
+    <!-- FORM FOOTER -->
+    <div class="form-footer">
+      <button type="button" class="btn-secondary" (click)="goBack()" [disabled]="loading">
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="createBank()"
+        [disabled]="loading || !name.trim() || !code.trim()"
+      >
+        @if (loading) {
+          <i class="bi bi-arrow-repeat spinning"></i>
+          <span>Creating...</span>
+        } @else {
+          <i class="bi bi-plus-lg"></i>
+          <span>Create Bank</span>
+        }
+      </button>
+    </div>
+  </div>
+</div>

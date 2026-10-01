@@ -1,0 +1,17 @@
+<div class="app-layout">
+  <app-side-nav
+    [collapsed]="sidebarCollapsed"
+    [mobileOpen]="mobileSidebarOpen"
+    (collapsedChange)="onSidebarCollapsedChange($event)"
+    (mobileClose)="closeMobileSidebar()"
+  >
+  </app-side-nav>
+
+  <div class="main-area" [class.sidebar-collapsed]="sidebarCollapsed">
+    <app-top-nav (menuToggle)="toggleSidebar()"> </app-top-nav>
+
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

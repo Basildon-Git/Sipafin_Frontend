@@ -1,0 +1,249 @@
+<div class="page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="title-row">
+        <div class="title-icon">
+          <i class="bi bi-building"></i>
+        </div>
+
+        <div>
+          <h1>Branches</h1>
+          <p>Manage Sipafin branches and their operational status.</p>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="createBranch()">
+      <i class="bi bi-plus-lg"></i>
+      New Branch
+    </button>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <!-- TOTAL -->
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-building"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Total Branches </span>
+
+        <strong>
+          {{ totalBranches() }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- ACTIVE -->
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-check-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Active Branches </span>
+
+        <strong>
+          {{ activeBranches() }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- INACTIVE -->
+    <div class="summary-card">
+      <div class="summary-icon orange">
+        <i class="bi bi-pause-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Inactive Branches </span>
+
+        <strong>
+          {{ inactiveBranches() }}
+        </strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card">
+    <!-- TOOLBAR -->
+    <div class="table-toolbar">
+      <div>
+        <h2>Branch Directory</h2>
+
+        <p>View and manage all registered branches.</p>
+      </div>
+
+      <div class="toolbar-actions">
+        <!-- SEARCH -->
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+
+          <input
+            type="text"
+            placeholder="Search branches..."
+            [value]="searchTerm()"
+            (input)="onSearch($event)"
+          />
+
+          @if (searchTerm()) {
+            <button type="button" class="clear-search" (click)="searchTerm.set('')">
+              <i class="bi bi-x"></i>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Branch</th>
+            <th>Code</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (branch of filteredBranches(); track branch.id) {
+            <tr>
+              <!-- BRANCH -->
+              <td>
+                <div class="branch-cell">
+                  <div class="branch-avatar">
+                    <i class="bi bi-building"></i>
+                  </div>
+
+                  <div class="branch-details">
+                    <span class="branch-name">
+                      {{ branch.name }}
+                    </span>
+
+                  </div>
+                </div>
+              </td>
+
+              <!-- CODE -->
+              <td>
+                <span class="branch-code">
+                  {{ branch.code }}
+                </span>
+              </td>
+
+              <!-- LOCATION -->
+              <td>
+                <div class="location-cell">
+                  <i class="bi bi-geo-alt"></i>
+
+                  <span>
+                    {{ branch.location || '-' }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- STATUS -->
+              <td>
+                @if (branch.active) {
+                  <span class="status-badge active">
+                    <span class="status-dot"></span>
+                    Active
+                  </span>
+                } @else {
+                  <span class="status-badge inactive">
+                    <span class="status-dot"></span>
+                    Inactive
+                  </span>
+                }
+              </td>
+
+              <!-- ACTIONS -->
+              <td>
+                <div class="action-buttons">
+                  <!-- VIEW -->
+                  <button
+                    type="button"
+                    class="action-button view"
+                    title="View branch"
+                    (click)="viewBranch(branch)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <!-- EDIT -->
+                  <button
+                    type="button"
+                    class="action-button edit"
+                    title="Edit branch"
+                    (click)="editBranch(branch)"
+                  >
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+
+                  <!-- ACTIVATE / DEACTIVATE -->
+                  <button
+                    type="button"
+                    class="action-button status"
+                    [class.activate]="!branch.active"
+                    [class.deactivate]="branch.active"
+                    [title]="branch.active ? 'Deactivate branch' : 'Activate branch'"
+                    (click)="toggleStatus(branch)"
+                  >
+                    @if (branch.active) {
+                      <i class="bi bi-building-dash"></i>
+                    } @else {
+                      <i class="bi bi-building-check"></i>
+                    }
+                  </button>
+
+                  <!-- DELETE
+                  <button
+                    type="button"
+                    class="action-button delete"
+                    title="Delete branch"
+                    (click)="deleteBranch(branch)"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button> -->
+                </div>
+              </td>
+            </tr>
+          }
+
+          <!-- EMPTY STATE -->
+          @if (filteredBranches().length === 0) {
+            <tr>
+              <td colspan="5" class="empty-state">
+                <div class="empty-icon">
+                  <i class="bi bi-building"></i>
+                </div>
+
+                <h3>No branches found</h3>
+
+                <p>Try changing your search criteria.</p>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TABLE FOOTER -->
+    <div class="table-footer">
+      <span>
+        Showing
+        <strong>{{ filteredBranches().length }}</strong>
+        of
+        <strong>{{ totalBranches() }}</strong>
+        branches
+      </span>
+    </div>
+  </div>
+</div>

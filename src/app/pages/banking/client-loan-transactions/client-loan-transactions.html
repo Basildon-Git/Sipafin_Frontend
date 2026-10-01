@@ -1,0 +1,871 @@
+<div class="page-container">
+  <!-- ========================================================= -->
+  <!-- PAGE HEADER -->
+  <!-- ========================================================= -->
+
+  <div class="page-header">
+    <div class="title-row">
+      <div class="title-icon">
+        <i class="bi bi-arrow-left-right"></i>
+      </div>
+
+      <div>
+        <h1>Client Loan Transactions</h1>
+        <p>Manage client loans, repayments and transaction history.</p>
+      </div>
+    </div>
+
+    <button type="button" class="btn-secondary" (click)="goBack()">
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Client Loans
+    </button>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- LOAN LIST -->
+  <!-- ========================================================= -->
+
+  @if (!selectedLoan) {
+    <div class="table-card">
+      <!-- Toolbar -->
+
+      <div class="table-toolbar">
+        <div>
+          <h2>Client Loans</h2>
+          <p>Select a client loan to view its transactions and repayments.</p>
+        </div>
+
+        <div class="toolbar-actions">
+          <div class="search-box">
+            <i class="bi bi-search"></i>
+
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              (input)="onSearch()"
+              placeholder="Search client loans..."
+              autocomplete="off"
+            />
+          </div>
+
+          <button
+            type="button"
+            class="refresh-button"
+            (click)="loadClientLoans()"
+            [disabled]="loadingLoans"
+          >
+            <i class="bi bi-arrow-clockwise" [class.spinning]="loadingLoans"></i>
+
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+
+      @if (loadingLoans) {
+        <div class="loading-state">
+          <div class="loading-spinner">
+            <i class="bi bi-arrow-repeat spinning"></i>
+          </div>
+
+          <h3>Loading Client Loans</h3>
+
+          <p>Please wait while client loans are being loaded.</p>
+        </div>
+      }
+
+      <!-- Empty -->
+
+      @if (!loadingLoans && filteredLoans().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="bi bi-wallet2"></i>
+          </div>
+
+          <h3>No Client Loans Found</h3>
+
+          <p>There are no client loans matching your search.</p>
+        </div>
+      }
+
+      <!-- Table -->
+
+      @if (!loadingLoans && filteredLoans().length > 0) {
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Client</th>
+
+                <th>Branch</th>
+
+                <th>Currency</th>
+
+                <th>Principal</th>
+
+                <th>Receivable</th>
+
+                <th>Outstanding</th>
+
+                <th>Funding Source</th>
+
+                <th>Status</th>
+
+                <th>Date Issued</th>
+
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (loan of paginatedLoans(); track loan.id) {
+                <tr>
+                  <td>
+                    <div class="client-cell">
+                      <div class="client-avatar">
+                        <i class="bi bi-person"></i>
+                      </div>
+
+                      <div class="client-details">
+                        <span class="client-name">
+                          {{ loan.clientName }}
+                        </span>
+
+                        <span class="client-phone">
+                          {{ loan.clientPhone }}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td>
+                    {{ loan.branchName }}
+                  </td>
+
+                  <td>
+                    <span class="currency-badge">
+                      {{ loan.currency }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <div class="amount-cell">
+                      <strong>
+                        {{ loan.principalAmount | number: '1.2-2' }}
+                      </strong>
+
+                      <span>
+                        {{ loan.currency }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="amount-cell">
+                      <strong>
+                        {{ loan.totalReceivable | number: '1.2-2' }}
+                      </strong>
+
+                      <span>
+                        {{ loan.currency }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="amount-cell outstanding">
+                      <strong>
+                        {{ loan.outstandingBalance | number: '1.2-2' }}
+                      </strong>
+
+                      <span>
+                        {{ loan.currency }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="funding-cell">
+                      <span class="funding-source">
+                        {{ loan.fundingSource }}
+                      </span>
+
+                      @if (loan.fundingBankAccountName) {
+                        <small>
+                          {{ loan.fundingBankAccountName }}
+                        </small>
+                      }
+                    </div>
+                  </td>
+
+                  <td>
+                    <span
+                      class="status-badge"
+                      [class.active]="loan.status === 'ACTIVE'"
+                      [class.paid]="loan.status === 'PAID'"
+                      [class.overdue]="loan.status === 'OVERDUE'"
+                      [class.closed]="loan.status === 'CLOSED'"
+                    >
+                      <span class="status-dot"></span>
+
+                      {{ loan.status }}
+                    </span>
+                  </td>
+
+                  <td>
+                    {{ loan.dateIssued | date: 'dd MMM yyyy' }}
+                  </td>
+
+                  <td>
+                    <button
+                      type="button"
+                      class="action-button view"
+                      title="View transactions"
+                      (click)="selectLoan(loan)"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+
+        <div class="pagination-footer">
+          <div class="pagination-info">
+            Showing
+
+            <strong>
+              {{ filteredLoans().length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }}
+            </strong>
+
+            to
+
+            <strong>
+              {{ Math.min(currentPage * pageSize, filteredLoans().length) }}
+            </strong>
+
+            of
+
+            <strong>
+              {{ filteredLoans().length }}
+            </strong>
+
+            client loans
+          </div>
+
+          <div class="pagination-controls">
+            <button
+              type="button"
+              class="page-button"
+              [disabled]="currentPage === 1"
+              (click)="previousPage()"
+            >
+              <i class="bi bi-chevron-left"></i>
+            </button>
+
+            @for (page of getPageNumbers(); track $index) {
+              @if (page === 0) {
+                <span class="page-ellipsis"> ... </span>
+              } @else {
+                <button
+                  type="button"
+                  class="page-button"
+                  [class.active]="currentPage === page"
+                  (click)="goToPage(page)"
+                >
+                  {{ page }}
+                </button>
+              }
+            }
+
+            <button
+              type="button"
+              class="page-button"
+              [disabled]="currentPage === totalPages()"
+              (click)="nextPage()"
+            >
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+
+          <div class="page-size">
+            <label for="pageSize"> Show </label>
+
+            <select id="pageSize" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+              @for (size of pageSizes; track size) {
+                <option [value]="size">
+                  {{ size }}
+                </option>
+              }
+            </select>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ========================================================= -->
+  <!-- SELECTED CLIENT LOAN -->
+  <!-- ========================================================= -->
+
+  @if (selectedLoan) {
+    <div class="detail-header">
+      <button type="button" class="back-button" (click)="selectedLoan = null">
+        <i class="bi bi-arrow-left"></i>
+
+        Back to Client Loans
+      </button>
+
+      <div class="detail-title-row">
+        <div>
+          <div class="detail-title">
+            <div class="detail-client-icon">
+              <i class="bi bi-person"></i>
+            </div>
+
+            <div>
+              <h2>
+                {{ selectedLoan.clientName }}
+              </h2>
+
+              <p>
+                {{ selectedLoan.clientPhone }}
+                <span class="separator">•</span>
+                {{ selectedLoan.branchName }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        @if (selectedLoan.status === 'ACTIVE' && selectedLoan.outstandingBalance > 0) {
+          <button type="button" class="btn-primary" (click)="openRepaymentForm()">
+            <i class="bi bi-cash-coin"></i>
+
+            Make Repayment
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- LOAN SUMMARY -->
+    <!-- ======================================================= -->
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-icon blue">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+
+        <div>
+          <span class="summary-label"> Principal Amount </span>
+
+          <strong>
+            {{ selectedLoan.currency }}
+            {{ selectedLoan.principalAmount | number: '1.2-2' }}
+          </strong>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-icon orange">
+          <i class="bi bi-percent"></i>
+        </div>
+
+        <div>
+          <span class="summary-label"> Interest </span>
+
+          <strong>
+            {{ selectedLoan.currency }}
+            {{ selectedLoan.interestAmount | number: '1.2-2' }}
+          </strong>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-icon green">
+          <i class="bi bi-wallet2"></i>
+        </div>
+
+        <div>
+          <span class="summary-label"> Total Receivable </span>
+
+          <strong>
+            {{ selectedLoan.currency }}
+            {{ selectedLoan.totalReceivable | number: '1.2-2' }}
+          </strong>
+        </div>
+      </div>
+
+      <div class="summary-card outstanding-card">
+        <div class="summary-icon red">
+          <i class="bi bi-hourglass-split"></i>
+        </div>
+
+        <div>
+          <span class="summary-label"> Outstanding Balance </span>
+
+          <strong>
+            {{ selectedLoan.currency }}
+            {{ selectedLoan.outstandingBalance | number: '1.2-2' }}
+          </strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- REPAYMENT FORM -->
+    <!-- ======================================================= -->
+
+    @if (showRepaymentForm) {
+      <div class="form-card repayment-card">
+        <div class="form-section">
+          <div class="section-header">
+            <div>
+              <h2>
+                <i class="bi bi-cash-coin me-2"></i>
+                Record Loan Repayment
+              </h2>
+
+              <p>Record a payment against the outstanding client loan balance.</p>
+            </div>
+
+            <button type="button" class="close-button" (click)="closeRepaymentForm()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <div class="form-grid">
+            <!-- Payment Destination -->
+
+            <div class="form-group">
+              <label for="paymentDestination">
+                Receiving Account
+                <span class="required">*</span>
+              </label>
+
+              <select
+                id="paymentDestination"
+                class="form-control"
+                [(ngModel)]="paymentDestination"
+                (change)="onPaymentDestinationChange()"
+              >
+                <option value="BRANCH_FLOAT">Branch Float</option>
+
+                <option value="BANK_ACCOUNT">Bank Account</option>
+              </select>
+
+              <span class="field-hint"> Select where the repayment money is received. </span>
+            </div>
+
+            <!-- Amount -->
+
+            <div class="form-group">
+              <label for="repaymentAmount">
+                Repayment Amount
+                <span class="required">*</span>
+              </label>
+
+              <div class="amount-input">
+                <span class="currency-prefix">
+                  {{ selectedLoan.currency }}
+                </span>
+
+                <input
+                  id="repaymentAmount"
+                  type="number"
+                  class="form-control"
+                  [(ngModel)]="repaymentAmount"
+                  min="0.01"
+                  [max]="selectedLoan.outstandingBalance"
+                  step="0.01"
+                  placeholder="Enter repayment amount"
+                />
+              </div>
+
+              <span class="field-hint">
+                Maximum:
+                {{ selectedLoan.currency }}
+                {{ selectedLoan.outstandingBalance | number: '1.2-2' }}
+              </span>
+            </div>
+
+            <!-- Bank Account -->
+
+            @if (paymentDestination === 'BANK_ACCOUNT') {
+              <div class="form-group full-width">
+                <label for="bankAccount">
+                  Bank Account
+                  <span class="required">*</span>
+                </label>
+
+                <div class="bank-search-wrapper">
+                  <div class="bank-search-box" [class.selected]="bankAccountSelected">
+                    <i class="bi bi-bank"></i>
+
+                    <input
+                      id="bankAccount"
+                      type="text"
+                      placeholder="Search bank account by bank, name or number..."
+                      [value]="bankAccountSearch"
+                      (input)="onBankAccountSearch($event)"
+                      (focus)="onBankAccountFocus()"
+                      autocomplete="off"
+                    />
+
+                    @if (bankAccountSelected) {
+                      <button
+                        type="button"
+                        class="clear-bank"
+                        title="Clear bank account"
+                        (click)="clearBankAccount()"
+                      >
+                        <i class="bi bi-x"></i>
+                      </button>
+                    }
+                  </div>
+
+                  @if (loadingBankAccounts) {
+                    <div class="bank-loading">
+                      <i class="bi bi-arrow-repeat spinning"></i>
+
+                      Loading
+                      {{ selectedLoan.currency }}
+                      bank accounts...
+                    </div>
+                  }
+
+                  @if (!loadingBankAccounts && !bankAccountSelected && bankAccountSearchStarted) {
+                    <div class="bank-results">
+                      @if (filteredBankAccounts().length > 0) {
+                        @for (account of filteredBankAccounts(); track account.id) {
+                          <button
+                            type="button"
+                            class="bank-result"
+                            (click)="selectBankAccount(account)"
+                          >
+                            <div class="result-bank-icon">
+                              <i class="bi bi-bank"></i>
+                            </div>
+
+                            <div class="result-bank-details">
+                              <span class="result-bank-name">
+                                {{ account.bankName }}
+                                -
+                                {{ account.accountName }}
+                              </span>
+
+                              <span class="result-bank-meta">
+                                {{ maskAccountNumber(account.accountNumber) }}
+
+                                ·
+
+                                {{ account.currency }}
+
+                                ·
+
+                                {{ account.branchName }}
+                              </span>
+                            </div>
+
+                            <i class="bi bi-chevron-right result-arrow"></i>
+                          </button>
+                        }
+                      } @else {
+                        <div class="no-banks">
+                          <i class="bi bi-search"></i>
+
+                          <span> No active bank accounts found </span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <span class="field-hint">
+                  Only active
+                  {{ selectedLoan.currency }}
+                  bank accounts are available.
+                </span>
+
+                @if (bankAccountSelected && fundingBankAccountId) {
+                  <div class="selected-account-card">
+                    <div class="selected-account-icon">
+                      <i class="bi bi-bank"></i>
+                    </div>
+
+                    <div class="selected-account-details">
+                      <span class="selected-account-label"> Selected Bank Account </span>
+
+                      <strong>
+                        {{ bankAccountSearch }}
+                      </strong>
+
+                      <span>
+                        Currency:
+                        {{ selectedLoan.currency }}
+                      </span>
+                    </div>
+
+                    <div class="selected-account-status">
+                      <span class="status-badge active">
+                        <span class="status-dot"></span>
+
+                        Selected
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Transaction Date -->
+
+            <div class="form-group">
+              <label for="transactionDate">
+                Transaction Date
+                <span class="required">*</span>
+              </label>
+
+              <input
+                id="transactionDate"
+                type="date"
+                class="form-control"
+                [(ngModel)]="transactionDate"
+              />
+            </div>
+
+            <!-- Reference -->
+
+            <div class="form-group">
+              <label for="repaymentReference">
+                Reference
+                <span class="optional"> Optional </span>
+              </label>
+
+              <input
+                id="repaymentReference"
+                type="text"
+                class="form-control"
+                [(ngModel)]="repaymentReference"
+                placeholder="Enter payment reference"
+              />
+            </div>
+
+            <!-- Description -->
+
+            <div class="form-group full-width">
+              <label for="repaymentDescription">
+                Description
+                <span class="optional"> Optional </span>
+              </label>
+
+              <textarea
+                id="repaymentDescription"
+                class="form-control textarea"
+                [(ngModel)]="repaymentDescription"
+                rows="3"
+                placeholder="Enter repayment description"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="closeRepaymentForm()"
+            [disabled]="repaymentLoading"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="repayClientLoan()"
+            [disabled]="repaymentLoading"
+          >
+            @if (repaymentLoading) {
+              <i class="bi bi-arrow-repeat spinning"></i>
+
+              Processing...
+            } @else {
+              <i class="bi bi-check2-circle"></i>
+
+              Record Repayment
+            }
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ======================================================= -->
+    <!-- TRANSACTIONS -->
+    <!-- ======================================================= -->
+
+    <div class="table-card transaction-card">
+      <div class="table-toolbar">
+        <div>
+          <h2>Transaction History</h2>
+
+          <p>All financial transactions recorded against this client loan.</p>
+        </div>
+
+        <div class="loan-meta">
+          <span class="currency-badge">
+            {{ selectedLoan.currency }}
+          </span>
+
+          <span
+            class="status-badge"
+            [class.active]="selectedLoan.status === 'ACTIVE'"
+            [class.paid]="selectedLoan.status === 'PAID'"
+            [class.overdue]="selectedLoan.status === 'OVERDUE'"
+            [class.closed]="selectedLoan.status === 'CLOSED'"
+          >
+            <span class="status-dot"></span>
+
+            {{ selectedLoan.status }}
+          </span>
+        </div>
+      </div>
+
+      @if (loadingTransactions) {
+        <div class="loading-state">
+          <div class="loading-spinner">
+            <i class="bi bi-arrow-repeat spinning"></i>
+          </div>
+
+          <h3>Loading Transactions</h3>
+
+          <p>Please wait while the transaction history is loaded.</p>
+        </div>
+      }
+
+      @if (!loadingTransactions && transactions().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="bi bi-receipt"></i>
+          </div>
+
+          <h3>No Transactions Found</h3>
+
+          <p>There are no transactions recorded for this client loan.</p>
+        </div>
+      }
+
+      @if (!loadingTransactions && transactions().length > 0) {
+        <div class="table-wrapper">
+          <table class="transaction-table">
+            <thead>
+              <tr>
+                <th>Transaction</th>
+
+                <th>Date</th>
+
+                <th>Amount</th>
+
+                <th>Reference</th>
+
+                <th>Description</th>
+
+                <th>Actioned By</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (transaction of transactions(); track transaction.id) {
+                <tr>
+                  <td>
+                    <div class="transaction-type">
+                      <div
+                        class="transaction-icon"
+                        [class]="getTransactionClass(transaction.transactionType)"
+                      >
+                        <i class="bi" [class]="getTransactionIcon(transaction.transactionType)"></i>
+                      </div>
+
+                      <div>
+                        <strong>
+                          {{ formatTransactionType(transaction.transactionType) }}
+                        </strong>
+
+                        <small>
+                          {{ transaction.branchName }}
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="date-cell">
+                      <span class="date">
+                        {{ transaction.transactionDate | date: 'dd MMM yyyy' }}
+                      </span>
+
+                      <span class="created-date">
+                        Recorded
+                        {{ transaction.createdAt | date: 'dd MMM yyyy, HH:mm' }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div
+                      class="transaction-amount"
+                      [class.repayment-amount]="
+                        getTransactionClass(transaction.transactionType) === 'repayment'
+                      "
+                    >
+                      <strong>
+                        {{ transaction.amount | number: '1.2-2' }}
+                      </strong>
+
+                      <span>
+                        {{ transaction.currency }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <span class="reference">
+                      {{ transaction.reference || '—' }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <span class="description">
+                      {{ transaction.description || '—' }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <span class="actioned-by">
+                      <i class="bi bi-person-check"></i>
+
+                      {{ transaction.actionedBy }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-footer">
+          <span>
+            {{ transactions().length }}
+            transaction(s)
+          </span>
+        </div>
+      }
+    </div>
+  }
+</div>

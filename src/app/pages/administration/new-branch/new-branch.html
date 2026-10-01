@@ -1,0 +1,167 @@
+<div class="page-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <button type="button" class="back-button" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i>
+        Back to Branches
+      </button>
+
+      <div class="title-row">
+        <div class="title-icon">
+          <i class="bi bi-building-add"></i>
+        </div>
+
+        <div>
+          <h1>Create New Branch</h1>
+
+          <p>Add a new branch to the Sipafin network.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+    <div class="form-section">
+      <!-- SECTION HEADER -->
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-building"></i>
+        </div>
+
+        <div>
+          <h2>Branch Information</h2>
+
+          <p>Enter the branch details below.</p>
+        </div>
+      </div>
+
+      <!-- FORM -->
+      <div class="form-grid">
+        <!-- BRANCH NAME -->
+        <div class="form-group">
+          <label for="name">
+            Branch Name
+            <span>*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-building"></i>
+
+            <input
+              id="name"
+              type="text"
+              [(ngModel)]="name"
+              maxlength="150"
+              placeholder="e.g. Harare Branch"
+              autocomplete="off"
+            />
+          </div>
+
+          <small> Maximum 150 characters. </small>
+        </div>
+
+        <!-- BRANCH CODE -->
+        <div class="form-group">
+          <label for="code">
+            Branch Code
+            <span>*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-upc-scan"></i>
+
+            <input
+              id="code"
+              type="text"
+              [(ngModel)]="code"
+              (input)="onCodeInput()"
+              maxlength="50"
+              placeholder="e.g. HAR"
+              autocomplete="off"
+            />
+          </div>
+
+          <small> A unique identifier for the branch. </small>
+        </div>
+
+        <!-- LOCATION -->
+        <div class="form-group full-width">
+          <label for="location"> Location </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-geo-alt"></i>
+
+            <input
+              id="location"
+              type="text"
+              [(ngModel)]="location"
+              maxlength="255"
+              placeholder="e.g. Harare, Zimbabwe"
+              autocomplete="off"
+            />
+          </div>
+
+          <small> Optional branch location or address. </small>
+        </div>
+
+        <!-- STATUS -->
+        <!-- <div class="form-group">
+          <label> Branch Status </label>
+
+          <div class="status-control">
+            <button
+              type="button"
+              class="status-toggle"
+              [class.active]="active"
+              [class.inactive]="!active"
+              (click)="active = !active"
+            >
+              <span class="toggle-track">
+                <span class="toggle-thumb"></span>
+              </span>
+
+              <span class="status-text">
+                @if (active) {
+                  Active
+                } @else {
+                  Inactive
+                }
+              </span>
+            </button>
+          </div>
+
+          <small> Inactive branches cannot be assigned to new users. </small>
+        </div> -->
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="form-footer">
+      <div class="required-note">
+        <span>*</span>
+        Required fields
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="goBack()">Cancel</button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="loading || !name.trim() || !code.trim()"
+          (click)="createBranch()"
+        >
+          @if (loading) {
+            <span class="spinner"></span>
+            Creating...
+          } @else {
+            <i class="bi bi-building-add"></i>
+            Create Branch
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

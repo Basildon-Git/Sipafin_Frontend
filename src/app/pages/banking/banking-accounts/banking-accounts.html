@@ -1,0 +1,272 @@
+<div class="page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="title-row">
+      <div class="title-icon">
+        <i class="bi bi-bank"></i>
+      </div>
+
+      <div>
+        <h1>Banking Accounts</h1>
+        <p>Manage bank accounts and their current balances.</p>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="createAccount()">
+      <i class="bi bi-plus-lg"></i>
+      <span>New Account</span>
+    </button>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-bank"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Total Accounts</span>
+        <strong>{{ totalAccounts() }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-check-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Active Accounts</span>
+        <strong>{{ activeAccounts() }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon orange">
+        <i class="bi bi-pause-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Inactive Accounts</span>
+        <strong>{{ inactiveAccounts() }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon purple">
+        <i class="bi bi-wallet2"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Active Balance</span>
+        <strong>${{ totalBalance() | number: '1.2-2' }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card">
+    <!-- TOOLBAR -->
+    <div class="table-toolbar">
+      <div>
+        <h2>Account Directory</h2>
+        <p>All bank accounts registered in Sipafin.</p>
+      </div>
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input type="text" placeholder="Search accounts, banks..." (input)="onSearch($event)" />
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Bank</th>
+            <th>Account</th>
+            <th>Account Number</th>
+            <th>Currency</th>
+            <th>Current Balance</th>
+            <th>Commission</th>
+            <th>Status</th>
+            <th class="actions-header">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (account of filteredAccounts(); track account.id) {
+            <tr>
+              <!-- BANK -->
+              <td>
+                <div class="bank-cell">
+                  <div class="bank-avatar">
+                    <i class="bi bi-bank"></i>
+                  </div>
+
+                  <div class="bank-details">
+                    <span class="bank-name">
+                      {{ account.bankName }}
+                    </span>
+
+                    <span class="bank-code">
+                      {{ account.bankCode }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- ACCOUNT -->
+              <td>
+                <div class="account-details">
+                  <span class="account-name">
+                    {{ account.accountName }}
+                  </span>
+
+                  @if (account.branchName) {
+                    <span class="account-id"> Branch: {{ account.branchName }} </span>
+                  }
+                </div>
+              </td>
+
+              <!-- ACCOUNT NUMBER -->
+              <td>
+                <span class="account-number">
+                  {{ maskAccountNumber(account.accountNumber) }}
+                </span>
+              </td>
+
+              <!-- CURRENCY -->
+              <td>
+                <span class="currency-badge">
+                  {{ account.currency }}
+                </span>
+              </td>
+
+              <!-- BALANCE -->
+              <td>
+                <div class="balance-cell">
+                  <span class="balance">
+                    {{ account.currentBalance | number: '1.2-2' }}
+                  </span>
+
+                  <span class="balance-currency">
+                    {{ account.currency }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- COMMISSION -->
+              <td>
+                <div class="balance-cell">
+                  <span class="balance">
+                    {{ account.commissionRate ?? 0 | number: '1.2-2' }}%
+                  </span>
+
+                  <span class="balance-currency"> Commission </span>
+                </div>
+              </td>
+
+              <!-- STATUS -->
+              <td>
+                @if (account.active) {
+                  <span class="status-badge active">
+                    <span class="status-dot"></span>
+                    Active
+                  </span>
+                } @else {
+                  <span class="status-badge inactive">
+                    <span class="status-dot"></span>
+                    Inactive
+                  </span>
+                }
+              </td>
+
+              <!-- ACTIONS -->
+              <td>
+                <div class="actions">
+                  <!-- <button
+                    type="button"
+                    class="action-button view"
+                    title="View account"
+                    (click)="viewAccount(account)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button> -->
+
+                  <!-- <button
+                    type="button"
+                    class="action-button edit"
+                    title="Edit account"
+                    (click)="editAccount(account)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button> -->
+
+                  @if (account.active) {
+                    <button
+                      type="button"
+                      class="action-button deactivate"
+                      title="Deactivate account"
+                      (click)="toggleStatus(account)"
+                    >
+                      <i class="bi bi-pause-circle"></i>
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="action-button activate"
+                      title="Activate account"
+                      (click)="toggleStatus(account)"
+                    >
+                      <i class="bi bi-play-circle"></i>
+                    </button>
+                  }
+                  <!-- 
+                  <button
+                    type="button"
+                    class="action-button delete"
+                    title="Delete account"
+                    (click)="deleteAccount(account)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button> -->
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">
+                  <div class="empty-icon">
+                    <i class="bi bi-bank"></i>
+                  </div>
+
+                  <h3>No bank accounts found</h3>
+
+                  <p>Try adjusting your search or create a new bank account.</p>
+
+                  <button type="button" class="btn-primary" (click)="createAccount()">
+                    <i class="bi bi-plus-lg"></i>
+                    New Account
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="table-footer">
+      <span>
+        Showing {{ filteredAccounts().length }} of {{ totalAccounts() }}
+        accounts
+      </span>
+    </div>
+  </div>
+</div>

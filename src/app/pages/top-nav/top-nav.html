@@ -1,0 +1,164 @@
+<header class="top-nav">
+  <!-- Left -->
+  <div class="top-left">
+    <!-- Mobile menu -->
+    <button type="button" class="icon-button mobile-menu" (click)="openMenu()">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Desktop collapse -->
+    <button
+      type="button"
+      class="icon-button desktop-collapse"
+      title="Toggle sidebar"
+      (click)="openMenu()"
+    >
+      <i class="bi bi-layout-sidebar-inset"></i>
+    </button>
+
+    <!-- Page context -->
+    <div class="page-context">
+      <span class="context-label"> SIPAFIN </span>
+      <span class="context-divider"> / </span>
+      <span class="context-label"> {{ branchName }} </span>
+      <span class="context-divider"> / </span>
+      <span class="context-page"> Financial Management </span>
+    </div>
+  </div>
+
+  <!-- Right -->
+  <div class="top-right">
+    <!-- Search -->
+    <div class="search-container" [class.open]="searchOpen">
+      <button type="button" class="icon-button search-button" (click)="toggleSearch()">
+        <i class="bi bi-search"></i>
+      </button>
+
+      <input type="text" placeholder="Search Sipafin..." aria-label="Search" />
+    </div>
+
+    <!-- Environment -->
+    <div class="environment">
+      <span class="status-dot"></span>
+
+      <span> Live </span>
+    </div>
+
+    <!-- Notifications -->
+    <div class="dropdown-wrapper">
+      <button type="button" class="icon-button notification-button" (click)="toggleNotifications()">
+        <i class="bi bi-bell"></i>
+
+        <span class="notification-badge"> 3 </span>
+      </button>
+
+      @if (notificationsOpen) {
+        <div class="dropdown notification-dropdown">
+          <div class="dropdown-header">
+            <strong> Notifications </strong>
+
+            <span> 3 new </span>
+          </div>
+
+          <div class="notification-item">
+            <div class="notification-icon blue">
+              <i class="bi bi-bank"></i>
+            </div>
+
+            <div>
+              <strong> Bank reconciliation </strong>
+
+              <span> Reconciliation requires attention </span>
+
+              <small> 5 minutes ago </small>
+            </div>
+          </div>
+
+          <div class="notification-item">
+            <div class="notification-icon green">
+              <i class="bi bi-arrow-down-left"></i>
+            </div>
+
+            <div>
+              <strong> Deposit received </strong>
+
+              <span> Deposit successfully processed </span>
+
+              <small> 24 minutes ago </small>
+            </div>
+          </div>
+
+          <div class="notification-item">
+            <div class="notification-icon orange">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+
+            <div>
+              <strong> Low cash float </strong>
+
+              <span> Harare branch float is below threshold </span>
+
+              <small> 1 hour ago </small>
+            </div>
+          </div>
+
+          <button type="button" class="view-all">View all notifications</button>
+        </div>
+      }
+    </div>
+
+    <!-- Divider -->
+    <div class="top-divider"></div>
+
+    <!-- User -->
+    <div class="dropdown-wrapper">
+      <button type="button" class="user-button" (click)="toggleProfile()">
+        <div class="avatar">{{ initials }}</div>
+
+        <div class="user-info">
+          <strong> {{ loggedUserName }} </strong>
+          <span> {{ role }} </span>
+        </div>
+
+        <i class="bi bi-chevron-down"></i>
+      </button>
+
+      @if (profileOpen) {
+        <div class="dropdown profile-dropdown">
+          <div class="profile-dropdown-header">
+            <div class="avatar">{{ initials }}</div>
+
+            <div>
+              <strong> {{ loggedUserName }} </strong>
+              <span> {{ role }} </span>
+            </div>
+          </div>
+
+          <div class="dropdown-divider"></div>
+
+          <button type="button" class="dropdown-action">
+            <i class="bi bi-person"></i>
+            Profile
+          </button>
+
+          <button type="button" class="dropdown-action">
+            <i class="bi bi-gear"></i>
+            Account settings
+          </button>
+
+          <button type="button" class="dropdown-action">
+            <i class="bi bi-shield-check"></i>
+            Security
+          </button>
+
+          <div class="dropdown-divider"></div>
+
+          <button type="button" class="dropdown-action logout" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i>
+            Sign out
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</header>

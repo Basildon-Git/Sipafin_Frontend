@@ -1,0 +1,168 @@
+<div class="new-investor-page">
+  <!-- Header -->
+  <div class="page-header">
+    <button type="button" class="back-button" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i>
+      Back to Investors
+    </button>
+
+    <div class="title-section">
+      <div class="title-icon">
+        <i class="bi bi-person-plus"></i>
+      </div>
+
+      <div>
+        <h1>Create New Investor</h1>
+        <p>Add a new investor to the Sipafin platform.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="form-card">
+    <div class="card-header">
+      <div>
+        <h2>Investor Information</h2>
+        <p>Enter the investor's personal and contact details.</p>
+      </div>
+    </div>
+
+    <form #investorForm="ngForm" (ngSubmit)="createInvestor()">
+      <div class="form-grid">
+        <!-- Full Name -->
+        <div class="form-group full-width">
+          <label for="fullName">
+            Full Name
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-person"></i>
+
+            <input
+              id="fullName"
+              type="text"
+              name="fullName"
+              [(ngModel)]="fullName"
+              placeholder="Enter investor full name"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Phone Number -->
+        <div class="form-group">
+          <label for="phoneNumber">
+            Phone Number
+            <span class="required">*</span>
+          </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-telephone"></i>
+
+            <input
+              id="phoneNumber"
+              type="tel"
+              name="phoneNumber"
+              [(ngModel)]="phoneNumber"
+              placeholder="+263 77 123 4567"
+              required
+            />
+          </div>
+
+          <span class="field-hint"> Include the country code where applicable. </span>
+        </div>
+
+        <!-- National ID -->
+        <div class="form-group">
+          <label for="nationalId"> National ID </label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-card-text"></i>
+
+            <input
+              id="nationalId"
+              type="text"
+              name="nationalId"
+              [(ngModel)]="nationalId"
+              placeholder="Enter national ID"
+            />
+          </div>
+
+          <span class="field-hint"> Optional. </span>
+        </div>
+
+        <!-- Address -->
+        <div class="form-group full-width">
+          <label for="address"> Address </label>
+
+          <div class="input-wrapper textarea-wrapper">
+            <i class="bi bi-geo-alt"></i>
+
+            <textarea
+              id="address"
+              name="address"
+              [(ngModel)]="address"
+              placeholder="Enter investor address"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <span class="field-hint"> Optional. </span>
+        </div>
+
+        <!-- Status -->
+        <!-- <div class="form-group full-width">
+          <div class="status-setting">
+            <div class="status-information">
+              <div class="status-icon">
+                <i class="bi bi-toggle-on"></i>
+              </div>
+
+              <div>
+                <label class="status-label"> Investor Status </label>
+
+                <p>Inactive investors cannot be used for new transactions.</p>
+              </div>
+            </div>
+
+            <label class="switch">
+              <input type="checkbox" name="active" [(ngModel)]="active" />
+
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="status-value" [class.inactive]="!active">
+            <i
+              class="bi"
+              [class.bi-check-circle-fill]="active"
+              [class.bi-x-circle-fill]="!active"
+            ></i>
+
+            {{ active ? 'Active' : 'Inactive' }}
+          </div>
+        </div> -->
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="goBack()">Cancel</button>
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="loading || !fullName.trim() || !phoneNumber.trim()"
+        >
+          @if (loading) {
+            <span class="spinner"></span>
+            Creating...
+          } @else {
+            <i class="bi bi-person-plus"></i>
+            Create Investor
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

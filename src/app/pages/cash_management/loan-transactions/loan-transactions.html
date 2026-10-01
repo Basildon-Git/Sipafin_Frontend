@@ -1,0 +1,299 @@
+<div class="page-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="title-icon">
+        <i class="bi bi-arrow-left-right"></i>
+      </div>
+
+      <div>
+        <h1>Loan Transactions</h1>
+        <p>Track loans received and their outstanding balances.</p>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-primary" (click)="newTransaction()">
+      <i class="bi bi-plus-lg"></i>
+      New Transaction
+    </button>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <!-- TOTAL LOANS -->
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-arrow-left-right"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Loans</span>
+        <strong>{{ totalLoans() }}</strong>
+      </div>
+    </div>
+
+    <!-- TOTAL PRINCIPAL -->
+    <div class="summary-card">
+      <div class="summary-icon orange">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Principal</span>
+        <strong>
+          {{ totalPrincipal() | number: '1.2-2' }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- OUTSTANDING -->
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-wallet2"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Outstanding</span>
+        <strong>
+          {{ totalOutstanding() | number: '1.2-2' }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- ACTIVE -->
+    <div class="summary-card">
+      <div class="summary-icon purple">
+        <i class="bi bi-check-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Active Loans</span>
+        <strong>{{ totalActive() }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card">
+    <!-- TOOLBAR -->
+    <div class="table-toolbar">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input
+          type="text"
+          placeholder="Search investor, branch, currency, status..."
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+        />
+      </div>
+
+      <div class="result-count">
+        {{ filteredLoans().length }}
+        of
+        {{ totalLoans() }}
+        loans
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Investor</th>
+            <th>Branch</th>
+            <th>Currency</th>
+            <th>Principal Amt</th>
+            <th>Outstanding Bal</th>
+            <th>Interest Rate</th>
+            <th>Interest Amt</th>
+            <th>Payable Amt</th>
+            <th>Status</th>
+            <th>Date Received</th>
+            <th>Due Date</th>
+            <th>Description</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (loan of filteredLoans(); track loan.id) {
+            <tr>
+              <!-- INVESTOR -->
+              <td>
+                <div class="investor-cell">
+                  <div class="avatar">
+                    {{ loan.investorName.charAt(0).toUpperCase() }}
+                  </div>
+
+                  <span>
+                    {{ loan.investorName }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- BRANCH -->
+              <td>
+                <div class="branch-cell">
+                  <span class="branch-name">
+                    {{ loan.branchName }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- CURRENCY -->
+              <td>
+                <span class="currency">
+                  {{ loan.currency }}
+                </span>
+              </td>
+
+              <!-- PRINCIPAL -->
+              <td>
+                <span class="amount">
+                  {{ getCurrencySymbol(loan.currency) }}
+                  {{ loan.principalAmount | number: '1.2-2' }}
+                </span>
+              </td>
+
+              <!-- OUTSTANDING -->
+              <td>
+                <span class="amount" [class.amount-in]="loan.outstandingBalance > 0">
+                  {{ getCurrencySymbol(loan.currency) }}
+                  {{ loan.outstandingBalance | number: '1.2-2' }}
+                </span>
+              </td>
+
+              <!-- Interest Rate -->
+              <td>
+                <span class="amount"> {{ loan.interestRate | number: '1.2-2' }}% </span>
+              </td>
+
+              <!-- Interest Amount -->
+              <td>
+                <span class="amount"> ${{ loan.interestAmount | number: '1.2-2' }} </span>
+              </td>
+
+              <!-- Amount Payable -->
+              <td>
+                <span class="amount"> ${{ loan.totalPayable | number: '1.2-2' }} </span>
+              </td>
+
+              <!-- STATUS -->
+              <td>
+                <span
+                  class="status-badge"
+                  [class.active]="getStatusClass(loan.status) === 'active'"
+                  [class.partially-paid]="getStatusClass(loan.status) === 'partially-paid'"
+                  [class.paid]="getStatusClass(loan.status) === 'paid'"
+                  [class.cancelled]="getStatusClass(loan.status) === 'cancelled'"
+                >
+                  @if (loan.status === 'ACTIVE') {
+                    <i class="bi bi-check-circle"></i>
+                  } @else if (loan.status === 'PARTIALLY_PAID') {
+                    <i class="bi bi-hourglass-split"></i>
+                  } @else if (loan.status === 'PAID') {
+                    <i class="bi bi-check2-all"></i>
+                  } @else if (loan.status === 'CANCELLED') {
+                    <i class="bi bi-x-circle"></i>
+                  } @else {
+                    <i class="bi bi-info-circle"></i>
+                  }
+
+                  {{ formatStatus(loan.status) }}
+                </span>
+              </td>
+
+              <!-- DATE RECEIVED -->
+              <td>
+                <span class="date">
+                  {{ formatDate(loan.dateReceived) }}
+                </span>
+              </td>
+
+              <!-- DUE DATE -->
+              <td>
+                <span class="date">
+                  {{ formatDate(loan.dueDate) }}
+                </span>
+              </td>
+
+              <!-- DESCRIPTION -->
+              <td>
+                <span class="description" [title]="loan.description">
+                  {{ loan.description || '-' }}
+                </span>
+              </td>
+
+              <!-- ACTIONS -->
+              <td class="actions-column">
+                <div class="action-buttons">
+                  <button
+                    type="button"
+                    class="action-btn view"
+                    title="View"
+                    (click)="viewTransaction(loan)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-btn edit"
+                    title="Edit"
+                    (click)="editTransaction(loan)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="13">
+                <div class="empty-state">
+                  <div class="empty-icon">
+                    <i class="bi bi-arrow-left-right"></i>
+                  </div>
+
+                  @if (loading()) {
+                    <h3>Loading loans...</h3>
+
+                    <p>Please wait while the loans are being loaded.</p>
+                  } @else {
+                    <h3>No loans found</h3>
+
+                    <p>There are no loans matching your search.</p>
+
+                    @if (searchTerm()) {
+                      <button type="button" class="btn btn-secondary" (click)="clearSearch()">
+                        Clear Search
+                      </button>
+                    } @else {
+                      <button type="button" class="btn btn-primary" (click)="newTransaction()">
+                        <i class="bi bi-plus-lg"></i>
+                        New Transaction
+                      </button>
+                    }
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="table-footer">
+      <span>
+        Showing
+        <strong>{{ filteredLoans().length }}</strong>
+        of
+        <strong>{{ totalLoans() }}</strong>
+        loans
+      </span>
+    </div>
+  </div>
+</div>

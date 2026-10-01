@@ -1,0 +1,250 @@
+<div class="page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="title-row">
+      <div class="title-icon">
+        <i class="bi bi-person-badge"></i>
+      </div>
+
+      <div>
+        <h1>Investors</h1>
+        <p>Manage investors registered within the Sipafin platform.</p>
+      </div>
+    </div>
+
+   <div>
+     <button type="button" class="btn-primary mx-1" (click)="createInvestor()">
+      <i class="bi bi-plus-lg"></i>
+      <span>New Investor</span>
+    </button>
+     <button type="button" class="btn-primary" (click)="loans()">
+      <i class="bi bi-plus-lg"></i>
+      <span>New Liability</span>
+    </button>
+     <button type="button" class="btn-primary mx-1" (click)="loanTransactions()">
+      <i class="bi bi-plus-lg"></i>
+      <span>Repayment</span>
+    </button>
+   </div>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-people"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Total Investors</span>
+        <strong>{{ totalInvestors() }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-person-check"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Active Investors</span>
+        <strong>{{ activeInvestors() }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon orange">
+        <i class="bi bi-person-dash"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Inactive Investors</span>
+        <strong>{{ inactiveInvestors() }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card">
+    <!-- TOOLBAR -->
+    <div class="table-toolbar">
+      <div>
+        <h2>Investor Directory</h2>
+        <p>All investors registered in Sipafin.</p>
+      </div>
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input type="text" placeholder="Search investors..." (input)="onSearch($event)" />
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Investor</th>
+            <th>Phone Number</th>
+            <th>National ID</th>
+            <th>Address</th>
+            <th>Status</th>
+            <th class="actions-header">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (investor of filteredInvestors(); track investor.id) {
+            <tr>
+              <!-- INVESTOR -->
+              <td>
+                <div class="investor-cell">
+                  <div class="investor-avatar">
+                    {{ getInitials(investor.fullName) }}
+                  </div>
+
+                  <div class="investor-details">
+                    <span class="investor-name">
+                      {{ investor.fullName }}
+                    </span>
+
+                    <!-- <span class="investor-id"> Investor ID: {{ investor.id }} </span> -->
+                  </div>
+                </div>
+              </td>
+
+              <!-- PHONE -->
+              <td>
+                <div class="phone-cell">
+                  <i class="bi bi-telephone"></i>
+
+                  <span>
+                    {{ investor.phoneNumber }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- NATIONAL ID -->
+              <td>
+                @if (investor.nationalId) {
+                  <span class="national-id">
+                    {{ investor.nationalId }}
+                  </span>
+                } @else {
+                  <span class="not-provided"> Not provided </span>
+                }
+              </td>
+
+              <!-- ADDRESS -->
+              <td>
+                <div class="address-cell">
+                  @if (investor.address) {
+                    <i class="bi bi-geo-alt"></i>
+
+                    <span>
+                      {{ investor.address }}
+                    </span>
+                  } @else {
+                    <span class="not-provided"> Not provided </span>
+                  }
+                </div>
+              </td>
+
+              <!-- STATUS -->
+              <td>
+                @if (investor.active) {
+                  <span class="status-badge active">
+                    <span class="status-dot"></span>
+                    Active
+                  </span>
+                } @else {
+                  <span class="status-badge inactive">
+                    <span class="status-dot"></span>
+                    Inactive
+                  </span>
+                }
+              </td>
+
+              <!-- ACTIONS -->
+              <td>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="action-button view"
+                    title="View investor"
+                    (click)="viewInvestor(investor)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-button edit"
+                    title="Edit investor"
+                    (click)="editInvestor(investor)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+
+                  @if (investor.active) {
+                    <button
+                      type="button"
+                      class="action-button deactivate"
+                      title="Deactivate investor"
+                      (click)="toggleStatus(investor)"
+                    >
+                      <i class="bi bi-person-dash"></i>
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="action-button activate"
+                      title="Activate investor"
+                      (click)="toggleStatus(investor)"
+                    >
+                      <i class="bi bi-person-check"></i>
+                    </button>
+                  }
+
+                  <button
+                    type="button"
+                    class="action-button delete"
+                    title="Delete investor"
+                    (click)="deleteInvestor(investor)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <div class="empty-icon">
+                    <i class="bi bi-person-badge"></i>
+                  </div>
+
+                  <h3>No investors found</h3>
+
+                  <p>Try adjusting your search or create a new investor.</p>
+
+                  <button type="button" class="btn-primary" (click)="createInvestor()">
+                    <i class="bi bi-plus-lg"></i>
+                    New Investor
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="table-footer">
+      <span> Showing {{ filteredInvestors().length }} of {{ totalInvestors() }} investors </span>
+    </div>
+  </div>
+</div>

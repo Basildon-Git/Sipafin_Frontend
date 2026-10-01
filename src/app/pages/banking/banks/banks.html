@@ -1,0 +1,233 @@
+<div class="page-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="title-row">
+      <div class="title-icon">
+        <i class="bi bi-bank"></i>
+      </div>
+
+      <div>
+        <h1>Banks</h1>
+
+        <p>Manage banks available within the Sipafin platform.</p>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="createBank()">
+      <i class="bi bi-plus-lg"></i>
+      New Bank
+    </button>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <!-- TOTAL -->
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-bank"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Total Banks </span>
+
+        <strong>
+          {{ totalBanks() }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- ACTIVE -->
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-check-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Active Banks </span>
+
+        <strong>
+          {{ activeBanks() }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- INACTIVE -->
+    <div class="summary-card">
+      <div class="summary-icon orange">
+        <i class="bi bi-pause-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Inactive Banks </span>
+
+        <strong>
+          {{ inactiveBanks() }}
+        </strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card">
+    <!-- TOOLBAR -->
+    <div class="table-toolbar">
+      <div>
+        <h2>Bank Directory</h2>
+
+        <p>View and manage all registered banks.</p>
+      </div>
+
+      <!-- SEARCH -->
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input
+          type="text"
+          placeholder="Search banks..."
+          [value]="searchTerm()"
+          (input)="onSearch($event)"
+        />
+
+        @if (searchTerm()) {
+          <button type="button" class="clear-search" (click)="searchTerm.set('')">
+            <i class="bi bi-x"></i>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Bank</th>
+            <th>Code</th>
+            <th>Status</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (bank of filteredBanks(); track bank.id) {
+            <tr>
+              <!-- BANK -->
+              <td>
+                <div class="bank-cell">
+                  <div class="bank-avatar">
+                    <i class="bi bi-bank"></i>
+                  </div>
+
+                  <div class="bank-details">
+                    <span class="bank-name">
+                      {{ bank.name }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- CODE -->
+              <td>
+                <span class="bank-code">
+                  {{ bank.code }}
+                </span>
+              </td>
+
+              <!-- STATUS -->
+              <td>
+                @if (bank.active) {
+                  <span class="status-badge active">
+                    <span class="status-dot"></span>
+                    Active
+                  </span>
+                } @else {
+                  <span class="status-badge inactive">
+                    <span class="status-dot"></span>
+                    Inactive
+                  </span>
+                }
+              </td>
+
+              <!-- ACTIONS -->
+              <td>
+                <div class="action-buttons">
+                  <!-- VIEW -->
+                  <button
+                    type="button"
+                    class="action-button view"
+                    title="View bank"
+                    (click)="viewBank(bank)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <!-- EDIT -->
+                  <button
+                    type="button"
+                    class="action-button edit"
+                    title="Edit bank"
+                    (click)="editBank(bank)"
+                  >
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+
+                  <!-- ACTIVATE / DEACTIVATE -->
+                  <button
+                    type="button"
+                    class="action-button status"
+                    [class.activate]="!bank.active"
+                    [class.deactivate]="bank.active"
+                    [title]="bank.active ? 'Deactivate bank' : 'Activate bank'"
+                    (click)="toggleStatus(bank)"
+                  >
+                    @if (bank.active) {
+                      <i class="bi bi-bank"></i>
+                    } @else {
+                      <i class="bi bi-bank2"></i>
+                    }
+                  </button>
+
+                  <!-- DELETE -->
+                  <button
+                    type="button"
+                    class="action-button delete"
+                    title="Delete bank"
+                    (click)="deleteBank(bank)"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+
+          <!-- EMPTY -->
+          @if (filteredBanks().length === 0) {
+            <tr>
+              <td colspan="4" class="empty-state">
+                <div class="empty-icon">
+                  <i class="bi bi-bank"></i>
+                </div>
+
+                <h3>No banks found</h3>
+
+                <p>Try changing your search criteria.</p>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="table-footer">
+      <span>
+        Showing
+        <strong>{{ filteredBanks().length }}</strong>
+        of
+        <strong>{{ totalBanks() }}</strong>
+        banks
+      </span>
+    </div>
+  </div>
+</div>

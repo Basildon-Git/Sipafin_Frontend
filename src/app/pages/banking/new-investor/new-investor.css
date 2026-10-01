@@ -1,0 +1,507 @@
+.new-investor-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+}
+
+/* =========================
+   Header
+========================= */
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  border: none;
+  background: transparent;
+
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+
+  padding: 0;
+  margin-bottom: 18px;
+
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.back-button:hover {
+  color: #0756b8;
+}
+
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.title-icon {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eaf3ff;
+  color: #0756b8;
+
+  border-radius: 10px;
+
+  font-size: 22px;
+}
+
+.title-section h1 {
+  margin: 0;
+
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.title-section p {
+  margin: 4px 0 0;
+
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* =========================
+   Form Card
+========================= */
+
+.form-card {
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 22px 24px;
+
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.card-header h2 {
+  margin: 0;
+
+  color: #1e293b;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.card-header p {
+  margin: 5px 0 0;
+
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* =========================
+   Form
+========================= */
+
+form {
+  padding: 24px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 20px;
+}
+
+.form-group {
+  min-width: 0;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.required {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
+/* =========================
+   Inputs
+========================= */
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-wrapper > i {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: #94a3b8;
+  font-size: 16px;
+
+  pointer-events: none;
+}
+
+.input-wrapper input,
+.input-wrapper textarea {
+  width: 100%;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #0f172a;
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.input-wrapper input {
+  height: 44px;
+  padding: 0 14px 0 40px;
+}
+
+.input-wrapper textarea {
+  padding: 12px 14px 12px 40px;
+
+  resize: vertical;
+  min-height: 90px;
+}
+
+.input-wrapper textarea + * {
+  position: relative;
+}
+
+.input-wrapper:focus-within > i {
+  color: #0756b8;
+}
+
+.input-wrapper input:focus,
+.input-wrapper textarea:focus {
+  border-color: #0756b8;
+
+  box-shadow: 0 0 0 3px rgba(7, 86, 184, 0.1);
+}
+
+.input-wrapper input::placeholder,
+.input-wrapper textarea::placeholder {
+  color: #94a3b8;
+}
+
+.textarea-wrapper > i {
+  top: 17px;
+  transform: none;
+}
+
+.field-hint {
+  display: block;
+
+  margin-top: 6px;
+
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+/* =========================
+   Status
+========================= */
+
+.status-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 16px;
+
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.status-information {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-icon {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eaf3ff;
+  color: #0756b8;
+
+  border-radius: 8px;
+
+  font-size: 18px;
+}
+
+.status-label {
+  margin: 0 !important;
+
+  color: #1e293b !important;
+  font-size: 14px !important;
+}
+
+.status-information p {
+  margin: 3px 0 0;
+
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* Toggle */
+
+.switch {
+  position: relative;
+
+  width: 46px;
+  height: 25px;
+
+  margin: 0 !important;
+
+  flex-shrink: 0;
+}
+
+.switch input {
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+
+  background: #cbd5e1;
+
+  border-radius: 30px;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.slider::before {
+  content: '';
+
+  position: absolute;
+
+  width: 19px;
+  height: 19px;
+
+  left: 3px;
+  top: 3px;
+
+  background: #ffffff;
+
+  border-radius: 50%;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+
+  transition: 0.2s ease;
+}
+
+.switch input:checked + .slider {
+  background: #0756b8;
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(21px);
+}
+
+.status-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 8px;
+
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-value.inactive {
+  color: #dc2626;
+}
+
+/* =========================
+   Actions
+========================= */
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 28px;
+  padding-top: 22px;
+
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn {
+  height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 0 18px;
+
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.btn-secondary {
+  background: #ffffff;
+
+  border: 1px solid #cbd5e1;
+
+  color: #475569;
+}
+
+.btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-primary {
+  background: #0756b8;
+
+  border: 1px solid #0756b8;
+
+  color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #063b80;
+  border-color: #063b80;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* =========================
+   Spinner
+========================= */
+
+.spinner {
+  width: 15px;
+  height: 15px;
+
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+
+  border-radius: 50%;
+
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 768px) {
+  .new-investor-page {
+    padding: 22px 16px 30px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: auto;
+  }
+
+  .title-section h1 {
+    font-size: 21px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .new-investor-page {
+    padding: 18px 12px 25px;
+  }
+
+  form {
+    padding: 18px;
+  }
+
+  .card-header {
+    padding: 18px;
+  }
+
+  .title-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 19px;
+  }
+
+  .status-setting {
+    align-items: flex-start;
+  }
+
+  .status-information {
+    align-items: flex-start;
+  }
+}

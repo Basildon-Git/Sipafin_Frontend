@@ -1,0 +1,429 @@
+<div class="dashboard">
+  <!-- ================================================
+       HEADER
+       ================================================= -->
+
+  <div class="dashboard-header">
+    <div>
+      <div class="welcome-label">FINANCIAL OVERVIEW</div>
+
+      <h1>Welcome back, Basildon</h1>
+
+      <p>Here's what's happening with your finances today.</p>
+    </div>
+
+    <div class="header-actions">
+      <div class="date-display">
+        <i class="bi bi-calendar3"></i>
+
+        <span>
+          {{ today | date: 'EEEE, dd MMMM yyyy' }}
+        </span>
+      </div>
+
+      <button class="primary-button">
+        <i class="bi bi-plus-lg"></i>
+        New Transaction
+      </button>
+    </div>
+  </div>
+
+  <!-- ================================================
+       KPI CARDS
+       ================================================= -->
+
+  <section class="stats-grid">
+    @for (stat of stats; track stat.title) {
+      <div class="stat-card">
+        <div class="stat-top">
+          <div
+            class="stat-icon"
+            [class.primary]="stat.type === 'primary'"
+            [class.blue]="stat.type === 'blue'"
+            [class.green]="stat.type === 'green'"
+            [class.orange]="stat.type === 'orange'"
+          >
+            <i class="bi {{ stat.icon }}"></i>
+          </div>
+
+          <span class="stat-change">
+            {{ stat.change }}
+          </span>
+        </div>
+
+        <div class="stat-title">
+          {{ stat.title }}
+        </div>
+
+        <div class="stat-value">
+          {{ stat.value }}
+        </div>
+
+        <div class="stat-description">
+          {{ stat.description }}
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- ================================================
+       MAIN GRID
+       ================================================= -->
+
+  <div class="main-grid">
+    <!-- Cash Flow -->
+    <section class="card cash-flow-card">
+      <div class="card-header">
+        <div>
+          <h2>Cash Flow Overview</h2>
+
+          <p>Inflows and outflows across all banks</p>
+        </div>
+
+        <select>
+          <option>This Month</option>
+          <option>Last Month</option>
+          <option>Last 3 Months</option>
+          <option>This Year</option>
+        </select>
+      </div>
+
+      <div class="chart-area">
+        <div class="chart-summary">
+          <div>
+            <span>Total Inflows</span>
+            <strong>$1.24M</strong>
+          </div>
+
+          <div>
+            <span>Total Outflows</span>
+            <strong>$824K</strong>
+          </div>
+
+          <div>
+            <span>Net Cash Flow</span>
+            <strong class="positive"> +$416K </strong>
+          </div>
+        </div>
+
+        <!-- Chart placeholder -->
+
+        <div class="chart">
+          <div class="chart-y-axis">
+            <span>$500K</span>
+            <span>$400K</span>
+            <span>$300K</span>
+            <span>$200K</span>
+            <span>$100K</span>
+            <span>$0</span>
+          </div>
+
+          <div class="chart-body">
+            <div class="grid-line line-1"></div>
+            <div class="grid-line line-2"></div>
+            <div class="grid-line line-3"></div>
+            <div class="grid-line line-4"></div>
+            <div class="grid-line line-5"></div>
+            <div class="grid-line line-6"></div>
+
+            <div class="bars">
+              <div class="bar-group">
+                <div class="bar inflow" style="height: 55%"></div>
+                <div class="bar outflow" style="height: 35%"></div>
+                <span>Jan</span>
+              </div>
+
+              <div class="bar-group">
+                <div class="bar inflow" style="height: 70%"></div>
+                <div class="bar outflow" style="height: 45%"></div>
+                <span>Feb</span>
+              </div>
+
+              <div class="bar-group">
+                <div class="bar inflow" style="height: 48%"></div>
+                <div class="bar outflow" style="height: 40%"></div>
+                <span>Mar</span>
+              </div>
+
+              <div class="bar-group">
+                <div class="bar inflow" style="height: 82%"></div>
+                <div class="bar outflow" style="height: 53%"></div>
+                <span>Apr</span>
+              </div>
+
+              <div class="bar-group">
+                <div class="bar inflow" style="height: 66%"></div>
+                <div class="bar outflow" style="height: 44%"></div>
+                <span>May</span>
+              </div>
+
+              <div class="bar-group">
+                <div class="bar inflow" style="height: 90%"></div>
+                <div class="bar outflow" style="height: 48%"></div>
+                <span>Jun</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-legend">
+          <span>
+            <i class="legend-dot inflow"></i>
+            Inflows
+          </span>
+
+          <span>
+            <i class="legend-dot outflow"></i>
+            Outflows
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bank Balances -->
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Bank Balances</h2>
+
+          <p>Current position by bank</p>
+        </div>
+
+        <button class="icon-action">
+          <i class="bi bi-three-dots"></i>
+        </button>
+      </div>
+
+      <div class="bank-list">
+        @for (bank of banks; track bank.name) {
+          <div class="bank-row">
+            <div class="bank-logo">
+              {{ bank.name.charAt(0) }}
+            </div>
+
+            <div class="bank-info">
+              <strong>
+                {{ bank.name }}
+              </strong>
+
+              <span>
+                {{ bank.account }}
+              </span>
+
+              <div class="balance-progress">
+                <div class="balance-progress-bar" [style.width.%]="bank.percentage"></div>
+              </div>
+            </div>
+
+            <div class="bank-balance">
+              {{ bank.balance }}
+            </div>
+          </div>
+        }
+      </div>
+
+      <button class="view-link">
+        View all banks
+        <i class="bi bi-arrow-right"></i>
+      </button>
+    </section>
+  </div>
+
+  <!-- ================================================
+       LOWER GRID
+       ================================================= -->
+
+  <div class="lower-grid">
+    <!-- Recent Activity -->
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Recent Activity</h2>
+
+          <p>Latest financial transactions</p>
+        </div>
+
+        <button class="view-link">View all</button>
+      </div>
+
+      <div class="activity-list">
+        @for (activity of activities; track activity.title + activity.time) {
+          <div class="activity-row">
+            <div
+              class="activity-icon"
+              [class.deposit]="activity.type === 'deposit'"
+              [class.withdrawal]="activity.type === 'withdrawal'"
+              [class.transfer]="activity.type === 'transfer'"
+            >
+              @if (activity.type === 'deposit') {
+                <i class="bi bi-arrow-down-left"></i>
+              }
+
+              @if (activity.type === 'withdrawal') {
+                <i class="bi bi-arrow-up-right"></i>
+              }
+
+              @if (activity.type === 'transfer') {
+                <i class="bi bi-arrow-left-right"></i>
+              }
+            </div>
+
+            <div class="activity-info">
+              <strong>
+                {{ activity.title }}
+              </strong>
+
+              <span>
+                {{ activity.description }}
+              </span>
+            </div>
+
+            <div class="activity-amount">
+              <strong
+                [class.positive]="activity.amount.startsWith('+')"
+                [class.negative]="activity.amount.startsWith('-')"
+              >
+                {{ activity.amount }}
+              </strong>
+
+              <span>
+                {{ activity.time }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Cash Floats -->
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Cash Floats</h2>
+
+          <p>Current branch float positions</p>
+        </div>
+
+        <button class="icon-action">
+          <i class="bi bi-three-dots"></i>
+        </button>
+      </div>
+
+      <div class="float-list">
+        @for (float of cashFloats; track float.location) {
+          <div class="float-item">
+            <div class="float-header">
+              <div>
+                <strong>
+                  {{ float.location }}
+                </strong>
+
+                <span>
+                  {{ float.status }}
+                </span>
+              </div>
+
+              <strong>
+                {{ float.balance }}
+              </strong>
+            </div>
+
+            <div class="float-progress">
+              <div
+                class="float-progress-bar"
+                [class.low]="float.percentage < 50"
+                [style.width.%]="float.percentage"
+              ></div>
+            </div>
+
+            <div class="float-footer">
+              <span> Utilisation </span>
+
+              <span> {{ float.percentage }}% </span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <button class="view-link">
+        Manage cash floats
+        <i class="bi bi-arrow-right"></i>
+      </button>
+    </section>
+  </div>
+
+  <!-- ================================================
+       QUICK ACTIONS
+       ================================================= -->
+
+  <section class="quick-actions">
+    <div class="quick-header">
+      <div>
+        <h2>Quick Actions</h2>
+
+        <p>Frequently used operations</p>
+      </div>
+    </div>
+
+    <div class="quick-grid">
+      <button class="quick-action">
+        <div class="quick-icon blue">
+          <i class="bi bi-arrow-down-left"></i>
+        </div>
+
+        <div>
+          <strong> Record Deposit </strong>
+
+          <span> Add incoming funds </span>
+        </div>
+
+        <i class="bi bi-arrow-right"></i>
+      </button>
+
+      <button class="quick-action">
+        <div class="quick-icon orange">
+          <i class="bi bi-arrow-up-right"></i>
+        </div>
+
+        <div>
+          <strong> Record Withdrawal </strong>
+
+          <span> Record outgoing funds </span>
+        </div>
+
+        <i class="bi bi-arrow-right"></i>
+      </button>
+
+      <button class="quick-action">
+        <div class="quick-icon purple">
+          <i class="bi bi-arrow-left-right"></i>
+        </div>
+
+        <div>
+          <strong> Transfer Funds </strong>
+
+          <span> Move money between banks </span>
+        </div>
+
+        <i class="bi bi-arrow-right"></i>
+      </button>
+
+      <button class="quick-action">
+        <div class="quick-icon green">
+          <i class="bi bi-file-earmark-bar-graph"></i>
+        </div>
+
+        <div>
+          <strong> Generate Report </strong>
+
+          <span> View financial reports </span>
+        </div>
+
+        <i class="bi bi-arrow-right"></i>
+      </button>
+    </div>
+  </section>
+</div>

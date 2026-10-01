@@ -1,0 +1,345 @@
+<div class="page-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="title-section">
+      <div class="title-icon">
+        <i class="bi bi-bank"></i>
+      </div>
+
+      <div>
+        <h1>Bank Transactions</h1>
+        <p>Track all transactions across bank accounts.</p>
+      </div>
+    </div>
+
+    <button type="button" class="primary-btn" (click)="addTransaction()">
+      <i class="bi bi-plus-lg"></i>
+      New Transaction
+    </button>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-list-ul"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Transactions </span>
+
+        <strong>
+          {{ totalTransactions() }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-arrow-down-left"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Total In </span>
+
+        <strong>
+          {{ totalIn() | number: '1.2-2' }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon red">
+        <i class="bi bi-arrow-up-right"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Total Out </span>
+
+        <strong>
+          {{ totalOut() | number: '1.2-2' }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon purple">
+        <i class="bi bi-arrow-left-right"></i>
+      </div>
+
+      <div>
+        <span class="summary-label"> Net Movement </span>
+
+        <strong>
+          {{ netMovement() | number: '1.2-2' }}
+        </strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <!-- TOOLBAR -->
+    <div class="table-toolbar">
+      <div class="toolbar-title">
+        <h2>Bank Transaction Ledger</h2>
+
+        <span>
+          {{ filteredTransactions().length }}
+          records
+        </span>
+      </div>
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input
+          type="text"
+          placeholder="Search account, branch, reference..."
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+        />
+
+        @if (searchTerm()) {
+          <button type="button" class="clear-search" (click)="searchTerm.set('')">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Bank Account</th>
+
+            <th>Branch</th>
+
+            <th>Transaction</th>
+
+            <th>Direction</th>
+
+            <th>Amount</th>
+
+            <th>Date</th>
+
+            <th>Reference</th>
+
+            <th>Description</th>
+
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (transaction of filteredTransactions(); track transaction.id) {
+            <tr>
+              <!-- BANK ACCOUNT -->
+              <td>
+                <div class="account-cell">
+                  <div class="account-icon">
+                    <i class="bi bi-bank"></i>
+                  </div>
+
+                  <div>
+                    <span class="primary-text">
+                      {{ transaction.bankAccount.accountName }}
+                    </span>
+
+                    <span class="secondary-text">
+                      {{ maskAccountNumber(transaction.bankAccount.accountNumber) }}
+
+                      ·
+
+                      {{ transaction.bankAccount.currency }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- BRANCH -->
+              <td>
+                @if (transaction.branch) {
+                  <div class="branch-cell">
+                    <span class="primary-text">
+                      {{ transaction.branch.name }}
+                    </span>
+
+                    <span class="secondary-text">
+                      {{ transaction.branch.code }}
+                    </span>
+                  </div>
+                } @else {
+                  <span class="muted"> All Branches </span>
+                }
+              </td>
+
+              <!-- TRANSACTION TYPE -->
+              <td>
+                <span
+                  class="transaction-badge"
+                  [class]="getTransactionClass(transaction.transactionType)"
+                >
+                  {{ formatTransactionType(transaction.transactionType) }}
+                </span>
+              </td>
+
+              <!-- DIRECTION -->
+              <td>
+                <span class="direction-badge" [class]="getDirectionClass(transaction.direction)">
+                  @if (transaction.direction === 'IN') {
+                    <i class="bi bi-arrow-down-left"></i>
+                    In
+                  } @else {
+                    <i class="bi bi-arrow-up-right"></i>
+                    Out
+                  }
+                </span>
+              </td>
+
+              <!-- AMOUNT -->
+              <td>
+                <span
+                  class="amount"
+                  [class.amount-in]="transaction.direction === 'IN'"
+                  [class.amount-out]="transaction.direction === 'OUT'"
+                >
+                  @if (transaction.direction === 'IN') {
+                    +
+                  } @else {
+                    -
+                  }
+
+                  {{ transaction.amount | number: '1.2-2' }}
+                </span>
+              </td>
+
+              <!-- DATE -->
+              <td>
+                <div class="date-cell">
+                  <i class="bi bi-calendar3"></i>
+
+                  {{ transaction.transactionDate | date: 'dd MMM yyyy' }}
+                </div>
+              </td>
+
+              <!-- REFERENCE -->
+              <td>
+                @if (transaction.reference) {
+                  <span class="reference">
+                    {{ transaction.reference }}
+                  </span>
+                } @else {
+                  <span class="muted"> — </span>
+                }
+              </td>
+
+              <!-- DESCRIPTION -->
+              <td>
+                @if (transaction.description) {
+                  <span class="description">
+                    {{ transaction.description }}
+                  </span>
+                } @else {
+                  <span class="muted"> — </span>
+                }
+              </td>
+
+              <!-- ACTIONS -->
+              <td>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="action-btn view"
+                    title="View"
+                    (click)="viewTransaction(transaction.id)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-btn edit"
+                    title="Edit"
+                    (click)="editTransaction(transaction.id)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-btn delete"
+                    title="Delete"
+                    (click)="deleteTransaction(transaction.id)"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+
+          <!-- EMPTY -->
+          @if (filteredTransactions().length === 0) {
+            <tr>
+              <td colspan="9">
+                <div class="empty-state">
+                  <div class="empty-icon">
+                    <i class="bi bi-bank"></i>
+                  </div>
+
+                  <h3>No bank transactions found</h3>
+
+                  <p>No transactions match your current search.</p>
+
+                  @if (searchTerm()) {
+                    <button type="button" class="secondary-btn" (click)="searchTerm.set('')">
+                      Clear Search
+                    </button>
+                  } @else {
+                    <button type="button" class="primary-btn" (click)="addTransaction()">
+                      <i class="bi bi-plus-lg"></i>
+
+                      New Transaction
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER -->
+    @if (filteredTransactions().length > 0) {
+      <div class="table-footer">
+        <span>
+          Showing
+
+          <strong>
+            {{ filteredTransactions().length }}
+          </strong>
+
+          of
+
+          <strong>
+            {{ totalTransactions() }}
+          </strong>
+
+          transactions
+        </span>
+
+        <span class="net-movement">
+          Net Movement:
+
+          <strong>
+            {{ netMovement() | number: '1.2-2' }}
+          </strong>
+        </span>
+      </div>
+    }
+  </div>
+</div>

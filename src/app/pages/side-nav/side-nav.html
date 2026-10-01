@@ -1,0 +1,366 @@
+<aside class="side-nav" [class.collapsed]="collapsed" [class.mobile-open]="mobileOpen">
+  <!-- Brand -->
+  <div class="brand">
+    <a routerLink="/dashboard" class="brand-link" (click)="closeMobile()">
+      <div class="brand-mark">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      @if (!collapsed) {
+        <div class="brand-name">Sipafin</div>
+      }
+    </a>
+
+    <!-- Mobile close -->
+    <button class="mobile-close" type="button" (click)="closeMobile()">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="navigation">
+    <!-- Main -->
+    <div class="nav-section">
+      @if (!collapsed) {
+        <div class="section-title">OVERVIEW</div>
+      }
+
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="nav-item"
+        (click)="closeMobile()"
+      >
+        <span class="nav-icon">
+          <i class="bi bi-grid-1x2"></i>
+        </span>
+
+        @if (!collapsed) {
+          <span class="nav-label"> Dashboard </span>
+        }
+      </a>
+    </div>
+
+    <!-- Cash Management -->
+    <!-- <div class="nav-section">
+      @if (!collapsed) {
+        <div class="section-title">CASH MANAGEMENT</div>
+      }
+
+      <button
+        type="button"
+        class="nav-item group-toggle"
+        [class.group-active]="openGroups.cashManagement"
+        (click)="toggleGroup('cashManagement')"
+      >
+        <span class="nav-icon">
+          <i class="bi bi-cash-stack"></i>
+        </span>
+
+        @if (!collapsed) {
+          <span class="nav-label"> Cash Management </span>
+
+          <i
+            class="bi"
+            [class.bi-chevron-down]="openGroups.cashManagement"
+            [class.bi-chevron-right]="!openGroups.cashManagement"
+            class="group-chevron"
+          ></i>
+        }
+      </button>
+
+      @if (!collapsed && openGroups.cashManagement) {
+        <div class="sub-navigation">
+          <a
+            routerLink="/expenses"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            <span>Expenses</span>
+          </a>
+
+          <a
+            routerLink="/commissions"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            <span>Commissions</span>
+          </a>
+
+          <a
+            routerLink="/bank-transactions"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            <span>Bank Transactions</span>
+          </a>
+        </div>
+      }
+    </div> -->
+
+    <!-- Banking -->
+    <div class="nav-section">
+      @if (!collapsed) {
+        <div class="section-title">BANKING</div>
+      }
+
+      <button
+        type="button"
+        class="nav-item group-toggle"
+        [class.group-active]="openGroups.banking"
+        (click)="toggleGroup('banking')"
+      >
+        <span class="nav-icon">
+          <i class="bi bi-bank"></i>
+        </span>
+
+        @if (!collapsed) {
+          <span class="nav-label"> Banking </span>
+
+          <i
+            class="bi group-chevron"
+            [class.bi-chevron-down]="openGroups.banking"
+            [class.bi-chevron-right]="!openGroups.banking"
+          ></i>
+        }
+      </button>
+
+      @if (!collapsed && openGroups.banking) {
+        <div class="sub-navigation">
+          <a
+            routerLink="/petty-cash-accounts"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            <span>Petty Cash Accounts</span>
+          </a>
+
+          <a
+            routerLink="/investors"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            Liabilities
+          </a>
+
+          <!-- <a
+            routerLink="/loans"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            Loans
+          </a>
+          <a
+            routerLink="/loan-transactions"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            <span>Loan Transactions</span>
+          </a> -->
+
+          <a
+            routerLink="/client-loans"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            <span>Investments</span>
+          </a>
+
+          <!-- <a
+            routerLink="/client-loan-transactions"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            <span>Client Loan Transactions</span>
+          </a> -->
+          <a
+            routerLink="/reconciliations"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            Reconciliations
+          </a>
+        </div>
+      }
+    </div>
+
+    <!-- Administration -->
+    <div class="nav-section">
+      @if (!collapsed) {
+        <div class="section-title">ADMINISTRATION</div>
+      }
+
+      <button
+        type="button"
+        class="nav-item group-toggle"
+        [class.group-active]="openGroups.administration"
+        (click)="toggleGroup('administration')"
+      >
+        <span class="nav-icon">
+          <i class="bi bi-gear"></i>
+        </span>
+
+        @if (!collapsed) {
+          <span class="nav-label"> Administration </span>
+
+          <i
+            class="bi group-chevron"
+            [class.bi-chevron-down]="openGroups.administration"
+            [class.bi-chevron-right]="!openGroups.administration"
+          ></i>
+        }
+      </button>
+
+      @if (!collapsed && openGroups.administration) {
+        <div class="sub-navigation">
+          <a
+            routerLink="/users"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            Users
+          </a>
+
+          <a
+            routerLink="/branches"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            Branches
+          </a>
+          <a
+            routerLink="/banks"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            Banks
+          </a>
+
+          <a
+            routerLink="/bank-accounts"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            Bank Accounts
+          </a>
+          <a
+            routerLink="/cash-floats"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            <span>Petty Cash Floats</span>
+          </a>
+        </div>
+      }
+    </div>
+
+
+     <!-- Analytics -->
+    <div class="nav-section">
+      @if (!collapsed) {
+        <div class="section-title">ANALYTICS</div>
+      }
+
+      <button
+        type="button"
+        class="nav-item group-toggle"
+        [class.group-active]="openGroups.analytics"
+        (click)="toggleGroup('analytics')"
+      >
+        <span class="nav-icon">
+          <i class="bi bi-bar-chart-line"></i>
+        </span>
+
+        @if (!collapsed) {
+          <span class="nav-label"> Analytics </span>
+
+          <i
+            class="bi group-chevron"
+            [class.bi-chevron-down]="openGroups.analytics"
+            [class.bi-chevron-right]="!openGroups.analytics"
+          ></i>
+        }
+      </button>
+
+      @if (!collapsed && openGroups.analytics) {
+        <div class="sub-navigation">
+          <a
+            routerLink="/balances"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            Balance Overview
+          </a>
+
+          <a
+            routerLink="/cash-flows"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            Cash Flow Analysis
+          </a>
+
+          <a
+            routerLink="/bank-performance"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            Bank Performance
+          </a>
+        </div>
+      }
+    </div>
+  </nav>
+
+  <!-- Bottom -->
+  <div class="sidebar-bottom">
+    <button type="button" class="nav-item bottom-item">
+      <span class="nav-icon">
+        <i class="bi bi-question-circle"></i>
+      </span>
+
+      @if (!collapsed) {
+        <span class="nav-label"> Help & Support </span>
+      }
+    </button>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="profile-mini">
+      <div class="profile-avatar">BS</div>
+
+      @if (!collapsed) {
+        <div class="profile-info">
+          <strong> {{ loggedUserName }} </strong>
+
+          <span> {{ role }} </span>
+        </div>
+
+        <button type="button" class="profile-menu">
+          <i class="bi bi-three-dots"></i>
+        </button>
+      }
+    </div>
+  </div>
+</aside>

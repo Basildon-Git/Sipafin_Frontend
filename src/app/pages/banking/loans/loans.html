@@ -1,0 +1,297 @@
+<div class="loans-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <div class="title-section">
+        <div class="title-icon">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+
+        <div>
+          <h1>Loans</h1>
+          <p>Manage investor loans and outstanding balances.</p>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="createLoan()">
+      <i class="bi bi-plus-lg"></i>
+      New Loan
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Total Loans</span>
+        <strong>{{ totalLoans() }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-check-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Active Loans</span>
+        <strong>{{ activeLoans() }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon red">
+        <i class="bi bi-exclamation-circle"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Overdue Loans</span>
+        <strong>{{ overdueLoans() }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon orange">
+        <i class="bi bi-wallet2"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Outstanding</span>
+        <strong> ${{ totalOutstanding() | number: '1.2-2' }} </strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <!-- Toolbar -->
+    <div class="table-toolbar">
+      <div>
+        <h2>Loan Accounts</h2>
+        <p>View and manage all investor loans.</p>
+      </div>
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input
+          type="text"
+          placeholder="Search loans..."
+          [value]="searchTerm()"
+          (input)="onSearch($event)"
+        />
+
+        @if (searchTerm()) {
+          <button type="button" class="clear-search" (click)="searchTerm.set('')">
+            <i class="bi bi-x"></i>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Investor</th>
+            <th>Branch</th>
+            <th>Principal Amt</th>
+            <th>Outstanding Bal</th>
+            <th>Interest Rate</th>
+            <th>Interest Amt</th>
+            <th>Payable Amt</th>
+            <th>Status</th>
+            <th>Date Received</th>
+            <th>Due Date</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (loan of filteredLoans(); track loan.id) {
+            <tr>
+              <!-- Investor -->
+              <td>
+                <div class="investor-cell">
+                  <div class="investor-avatar">
+                    {{ getInitials(loan.investorName) }}
+                  </div>
+
+                  <div class="investor-info">
+                    <span class="investor-name">
+                      {{ loan.investorName }}
+                    </span>
+
+                    <span class="investor-id"> Investor #{{ loan.investorId }} </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Branch -->
+              <td>
+                <div class="branch-cell">
+                  <div class="branch-icon">
+                    <i class="bi bi-building"></i>
+                  </div>
+
+                  <div>
+                    <span class="branch-name">
+                      {{ loan.branchName }}
+                    </span>
+
+                    <span class="branch-code"> Branch #{{ loan.branchId }} </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Principal -->
+              <td>
+                <span class="amount"> ${{ loan.principalAmount | number: '1.2-2' }} </span>
+              </td>
+
+              <!-- Outstanding -->
+              <td>
+                <span
+                  class="amount"
+                  [class.outstanding]="loan.outstandingBalance > 0"
+                  [class.paid]="loan.outstandingBalance === 0"
+                >
+                  ${{ loan.outstandingBalance | number: '1.2-2' }}
+                </span>
+              </td>
+
+              <!-- Interest Rate -->
+                <td>
+                <span class="amount"> {{ loan.interestRate | number: '1.2-2' }}% </span>
+              </td>
+
+              <!-- Interest Amount -->
+                <td>
+                <span class="amount"> ${{ loan.interestAmount | number: '1.2-2' }} </span>
+              </td>
+
+              <!-- Amount Payable -->
+                <td>
+                <span class="amount"> ${{ loan.totalPayable | number: '1.2-2' }} </span>
+              </td>
+
+              <!-- Status -->
+              <td>
+                <span class="status-badge" [class]="getStatusClass(loan.status)">
+                  @if (loan.status === 'ACTIVE') {
+                    <i class="bi bi-check-circle-fill"></i>
+                  } @else if (loan.status === 'PAID') {
+                    <i class="bi bi-check2-all"></i>
+                  } @else if (loan.status === 'OVERDUE') {
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                  } @else {
+                    <i class="bi bi-x-circle-fill"></i>
+                  }
+
+                  {{ loan.status }}
+                </span>
+              </td>
+
+              <!-- Date Received -->
+              <td>
+                <span class="date-value">
+                  <i class="bi bi-calendar3"></i>
+                  {{ loan.dateReceived }}
+                </span>
+              </td>
+
+              <!-- Due Date -->
+              <td>
+                @if (loan.dueDate) {
+                  <span class="date-value">
+                    <i class="bi bi-calendar-event"></i>
+                    {{ loan.dueDate }}
+                  </span>
+                } @else {
+                  <span class="not-provided"> No due date </span>
+                }
+              </td>
+
+              <!-- Actions -->
+              <td>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="action-btn view"
+                    title="View"
+                    (click)="viewLoan(loan)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-btn edit"
+                    title="Edit"
+                    (click)="editLoan(loan)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-btn delete"
+                    title="Delete"
+                    (click)="deleteLoan(loan)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <!-- Empty State -->
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">
+                  <div class="empty-icon">
+                    <i class="bi bi-cash-stack"></i>
+                  </div>
+
+                  <h3>No loans found</h3>
+
+                  <p>
+                    @if (searchTerm()) {
+                      No loans match your search criteria.
+                    } @else {
+                      There are no loans available yet.
+                    }
+                  </p>
+
+                  @if (!searchTerm()) {
+                    <button type="button" class="btn-primary" (click)="createLoan()">
+                      <i class="bi bi-plus-lg"></i>
+                      Create First Loan
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="table-footer">
+      <span>
+        Showing
+        <strong>{{ filteredLoans().length }}</strong>
+        of
+        <strong>{{ loans().length }}</strong>
+        loans
+      </span>
+    </div>
+  </div>
+</div>
