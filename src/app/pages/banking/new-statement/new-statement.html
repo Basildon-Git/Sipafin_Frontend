@@ -1,0 +1,325 @@
+<div class="statement-page">
+  <!-- PAGE HEADER -->
+
+  <div class="page-header">
+    <div>
+      <h4 class="page-title">New Bank Statement</h4>
+
+      <p class="page-subtitle">Capture a bank statement balance for reconciliation.</p>
+    </div>
+
+    <button type="button" class="btn-back" (click)="cancel()">
+      <i class="bi bi-arrow-left"></i>
+      Back
+    </button>
+  </div>
+
+  <!-- FORM -->
+
+  <form class="statement-form" #statementNgForm="ngForm" (ngSubmit)="saveStatement()" novalidate>
+    <!-- SECTION HEADING -->
+
+    <div class="section-heading">
+      <i class="bi bi-bank"></i>
+
+      <div>
+        <h5>Bank Account Details</h5>
+        <small>Select the bank account to reconcile.</small>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <!-- BANK SEARCH -->
+
+      <div class="form-group full-width">
+        <label for="bankSearch">
+          Bank Account
+          <span class="required">*</span>
+        </label>
+
+        <div class="bank-search-container">
+          <div class="bank-search-input">
+            <i class="bi bi-search search-icon"></i>
+
+            <input
+              id="bankSearch"
+              type="text"
+              class="form-control"
+              name="bankSearch"
+              [(ngModel)]="bankSearch"
+              (ngModelChange)="onBankSearch()"
+              (focus)="openBankDropdown()"
+              placeholder="Search bank name, account name or account number..."
+              autocomplete="off"
+              [disabled]="loadingBanks || saving"
+            />
+
+            @if (loadingBanks) {
+              <span class="spinner-border spinner-border-sm search-spinner"></span>
+            }
+
+            @if (selectedBankAccount && !saving) {
+              <button
+                type="button"
+                class="clear-bank"
+                (click)="clearBankSelection()"
+                title="Clear selected bank account"
+              >
+                <i class="bi bi-x-lg"></i>
+              </button>
+            }
+          </div>
+
+          <!-- SEARCH RESULTS -->
+
+          @if (showBankDropdown && !selectedBankAccount) {
+            <div class="bank-dropdown">
+              @if (filteredBankAccounts.length > 0) {
+                @for (account of filteredBankAccounts; track account.id) {
+                  <button type="button" class="bank-option" (click)="selectBankAccount(account)">
+                    <span class="bank-option-icon">
+                      <i class="bi bi-bank"></i>
+                    </span>
+
+                    <span class="bank-option-details">
+                      <strong>
+                        {{ account.bankName }}
+                      </strong>
+
+                      <span>
+                        {{ account.accountName }}
+                      </span>
+
+                      <small>
+                        {{ account.accountNumber }}
+                      </small>
+                    </span>
+
+                    <span class="bank-option-currency">
+                      {{ account.currency }}
+                    </span>
+                  </button>
+                }
+              } @else {
+                <div class="no-bank-results">No matching bank accounts found.</div>
+              }
+            </div>
+          }
+        </div>
+
+        @if (submitted && !form.bankAccountId) {
+          <small class="validation-message"> Please select a bank account. </small>
+        }
+      </div>
+
+      <!-- SELECTED BANK -->
+
+      @if (selectedBankAccount) {
+        <div class="selected-account full-width">
+          <div class="selected-account-header">
+            <i class="bi bi-check-circle-fill"></i>
+
+            Selected Bank Account
+          </div>
+
+          <div class="selected-account-grid">
+            <div>
+              <small>Bank</small>
+              <strong>
+                {{ selectedBankAccount.bankName }}
+              </strong>
+            </div>
+
+            <div>
+              <small>Account Name</small>
+              <strong>
+                {{ selectedBankAccount.accountName }}
+              </strong>
+            </div>
+
+            <div>
+              <small>Account Number</small>
+              <strong>
+                {{ selectedBankAccount.accountNumber }}
+              </strong>
+            </div>
+
+            <div>
+              <small>Current Balance</small>
+              <strong>
+                {{selectedBankAccount.currentBalance | number:'1.2-2'}} {{ selectedBankAccount.currency }}
+              </strong>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- CURRENCY -->
+
+      <div class="form-group">
+        <label>
+          Currency
+          <span class="required">*</span>
+        </label>
+
+        <input
+          type="text"
+          class="form-control readonly-input"
+          name="currency"
+          [(ngModel)]="form.currency"
+          placeholder="Auto-filled from bank account"
+          readonly
+        />
+      </div>
+    </div>
+
+    <!-- STATEMENT DETAILS -->
+
+    <div class="section-heading section-spacing">
+      <i class="bi bi-file-earmark-text"></i>
+
+      <div>
+        <h5>Statement Details</h5>
+        <small>Enter the balance shown on the bank statement.</small>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <!-- RECONCILIATION DATE -->
+
+      <div class="form-group">
+        <label for="reconciliationDate">
+          Reconciliation Date
+          <span class="required">*</span>
+        </label>
+
+        <input
+          id="reconciliationDate"
+          type="date"
+          class="form-control"
+          name="reconciliationDate"
+          [(ngModel)]="form.reconciliationDate"
+          required
+          [disabled]="saving"
+        />
+
+        @if (submitted && !form.reconciliationDate) {
+          <small class="validation-message"> Reconciliation date is required. </small>
+        }
+      </div>
+
+      <!-- STATEMENT BALANCE -->
+
+      <div class="form-group">
+        <label for="statementBalance">
+          Statement Balance
+          <span class="required">*</span>
+        </label>
+
+        <div class="amount-input">
+          <span class="currency-prefix">
+            {{ form.currency || '---' }}
+          </span>
+
+          <input
+            id="statementBalance"
+            type="number"
+            class="form-control"
+            name="statementBalance"
+            [(ngModel)]="form.statementBalance"
+            placeholder="0.00"
+            step="0.01"
+            required
+            [disabled]="saving"
+          />
+        </div>
+
+        @if (submitted && (form.statementBalance === null || form.statementBalance === undefined)) {
+          <small class="validation-message"> Statement balance is required. </small>
+        }
+      </div>
+
+      <!-- REFERENCE -->
+
+      <div class="form-group full-width">
+        <label for="reference">
+          Reference
+          <span class="required">*</span>
+        </label>
+
+        <input
+          id="reference"
+          type="text"
+          class="form-control"
+          name="reference"
+          [(ngModel)]="form.reference"
+          placeholder="Enter statement reference..."
+          maxlength="150"
+          required
+          [disabled]="saving"
+        />
+
+        @if (submitted && !form.reference.trim()) {
+          <small class="validation-message"> Reference is required. </small>
+        }
+      </div>
+
+      <!-- REASON -->
+
+      <div class="form-group full-width">
+        <label for="reason">
+          Reason / Remarks
+          <span class="required">*</span>
+        </label>
+
+        <textarea
+          id="reason"
+          class="form-control"
+          name="reason"
+          [(ngModel)]="form.reason"
+          placeholder="Enter reconciliation reason or remarks..."
+          rows="3"
+          required
+          [disabled]="saving"
+        ></textarea>
+
+        @if (submitted && !form.reason.trim()) {
+          <small class="validation-message"> Reason or remarks are required. </small>
+        }
+      </div>
+    </div>
+
+    <!-- ERROR -->
+
+    @if (errorMessage) {
+      <div class="form-error">
+        <i class="bi bi-exclamation-circle"></i>
+
+        {{ errorMessage }}
+      </div>
+    }
+
+    <!-- ACTIONS -->
+
+    <div class="form-actions">
+      <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="saving">
+        Cancel
+      </button>
+
+      <button type="button" class="btn-reset" (click)="resetForm()" [disabled]="saving">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        Reset
+      </button>
+
+      <button type="submit" class="btn-save" [disabled]="saving || loadingBanks">
+        @if (saving) {
+          <span class="spinner-border spinner-border-sm"></span>
+          Saving...
+        } @else {
+          <i class="bi bi-check2-circle"></i>
+          Save Statement
+        }
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,505 +1,483 @@
-<div class="page-container">
+<div class="reconciliation-page">
   <!-- PAGE HEADER -->
+
   <div class="page-header">
-    <div class="title-row">
-      <div class="title-icon">
-        <i class="bi bi-arrow-left-right"></i>
-      </div>
+    <div>
+      <h4 class="page-title">Bank Reconciliations</h4>
 
-      <div>
-        <h1>Bank Reconciliations</h1>
-        <p>Reconcile bank statements against Sipafin account balances.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- RECONCILIATION FORM -->
-  <div class="form-card">
-    <div class="form-section">
-      <div class="section-header">
-        <h2>New Reconciliation</h2>
-        <p>Enter the statement details for the selected bank account.</p>
-      </div>
-
-      <!-- BANK ACCOUNT -->
-      <div class="form-group">
-        <label for="bankAccount">
-          Bank Account
-          <span class="required">*</span>
-        </label>
-
-        <div class="bank-search-wrapper">
-          <div class="bank-search-box" [class.selected]="bankAccountSelected">
-            <i class="bi bi-bank"></i>
-
-            <input
-              id="bankAccount"
-              type="text"
-              placeholder="Search bank account by bank, name or number..."
-              [value]="bankAccountSearch"
-              (input)="onBankAccountSearch($event)"
-              (focus)="onBankAccountFocus()"
-              autocomplete="off"
-            />
-
-            @if (bankAccountSelected) {
-              <button
-                type="button"
-                class="clear-bank"
-                title="Clear bank account"
-                (click)="clearBankAccount()"
-              >
-                <i class="bi bi-x"></i>
-              </button>
-            }
-          </div>
-
-          @if (!bankAccountSelected && bankAccountSearchStarted) {
-            <div class="bank-results">
-              @if (filteredBankAccounts().length > 0) {
-                @for (account of filteredBankAccounts(); track account.id) {
-                  <button type="button" class="bank-result" (click)="selectBankAccount(account)">
-                    <div class="result-bank-icon">
-                      <i class="bi bi-bank"></i>
-                    </div>
-
-                    <div class="result-bank-details">
-                      <span class="result-bank-name">
-                        {{ account.bankName }}
-                        -
-                        {{ account.accountName }}
-                      </span>
-
-                      <span class="result-bank-meta">
-                        {{ maskAccountNumber(account.accountNumber) }}
-                        ·
-                        {{ account.currency }}
-                        ·
-                        {{ account.branchName }}
-                      </span>
-                    </div>
-
-                    <i class="bi bi-chevron-right result-arrow"></i>
-                  </button>
-                }
-              } @else {
-                <div class="no-banks">
-                  <i class="bi bi-search"></i>
-                  <span>No active bank accounts found</span>
-                </div>
-              }
-            </div>
-          }
-        </div>
-
-        <span class="field-hint"> Search and select the bank account you want to reconcile. </span>
-      </div>
-
-      <!-- SELECTED ACCOUNT INFORMATION -->
-      @if (bankAccountSelected && bankAccountId) {
-        <div class="selected-account-card">
-          <div class="selected-account-icon">
-            <i class="bi bi-bank"></i>
-          </div>
-
-          <div class="selected-account-details">
-            <span class="selected-account-label"> Selected Bank Account </span>
-
-            <strong>
-              {{ bankAccountSearch }}
-            </strong>
-
-            <span> Currency: {{ currency }} </span>
-          </div>
-
-          <div class="selected-account-status">
-            <span class="status-badge active">
-              <span class="status-dot"></span>
-              Selected
-            </span>
-          </div>
-        </div>
-      }
-
-      <!-- TWO COLUMNS -->
-      <div class="form-grid">
-        <!-- BRANCH -->
-        <div class="form-group">
-          <label for="branch">
-            Branch
-            <span class="required">*</span>
-          </label>
-
-          <div class="readonly-field">
-            <i class="bi bi-building"></i>
-
-            <input id="branch" type="text" class="form-control" [value]="branchSearch" readonly />
-          </div>
-
-          <span class="field-hint"> Your assigned branch is selected automatically. </span>
-        </div>
-
-        <!-- CURRENCY -->
-        <div class="form-group">
-          <label for="currency">
-            Currency
-            <span class="required">*</span>
-          </label>
-
-          <input id="currency" type="text" class="form-control" [value]="currency" readonly />
-
-          <span class="field-hint"> Currency of the selected bank account. </span>
-        </div>
-
-        <!-- RECONCILIATION DATE -->
-        <div class="form-group">
-          <label for="reconciliationDate">
-            Reconciliation Date
-            <span class="required">*</span>
-          </label>
-
-          <input
-            id="reconciliationDate"
-            type="date"
-            class="form-control"
-            [(ngModel)]="reconciliationDate"
-          />
-
-          <span class="field-hint"> Date on the bank statement being reconciled. </span>
-        </div>
-
-        <!-- STATEMENT BALANCE -->
-        <div class="form-group">
-          <label for="statementBalance">
-            Statement Balance
-            <span class="required">*</span>
-          </label>
-
-          <div class="amount-input">
-            <span class="currency-prefix">
-              {{ currency }}
-            </span>
-
-            <input
-              id="statementBalance"
-              type="number"
-              step="0.01"
-              min="0"
-              class="form-control"
-              [(ngModel)]="statementBalance"
-            />
-          </div>
-
-          <span class="field-hint"> Closing balance shown on the bank statement. </span>
-        </div>
-      </div>
-
-      <!-- ADJUSTMENT -->
-      <div class="adjustment-section">
-        <div class="adjustment-info">
-          <div class="adjustment-icon">
-            <i class="bi bi-sliders"></i>
-          </div>
-
-          <div>
-            <h3>Apply Adjustment</h3>
-
-            <p>Apply the reconciliation difference as an adjustment to the system balance.</p>
-          </div>
-        </div>
-
-        <label class="switch">
-          <input type="checkbox" [(ngModel)]="applyAdjustment" />
-
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <!-- REFERENCE -->
-      <div class="form-group">
-        <label for="reference"> Reference </label>
-
-        <input
-          id="reference"
-          type="text"
-          class="form-control"
-          placeholder="e.g. Bank Statement September 2026"
-          [(ngModel)]="reference"
-          maxlength="150"
-        />
-
-        <span class="field-hint"> Optional reference for this reconciliation. </span>
-      </div>
-
-      <!-- REASON -->
-      <div class="form-group">
-        <label for="reason"> Reason </label>
-
-        <textarea
-          id="reason"
-          class="form-control textarea"
-          rows="3"
-          placeholder="Enter the reason for the reconciliation or adjustment..."
-          [(ngModel)]="reason"
-          maxlength="500"
-        ></textarea>
-
-        <span class="field-hint">
-          Explain any difference between the system and statement balances.
-        </span>
-      </div>
+      <p class="page-subtitle">View and monitor bank reconciliation records.</p>
     </div>
 
-    <!-- FOOTER -->
-    <div class="form-footer">
-      <button type="button" class="btn-secondary" (click)="resetForm()" [disabled]="loading">
-        Clear
-      </button>
-
+    <div>
       <button
         type="button"
-        class="btn-primary"
-        (click)="createReconciliation()"
-        [disabled]="loading || !bankAccountId || !branchId || !reconciliationDate"
+        class="btn-refresh"
+        (click)="loadReconciliations()"
+        [disabled]="loading"
       >
-        @if (loading) {
-          <i class="bi bi-arrow-repeat spinning"></i>
-          <span>Reconciling...</span>
-        } @else {
-          <i class="bi bi-check2-circle"></i>
-          <span>Reconcile Account</span>
-        }
+        <i class="bi bi-arrow-clockwise"></i>
+        Refresh
+      </button>
+
+      <button type="button" class="btn-refresh mx-1" (click)="newBankStatement()">
+        <i class="bi bi-plus-lg"></i>
+        New Bank Statement
       </button>
     </div>
   </div>
 
-  <!-- RECONCILIATION HISTORY -->
-  <div class="table-card">
-    <!-- TOOLBAR -->
-    <div class="table-toolbar">
-      <div>
-        <h2>Reconciliation History</h2>
+  <!-- FILTERS -->
 
-        <p>
-          @if (bankAccountSelected) {
-            Reconciliation records for the selected bank account.
-          } @else {
-            Search and select a bank account to view its reconciliation records.
-          }
-        </p>
+  <div class="filter-section">
+    <div class="filter-grid">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search bank, account, reference..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+        />
       </div>
 
-      @if (bankAccountSelected && bankAccountId) {
-        <button
-          type="button"
-          class="refresh-button"
-          title="Refresh reconciliations"
-          (click)="loadReconciliations(bankAccountId)"
-          [disabled]="loadingReconciliations"
-        >
-          <i class="bi bi-arrow-clockwise" [class.spinning]="loadingReconciliations"></i>
+      <select class="form-select" [(ngModel)]="selectedCurrency" (ngModelChange)="applyFilters()">
+        <option value="">All Currencies</option>
 
-          Refresh
+        @for (currency of currencies; track currency) {
+          <option [value]="currency">
+            {{ currency }}
+          </option>
+        }
+      </select>
+
+      <select class="form-select" [(ngModel)]="selectedStatus" (ngModelChange)="applyFilters()">
+        <option value="">All Statuses</option>
+
+        @for (status of statuses; track status) {
+          <option [value]="status">
+            {{ formatLabel(status) }}
+          </option>
+        }
+      </select>
+
+      @if (hasActiveFilters) {
+        <button type="button" class="btn-clear" (click)="clearFilters()">
+          <i class="bi bi-x-circle"></i>
+          Clear
         </button>
       }
     </div>
+  </div>
 
-    <!-- LOADING -->
-    @if (loadingReconciliations) {
-      <div class="loading-state">
-        <div class="loading-spinner">
-          <i class="bi bi-arrow-repeat spinning"></i>
-        </div>
+  <!-- TABLE -->
 
-        <h3>Loading reconciliations...</h3>
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="table reconciliation-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Bank / Account</th>
+            <th>Branch</th>
+            <th>Currency</th>
+            <th>Reconciliation Date</th>
+            <th class="text-end">System Balance</th>
+            <th class="text-end">Statement Balance</th>
+            <th class="text-end">Difference</th>
+            <th>Difference Type</th>
+            <th class="text-end">Reconciled</th>
+            <th class="text-end">Unreconciled</th>
+            <th class="text-end">Balance After</th>
+            <th>Status</th>
+            <th>Reference</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
 
-        <p>Retrieving reconciliation records for this bank account.</p>
-      </div>
-    } @else {
-      <!-- TABLE -->
-      @if (reconciliations().length > 0) {
-        <div class="table-wrapper">
-          <table>
-            <thead>
+        <tbody>
+          @if (loading) {
+            <tr>
+              <td colspan="15" class="table-message">
+                <div class="loading-state">
+                  <span class="spinner-border spinner-border-sm"></span>
+
+                  Loading reconciliations...
+                </div>
+              </td>
+            </tr>
+          } @else if (pagedList.length === 0) {
+            <tr>
+              <td colspan="15" class="table-message">
+                <div class="empty-state">
+                  <i class="bi bi-inbox"></i>
+
+                  <span> No reconciliation records found. </span>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (item of pagedList; track item.id; let i = $index) {
               <tr>
-                <th>Date</th>
-                <th>Account</th>
-                <th>System Before</th>
-                <th>Statement</th>
-                <th>Difference</th>
-                <th>System After</th>
-                <th>Adjustment</th>
-                <th>Status</th>
-                <th>Reference</th>
-                <th>Actioned By</th>
+                <!-- ROW NUMBER -->
+
+                <td class="row-number">
+                  {{ pageSize === 'All' ? i + 1 : (page - 1) * paginationSize + i + 1 }}
+                </td>
+
+                <!-- BANK ACCOUNT -->
+
+                <td>
+                  <div class="account-info">
+                    <span class="bank-name">
+                      {{ item.bankName }}
+                    </span>
+
+                    <span class="account-name">
+                      {{ item.accountName }}
+                    </span>
+
+                    <small class="account-number">
+                      {{ item.accountNumber }}
+                    </small>
+                  </div>
+                </td>
+
+                <!-- BRANCH -->
+
+                <td>
+                  {{ item.branchName || 'Shared Account' }}
+                </td>
+
+                <!-- CURRENCY -->
+
+                <td>
+                  <span class="currency-label">
+                    {{ item.currency }}
+                  </span>
+                </td>
+
+                <!-- DATE -->
+
+                <td class="date-cell">
+                  {{ item.reconciliationDate | date: 'dd MMM yyyy' }}
+                </td>
+
+                <!-- SYSTEM BALANCE -->
+
+                <td class="text-end amount-cell">
+                  {{ item.systemBalanceBefore | number: '1.2-2' }}
+                </td>
+
+                <!-- STATEMENT BALANCE -->
+
+                <td class="text-end amount-cell">
+                  {{ item.statementBalance | number: '1.2-2' }}
+                </td>
+
+                <!-- DIFFERENCE -->
+
+                <td
+                  class="text-end amount-cell fw-semibold"
+                  [ngClass]="getDifferenceClass(item.differenceType)"
+                >
+                  {{ item.difference | number: '1.2-2' }}
+                </td>
+
+                <!-- DIFFERENCE TYPE -->
+
+                <td>
+                  <span
+                    class="difference-badge"
+                    [ngClass]="getDifferenceClass(item.differenceType)"
+                  >
+                    {{ formatLabel(item.differenceType) }}
+                  </span>
+                </td>
+
+                <!-- RECONCILED AMOUNT -->
+
+                <td class="text-end amount-cell">
+                  {{ item.reconciledAmount | number: '1.2-2' }}
+                </td>
+
+                <!-- UNRECONCILED AMOUNT -->
+
+                <td class="text-end amount-cell">
+                  {{ item.unreconciledAmount | number: '1.2-2' }}
+                </td>
+
+                <!-- SYSTEM BALANCE AFTER -->
+
+                <td class="text-end amount-cell fw-semibold">
+                  {{ item.systemBalanceAfter | number: '1.2-2' }}
+                </td>
+
+                <!-- STATUS -->
+
+                <td>
+                  <span class="status-badge" [ngClass]="getStatusClass(item.status)">
+                    {{ formatLabel(item.status) }}
+                  </span>
+                </td>
+
+                <!-- REFERENCE -->
+
+                <td>
+                  {{ item.reference || 'N/A' }}
+                </td>
+
+                <!-- ACTION -->
+
+                <td class="text-center">
+                  <button
+                    type="button"
+                    class="btn-view"
+                    title="View reconciliation details"
+                    (click)="viewDetails(item)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-view mx-1"
+                    title="Reconcile"
+                    (click)="newBankReconciliation(item.id, item.bankAccountId)"
+                  >
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+                </td>
               </tr>
-            </thead>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
 
-            <tbody>
-              @for (reconciliation of reconciliations(); track reconciliation.id) {
-                <tr>
-                  <!-- DATE -->
-                  <td>
-                    <div class="date-cell">
-                      <span class="date">
-                        {{ reconciliation.reconciliationDate }}
-                      </span>
+    <!-- PAGINATION FOOTER -->
 
-                      @if (reconciliation.createdAt) {
-                        <span class="created-date">
-                          Created:
-                          {{ reconciliation.createdAt | date: 'dd/MM/yyyy HH:mm' }}
-                        </span>
-                      }
-                    </div>
-                  </td>
+    <div class="pagination-footer">
+      <div class="page-size-control">
+        <label> Show </label>
 
-                  <!-- ACCOUNT -->
-                  <td>
-                    <div class="account-details">
-                      <span class="account-name">
-                        {{ reconciliation.accountName }}
-                      </span>
+        <select
+          class="form-select form-select-sm"
+          [(ngModel)]="pageSize"
+          (ngModelChange)="onPageSizeChange()"
+        >
+          @for (option of pageSizeOptions; track option) {
+            <option [ngValue]="option">
+              {{ option }}
+            </option>
+          }
+        </select>
 
-                      <span class="account-id">
-                        {{ reconciliation.bankName }}
-                        ·
-                        {{ reconciliation.branchName }}
-                      </span>
-                    </div>
-                  </td>
+        <span> entries </span>
+      </div>
 
-                  <!-- SYSTEM BEFORE -->
-                  <td>
-                    <div class="balance-cell">
-                      <span class="balance">
-                        {{ reconciliation.systemBalanceBefore | number: '1.2-2' }}
-                      </span>
-
-                      <span class="balance-currency">
-                        {{ reconciliation.currency }}
-                      </span>
-                    </div>
-                  </td>
-
-                  <!-- STATEMENT -->
-                  <td>
-                    <div class="balance-cell">
-                      <span class="balance">
-                        {{ reconciliation.statementBalance | number: '1.2-2' }}
-                      </span>
-
-                      <span class="balance-currency">
-                        {{ reconciliation.currency }}
-                      </span>
-                    </div>
-                  </td>
-
-                  <!-- DIFFERENCE -->
-                  <td>
-                    <span
-                      class="difference"
-                      [class]="getDifferenceClass(reconciliation.difference)"
-                    >
-                      @if (reconciliation.difference > 0) {
-                        +
-                      }
-
-                      {{ reconciliation.difference | number: '1.2-2' }}
-                    </span>
-                  </td>
-
-                  <!-- SYSTEM AFTER -->
-                  <td>
-                    <div class="balance-cell">
-                      <span class="balance">
-                        {{ reconciliation.systemBalanceAfter | number: '1.2-2' }}
-                      </span>
-
-                      <span class="balance-currency">
-                        {{ reconciliation.currency }}
-                      </span>
-                    </div>
-                  </td>
-
-                  <!-- ADJUSTMENT -->
-                  <td>
-                    @if (reconciliation.adjustmentApplied) {
-                      <span class="status-badge active">
-                        <span class="status-dot"></span>
-                        Applied
-                      </span>
-                    } @else {
-                      <span class="status-badge inactive">
-                        <span class="status-dot"></span>
-                        Not Applied
-                      </span>
-                    }
-                  </td>
-
-                  <!-- STATUS -->
-                  <td>
-                    <span
-                      class="reconciliation-status"
-                      [class]="getStatusClass(reconciliation.status)"
-                    >
-                      {{ reconciliation.status }}
-                    </span>
-                  </td>
-
-                  <!-- REFERENCE -->
-                  <td>
-                    <div class="reference-cell">
-                      <span>
-                        {{ reconciliation.reference || '-' }}
-                      </span>
-
-                      @if (reconciliation.reason) {
-                        <small>
-                          {{ reconciliation.reason }}
-                        </small>
-                      }
-                    </div>
-                  </td>
-
-                  <!-- ACTIONED BY -->
-                  <td>
-                    <span class="actioned-by">
-                      {{ reconciliation.actionedBy || '-' }}
-                    </span>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+      <div class="pagination-center">
+        <div class="record-count">
+          Showing
+          <strong>{{ recordStart }}</strong>
+          to
+          <strong>{{ recordEnd }}</strong>
+          of
+          <strong>{{ filteredList.length }}</strong>
+          records
         </div>
 
-        <!-- FOOTER -->
-        <div class="table-footer">
-          <span>
-            Showing
-            {{ reconciliations().length }}
-            reconciliation{{ reconciliations().length === 1 ? '' : 's' }}
-          </span>
-        </div>
-      } @else {
-        <!-- EMPTY -->
-        <div class="empty-state">
-          <div class="empty-icon">
-            <i class="bi bi-arrow-left-right"></i>
+        @if (filteredList.length > paginationSize && pageSize !== 'All') {
+          <ngb-pagination
+            [collectionSize]="filteredList.length"
+            [(page)]="page"
+            [pageSize]="paginationSize"
+            [maxSize]="5"
+            [rotate]="true"
+            [boundaryLinks]="true"
+            [ellipses]="true"
+            size="sm"
+            (pageChange)="onPageChange($event)"
+          ></ngb-pagination>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAILS MODAL -->
+
+  @if (showDetails && selectedReconciliation) {
+    <div class="details-overlay" (click)="closeDetails()">
+      <div class="details-modal" (click)="$event.stopPropagation()">
+        <div class="details-header">
+          <div>
+            <h5>Reconciliation Details</h5>
+
+            <small>
+              {{ selectedReconciliation.bankName }}
+              —
+              {{ selectedReconciliation.accountNumber }}
+            </small>
           </div>
 
-          @if (bankAccountSelected) {
-            <h3>No reconciliation records found</h3>
-
-            <p>This bank account has not been reconciled yet.</p>
-          } @else {
-            <h3>No bank account selected</h3>
-
-            <p>Search and select a bank account above to view its reconciliation history.</p>
-          }
+          <button type="button" class="modal-close" (click)="closeDetails()">
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
-      }
-    }
-  </div>
+
+        <div class="details-body">
+          <div class="details-grid">
+            <div class="detail-field">
+              <label>Bank</label>
+              <span>
+                {{ selectedReconciliation.bankName }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Account Name</label>
+              <span>
+                {{ selectedReconciliation.accountName }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Account Number</label>
+              <span>
+                {{ selectedReconciliation.accountNumber }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Currency</label>
+              <span>
+                {{ selectedReconciliation.currency }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Branch</label>
+              <span>
+                {{ selectedReconciliation.branchName || 'Shared Account' }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Reconciliation Date</label>
+              <span>
+                {{ selectedReconciliation.reconciliationDate | date: 'dd MMM yyyy' }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>System Balance Before</label>
+              <span>
+                {{ selectedReconciliation.systemBalanceBefore | number: '1.2-2' }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Statement Balance</label>
+              <span>
+                {{ selectedReconciliation.statementBalance | number: '1.2-2' }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Difference</label>
+
+              <span [ngClass]="getDifferenceClass(selectedReconciliation.differenceType)">
+                {{ selectedReconciliation.difference | number: '1.2-2' }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Difference Type</label>
+              <span>
+                {{ formatLabel(selectedReconciliation.differenceType) }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Reconciled Amount</label>
+              <span>
+                {{ selectedReconciliation.reconciledAmount | number: '1.2-2' }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Unreconciled Amount</label>
+              <span>
+                {{ selectedReconciliation.unreconciledAmount | number: '1.2-2' }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>System Balance After</label>
+              <span>
+                {{ selectedReconciliation.systemBalanceAfter | number: '1.2-2' }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Status</label>
+
+              <span class="status-badge" [ngClass]="getStatusClass(selectedReconciliation.status)">
+                {{ formatLabel(selectedReconciliation.status) }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Reference</label>
+              <span>
+                {{ selectedReconciliation.reference || 'N/A' }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <label>Actioned By</label>
+              <span>
+                {{ selectedReconciliation.actionedBy || 'N/A' }}
+              </span>
+            </div>
+
+            <div class="detail-field full-width">
+              <label>Reason</label>
+              <span>
+                {{ selectedReconciliation.reason || 'N/A' }}
+              </span>
+            </div>
+
+            <div class="detail-field full-width">
+              <label>Transaction Group</label>
+              <span class="group-reference">
+                {{ selectedReconciliation.transactionGroupId }}
+              </span>
+            </div>
+          </div>
+
+          <!-- RECONCILIATION ITEMS -->
+
+          <div class="items-section">
+            <h6>Reconciliation Items ({{ selectedReconciliation.items?.length || 0 }})</h6>
+
+            @if (selectedReconciliation.items && selectedReconciliation.items.length > 0) {
+              <div class="items-content">
+                @for (item of selectedReconciliation.items; track $index) {
+                  <pre>{{ item | json }}</pre>
+                }
+              </div>
+            } @else {
+              <div class="no-items">No reconciliation items recorded.</div>
+            }
+          </div>
+        </div>
+
+        <div class="details-footer">
+          <button type="button" class="btn-close-details" (click)="closeDetails()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

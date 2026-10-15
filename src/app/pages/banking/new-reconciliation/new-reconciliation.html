@@ -1,0 +1,336 @@
+<div class="reconciliation-page">
+  <!-- PAGE HEADER -->
+
+  <div class="page-header">
+    <div>
+      <h4 class="page-title">New Reconciliation Item</h4>
+      <p class="page-subtitle">Capture an item against the selected bank reconciliation.</p>
+    </div>
+
+    <button type="button" class="btn-back" (click)="cancel()">
+      <i class="bi bi-arrow-left"></i>
+      Back
+    </button>
+  </div>
+
+  <!-- BANK ACCOUNT / RECONCILIATION CONTEXT -->
+
+  <div class="reconciliation-context">
+    @if (loadingBankAccount) {
+      <div class="context-loading">
+        <span class="spinner-border spinner-border-sm"></span>
+
+        Loading bank account details...
+      </div>
+    } @else if (bankAccount) {
+      <div class="bank-context-content">
+        <!-- ICON -->
+
+        <div class="context-icon">
+          <i class="bi bi-bank"></i>
+        </div>
+
+        <!-- BANK DETAILS -->
+
+        <div class="bank-context-details">
+          <div class="bank-context-heading">
+            <h5>
+              {{ bankAccount.bankName }}
+            </h5>
+
+            <span class="bank-currency">
+              {{ bankAccount.currentBalance }} {{ bankAccount.currency }}
+            </span>
+          </div>
+
+          <div class="bank-account-name">
+            {{ bankAccount.accountName }}
+          </div>
+
+          <div class="bank-account-number">
+            <i class="bi bi-credit-card-2-front"></i>
+
+            {{ bankAccount.accountNumber }}
+          </div>
+        </div>
+
+        <!-- RECONCILIATION REFERENCE -->
+
+        <div class="context-reconciliation">
+          <small> Reconciliation </small>
+
+          <strong> #{{ reconciliationId }} </strong>
+
+          <span class="account-status" [class.account-inactive]="!bankAccount.active">
+            {{ bankAccount.active ? 'Active Account' : 'Inactive Account' }}
+          </span>
+        </div>
+      </div>
+    } @else {
+      <div class="context-error">
+        <i class="bi bi-exclamation-circle"></i>
+
+        <span>
+          {{ bankAccountError || 'Bank account information is unavailable.' }}
+        </span>
+
+        @if (bankAccountId) {
+          <button type="button" class="btn-retry" (click)="loadBankAccount()">Retry</button>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- FORM -->
+
+  <form
+    class="reconciliation-form"
+    #reconciliationNgForm="ngForm"
+    (ngSubmit)="saveReconciliation()"
+    novalidate
+  >
+    <!-- ITEM DETAILS -->
+
+    <div class="section-heading">
+      <i class="bi bi-file-earmark-text"></i>
+
+      <div>
+        <h5>Reconciliation Item Details</h5>
+        <small> Enter the transaction information. </small>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <!-- CATEGORY -->
+
+      <div class="form-group">
+        <label for="category">
+          Recon Account
+          <span class="required">*</span>
+        </label>
+
+        <select
+          id="category"
+          name="category"
+          class="form-select"
+          [(ngModel)]="form.category"
+          [disabled]="saving"
+          required
+        >
+          <option value="" disabled>Select category</option>
+
+          @for (category of categories; track category.value) {
+            <option [value]="category.value">
+              {{ category.label }}
+            </option>
+          }
+        </select>
+
+        @if (submitted && !form.category) {
+          <small class="validation-message"> Please select a category. </small>
+        }
+      </div>
+
+      <!-- TRANSACTION DATE -->
+
+      <div class="form-group">
+        <label for="transactionDate">
+          Transaction Date
+          <span class="required">*</span>
+        </label>
+
+        <input
+          id="transactionDate"
+          type="date"
+          name="transactionDate"
+          class="form-control"
+          [(ngModel)]="form.transactionDate"
+          [disabled]="saving"
+          required
+        />
+
+        @if (submitted && !form.transactionDate) {
+          <small class="validation-message"> Transaction date is required. </small>
+        }
+      </div>
+
+      <!-- AMOUNT -->
+
+      <div class="form-group">
+        <label for="amount">
+          Amount
+          <span class="required">*</span>
+        </label>
+
+        <input
+          id="amount"
+          type="number"
+          name="amount"
+          class="form-control amount-field"
+          [(ngModel)]="form.amount"
+          placeholder="0.00"
+          min="0.01"
+          step="0.01"
+          [disabled]="saving"
+          required
+        />
+
+        @if (submitted && (form.amount === null || form.amount === undefined || form.amount <= 0)) {
+          <small class="validation-message"> Enter an amount greater than zero. </small>
+        }
+      </div>
+
+      <!-- REFERENCE -->
+
+      <div class="form-group">
+        <label for="reference">
+          Reference
+          <span class="required">*</span>
+        </label>
+
+        <input
+          id="reference"
+          type="text"
+          name="reference"
+          class="form-control"
+          [(ngModel)]="form.reference"
+          placeholder="Enter transaction reference..."
+          maxlength="150"
+          [disabled]="saving"
+          required
+        />
+
+        @if (submitted && !form.reference.trim()) {
+          <small class="validation-message"> Reference is required. </small>
+        }
+      </div>
+    </div>
+
+    <!-- BALANCE EFFECT -->
+
+    <div class="section-heading section-spacing">
+      <i class="bi bi-arrow-left-right"></i>
+
+      <div>
+        <h5>Bank Balance Effect</h5>
+        <small> Select how this item should affect the bank balance. </small>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>
+        Effect
+        <span class="required">*</span>
+      </label>
+
+      <div class="effect-options">
+        @for (effect of effects; track effect.value) {
+          <button
+            type="button"
+            class="effect-option"
+            [class.selected]="form.effect === effect.value"
+            [disabled]="saving"
+            [attr.aria-pressed]="form.effect === effect.value"
+            (click)="selectEffect(effect.value)"
+          >
+            <span class="effect-icon">
+              <i class="bi" [ngClass]="effect.icon"></i>
+            </span>
+
+            <span class="effect-content">
+              <strong>
+                {{ effect.label }}
+              </strong>
+
+              <small>
+                {{ effect.description }}
+              </small>
+            </span>
+
+            <span class="effect-check">
+              @if (form.effect === effect.value) {
+                <i class="bi bi-check-circle-fill"></i>
+              } @else {
+                <i class="bi bi-circle"></i>
+              }
+            </span>
+          </button>
+        }
+      </div>
+
+      @if (submitted && !form.effect) {
+        <small class="validation-message"> Please select a bank balance effect. </small>
+      }
+    </div>
+
+    <!-- DESCRIPTION -->
+
+    <div class="section-heading section-spacing">
+      <i class="bi bi-chat-left-text"></i>
+
+      <div>
+        <h5>Additional Information</h5>
+        <small> Provide a description of this reconciliation item. </small>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label for="description">
+          Description
+          <span class="required">*</span>
+        </label>
+
+        <textarea
+          id="description"
+          name="description"
+          class="form-control"
+          [(ngModel)]="form.description"
+          placeholder="Enter transaction description..."
+          rows="4"
+          [disabled]="saving"
+          required
+        ></textarea>
+
+        @if (submitted && !form.description.trim()) {
+          <small class="validation-message"> Description is required. </small>
+        }
+      </div>
+    </div>
+
+    <!-- ERROR -->
+
+    @if (errorMessage) {
+      <div class="form-error">
+        <i class="bi bi-exclamation-circle"></i>
+
+        <span>
+          {{ errorMessage }}
+        </span>
+      </div>
+    }
+
+    <!-- FORM ACTIONS -->
+
+    <div class="form-actions">
+      <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="saving">
+        Cancel
+      </button>
+
+      <button type="button" class="btn-reset" (click)="resetForm()" [disabled]="saving">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        Reset
+      </button>
+
+      <button type="submit" class="btn-save" [disabled]="saving || !reconciliationId">
+        @if (saving) {
+          <span class="spinner-border spinner-border-sm"></span>
+          Saving...
+        } @else {
+          <i class="bi bi-check2-circle"></i>
+          Save Reconciliation Item
+        }
+      </button>
+    </div>
+  </form>
+</div>

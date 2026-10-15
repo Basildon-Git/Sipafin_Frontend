@@ -16,6 +16,7 @@ export interface CreateClientLoanRequest {
   fundingBankAccountId: number | null;
   dateIssued: string;
   dueDate: string | null;
+  affectBalances: boolean;
   reference: string;
   description: string;
   actionedBy: string;
@@ -34,71 +35,44 @@ export class NewClientLoan {
   private readonly toastr = inject(ToastrService);
   private readonly masterService = inject(Master);
 
-  // =========================
   // Client fields
-  // =========================
-
   clientName = '';
   clientPhone = '';
 
-  // =========================
   // Loan fields
-  // =========================
-
   currency = 'USD';
   principalAmount = 0;
   interestRate = 0;
-
   dateIssued = this.getToday();
   dueDate = '';
-
+  affectBalances = true;
   reference = '';
   description = '';
 
-  // =========================
   // Funding
-  // =========================
-
   fundingSource = 'BRANCH_FLOAT';
-
   fundingBankAccountId: number | null = null;
-
   fundingSources = ['BRANCH_FLOAT', 'BANK_ACCOUNT'];
 
-  // =========================
   // Bank accounts
-  // =========================
-
   bankAccounts: any[] = [];
   bankAccountsLoading = false;
 
-  // =========================
   // Branch
-  // =========================
-
   branchId: number | null = null;
   branchName = '';
 
-  // =========================
   // Currency options
-  // =========================
-
   currencies = ['USD', 'ZIG', 'ZAR', 'EUR'];
 
-  // =========================
   // Form state
-  // =========================
-
   loading = false;
 
   constructor() {
     this.loadLocalBranch();
   }
 
-  // =========================
   // Load branch from localStorage
-  // =========================
-
   loadLocalBranch(): void {
     const storedBranchId = localStorage.getItem('branchId');
 
@@ -113,18 +87,10 @@ export class NewClientLoan {
     }
 
     this.branchId = parsedBranchId;
-
-    const storedBranchName = localStorage.getItem('branchName');
-
-    if (storedBranchName) {
-      this.branchName = storedBranchName;
-    }
+    this.branchName = localStorage.getItem('branchName') || '';
   }
 
-  // =========================
   // Currency change
-  // =========================
-
   onCurrencyChange(): void {
     this.fundingBankAccountId = null;
     this.bankAccounts = [];
@@ -134,10 +100,7 @@ export class NewClientLoan {
     }
   }
 
-  // =========================
   // Load bank accounts
-  // =========================
-
   loadBankAccounts(): void {
     if (!this.currency) {
       this.bankAccounts = [];
@@ -152,14 +115,12 @@ export class NewClientLoan {
     this.http.get<any>(endpoint).subscribe({
       next: (response) => {
         this.bankAccounts = response?.data || [];
-
         this.bankAccountsLoading = false;
 
         if (this.bankAccounts.length === 0) {
           this.toastr.info(`No active bank accounts found for ${this.currency}.`, 'Bank Accounts');
         }
       },
-
       error: (error) => {
         this.bankAccounts = [];
         this.bankAccountsLoading = false;
@@ -174,14 +135,12 @@ export class NewClientLoan {
     });
   }
 
-  // =========================
   // Funding source
-  // =========================
-
   onFundingSourceChange(): void {
     if (this.fundingSource === 'BRANCH_FLOAT') {
       this.fundingBankAccountId = null;
       this.bankAccounts = [];
+      this.bankAccountsLoading = false;
     }
 
     if (this.fundingSource === 'BANK_ACCOUNT') {
@@ -189,38 +148,33 @@ export class NewClientLoan {
     }
   }
 
-  // =========================
   // Navigation
-  // =========================
-
   goBack(): void {
     this.router.navigate(['/client-loans']);
   }
 
-  // =========================
   // Create client loan
-  // =========================
-
   createClientLoan(): void {
     if (
       !this.branchId ||
       !this.clientName.trim() ||
       !this.clientPhone.trim() ||
       !this.currency ||
-      this.principalAmount <= 0 ||
+      !Number.isFinite(Number(this.principalAmount)) ||
+      Number(this.principalAmount) <= 0 ||
+      !Number.isFinite(Number(this.interestRate)) ||
+      Number(this.interestRate) < 0 ||
       !this.dateIssued
     ) {
       this.toastr.warning(
-        'Please enter the client details, select a currency and enter a valid principal amount.',
+        'Please enter the client details, select a currency, and enter a valid principal amount and interest rate.',
         'Validation',
       );
-
       return;
     }
 
     if (this.fundingSource === 'BANK_ACCOUNT' && !this.fundingBankAccountId) {
       this.toastr.warning('Please select the funding bank account.', 'Validation');
-
       return;
     }
 
@@ -231,18 +185,17 @@ export class NewClientLoan {
       clientName: this.clientName.trim(),
       clientPhone: this.clientPhone.trim(),
       currency: this.currency,
-      principalAmount: Number(this.principalAmount) || 0,
-      interestRate: Number(this.interestRate) || 0,
+      principalAmount: Number(this.principalAmount),
+      interestRate: Number(this.interestRate),
       fundingSource: this.fundingSource,
-
       fundingBankAccountId:
         this.fundingSource === 'BANK_ACCOUNT' ? Number(this.fundingBankAccountId) || null : null,
-
       dateIssued: this.dateIssued,
       dueDate: this.dueDate || null,
+      affectBalances: this.affectBalances,
       reference: this.reference.trim(),
       description: this.description.trim(),
-      actionedBy: actionedBy,
+      actionedBy,
     };
 
     console.log('CreateClientLoanRequest:', request);
@@ -256,12 +209,9 @@ export class NewClientLoan {
         console.log('Client loan created successfully:', response);
 
         this.loading = false;
-
         this.toastr.success('Client loan issued successfully.', 'Success');
-
         this.router.navigate(['/client-loans']);
       },
-
       error: (error) => {
         this.loading = false;
 
@@ -275,10 +225,7 @@ export class NewClientLoan {
     });
   }
 
-  // =========================
-  // Today
-  // =========================
-
+  // Today's date in local time
   private getToday(): string {
     const today = new Date();
     const year = today.getFullYear();

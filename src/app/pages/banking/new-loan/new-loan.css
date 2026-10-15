@@ -276,6 +276,50 @@ form {
   font-size: 12px;
 }
 
+
+.affect-balances-group {
+  padding: 14px 16px;
+  background: #f6f8f7;
+  border: 1px solid #dce8e1;
+  border-radius: 8px;
+}
+
+.affect-balances-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.affect-balances-option input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: #063b80;
+  cursor: pointer;
+}
+
+.affect-balances-option label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.affect-balances-title {
+  color: #063b80;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.affect-balances-description {
+  color: #647067;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
 /* =========================
    Search Select
 ========================= */

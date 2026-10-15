@@ -22,21 +22,14 @@
   <div class="form-card">
     <div class="card-header">
       <h2>Loan Information</h2>
-
       <p>Select the investor and branch, then enter the loan details.</p>
     </div>
 
     <form #loanForm="ngForm" (ngSubmit)="createLoan()">
       <div class="form-grid">
-        <!-- =========================
-             Investor
-        ========================== -->
-
+        <!-- Investor -->
         <div class="form-group full-width">
-          <label for="investor">
-            Investor
-            <span class="required">*</span>
-          </label>
+          <label for="investor"> Investor <span class="required">*</span> </label>
 
           <div class="search-select">
             <div class="input-wrapper">
@@ -51,6 +44,7 @@
                 (focus)="onInvestorFocus()"
                 placeholder="Search investor by name, phone or national ID"
                 autocomplete="off"
+                required
               />
 
               @if (investorSelected) {
@@ -111,15 +105,9 @@
           <span class="field-hint"> Only active investors are available for new loans. </span>
         </div>
 
-        <!-- =========================
-             Branch
-        ========================== -->
-
+        <!-- Branch -->
         <div class="form-group full-width">
-          <label for="branch">
-            Branch
-            <span class="required">*</span>
-          </label>
+          <label for="branch"> Branch <span class="required">*</span> </label>
 
           <div class="search-select">
             <div class="input-wrapper">
@@ -134,6 +122,7 @@
                 (focus)="onBranchFocus()"
                 placeholder="Search branch by name, code or location"
                 autocomplete="off"
+                required
               />
 
               @if (branchSelected) {
@@ -197,27 +186,16 @@
           }
         </div>
 
-        <!-- =========================
-             Principal Amount
-        ========================== -->
-        <!-- =========================
-     Currency
-========================== -->
-
+        <!-- Currency -->
         <div class="form-group">
-          <label for="currency">
-            Currency
-            <span class="required">*</span>
-          </label>
+          <label for="currency"> Currency <span class="required">*</span> </label>
 
           <div class="input-wrapper">
             <i class="bi bi-currency-exchange"></i>
 
             <select id="currency" name="currency" [(ngModel)]="currency" required>
               @for (item of currencies; track item) {
-                <option [value]="item">
-                  {{ item }}
-                </option>
+                <option [value]="item">{{ item }}</option>
               }
             </select>
           </div>
@@ -225,15 +203,9 @@
           <span class="field-hint"> Currency in which the loan was received. </span>
         </div>
 
-        <!-- =========================
-     Principal Amount
-========================== -->
-
+        <!-- Principal Amount -->
         <div class="form-group">
-          <label for="principalAmount">
-            Principal Amount
-            <span class="required">*</span>
-          </label>
+          <label for="principalAmount"> Principal Amount <span class="required">*</span> </label>
 
           <div class="input-wrapper amount-input">
             <span class="currency-prefix">{{ currency }}</span>
@@ -243,7 +215,7 @@
               type="number"
               name="principalAmount"
               [(ngModel)]="principalAmount"
-              min="0"
+              min="0.01"
               step="0.01"
               placeholder="0.00"
               required
@@ -253,15 +225,9 @@
           <span class="field-hint"> Original amount issued to the investor. </span>
         </div>
 
-        <!-- =========================
-     Interest Rate
-========================== -->
-
+        <!-- Interest Rate -->
         <div class="form-group">
-          <label for="interestRate">
-            Interest Rate
-            <span class="required">*</span>
-          </label>
+          <label for="interestRate"> Interest Rate <span class="required">*</span> </label>
 
           <div class="input-wrapper amount-input">
             <input
@@ -281,15 +247,9 @@
           <span class="field-hint"> Interest rate applicable to this loan. </span>
         </div>
 
-        <!-- =========================
-             Date Received
-        ========================== -->
-
+        <!-- Date Received -->
         <div class="form-group">
-          <label for="dateReceived">
-            Date Received
-            <span class="required">*</span>
-          </label>
+          <label for="dateReceived"> Date Received <span class="required">*</span> </label>
 
           <div class="input-wrapper">
             <i class="bi bi-calendar3"></i>
@@ -304,28 +264,49 @@
           </div>
         </div>
 
-        <!-- =========================
-             Due Date
-        ========================== -->
-
+        <!-- Due Date -->
         <div class="form-group">
-          <label for="dueDate"> Due Date </label>
+          <label for="dueDate">Due Date</label>
 
           <div class="input-wrapper">
             <i class="bi bi-calendar-event"></i>
 
-            <input id="dueDate" type="date" name="dueDate" [(ngModel)]="dueDate" />
+            <input
+              id="dueDate"
+              type="date"
+              name="dueDate"
+              [(ngModel)]="dueDate"
+              [min]="dateReceived"
+            />
           </div>
 
-          <span class="field-hint"> Optional. </span>
+          <span class="field-hint">Optional.</span>
         </div>
 
-        <!-- =========================
-             Reference
-        ========================== -->
+        <!-- Affect Account Balances -->
+        <div class="form-group full-width affect-balances-group">
+          <div class="affect-balances-option">
+            <input
+              id="affectBalances"
+              type="checkbox"
+              name="affectBalances"
+              [(ngModel)]="affectBalances"
+            />
 
+            <label for="affectBalances">
+              <span class="affect-balances-title"> Affect Account Balances </span>
+
+              <span class="affect-balances-description">
+                When enabled, the system will apply the loan transaction to the relevant account
+                balances, according to the backend's processing rules.
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Reference -->
         <div class="form-group">
-          <label for="reference"> Reference </label>
+          <label for="reference">Reference</label>
 
           <div class="input-wrapper">
             <i class="bi bi-upc-scan"></i>
@@ -342,12 +323,9 @@
           <span class="field-hint"> Optional reference for this loan. </span>
         </div>
 
-        <!-- =========================
-             Description
-        ========================== -->
-
+        <!-- Description -->
         <div class="form-group full-width">
-          <label for="description"> Description </label>
+          <label for="description">Description</label>
 
           <div class="input-wrapper textarea-wrapper">
             <i class="bi bi-card-text"></i>
@@ -372,7 +350,15 @@
         <button
           type="submit"
           class="btn-primary"
-          [disabled]="loading || !investorId || !branchId || principalAmount <= 0 || !dateReceived"
+          [disabled]="
+            loading ||
+            !investorId ||
+            !branchId ||
+            !currency ||
+            principalAmount <= 0 ||
+            interestRate < 0 ||
+            !dateReceived
+          "
         >
           @if (loading) {
             <span class="spinner"></span>

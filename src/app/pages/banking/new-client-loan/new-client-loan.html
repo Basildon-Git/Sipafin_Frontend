@@ -22,25 +22,17 @@
   <div class="form-card">
     <div class="card-header">
       <h2>Client Loan Information</h2>
-
       <p>Enter the client details, loan information and funding source.</p>
     </div>
 
     <form #clientLoanForm="ngForm" (ngSubmit)="createClientLoan()">
       <div class="form-grid">
-        <!-- =========================
-             Client Name
-        ========================== -->
-
+        <!-- Client Name -->
         <div class="form-group">
-          <label for="clientName">
-            Client Name
-            <span class="required">*</span>
-          </label>
+          <label for="clientName"> Client Name <span class="required">*</span> </label>
 
           <div class="input-wrapper">
             <i class="bi bi-person"></i>
-
             <input
               id="clientName"
               type="text"
@@ -55,19 +47,12 @@
           <span class="field-hint"> Full name of the client receiving the loan. </span>
         </div>
 
-        <!-- =========================
-             Client Phone
-        ========================== -->
-
+        <!-- Client Phone -->
         <div class="form-group">
-          <label for="clientPhone">
-            Client Phone
-            <span class="required">*</span>
-          </label>
+          <label for="clientPhone"> Client Phone <span class="required">*</span> </label>
 
           <div class="input-wrapper">
             <i class="bi bi-telephone"></i>
-
             <input
               id="clientPhone"
               type="tel"
@@ -79,22 +64,15 @@
             />
           </div>
 
-          <span class="field-hint"> Phone number for the client. </span>
+          <span class="field-hint">Phone number for the client.</span>
         </div>
 
-        <!-- =========================
-             Branch
-        ========================== -->
-
+        <!-- Branch -->
         <div class="form-group full-width">
-          <label for="branch">
-            Branch
-            <span class="required">*</span>
-          </label>
+          <label for="branch"> Branch <span class="required">*</span> </label>
 
           <div class="input-wrapper">
             <i class="bi bi-building"></i>
-
             <input
               id="branch"
               type="text"
@@ -107,19 +85,12 @@
           <span class="field-hint"> Client loan will be issued from your current branch. </span>
         </div>
 
-        <!-- =========================
-             Currency
-        ========================== -->
-
+        <!-- Currency -->
         <div class="form-group">
-          <label for="currency">
-            Currency
-            <span class="required">*</span>
-          </label>
+          <label for="currency"> Currency <span class="required">*</span> </label>
 
           <div class="input-wrapper">
             <i class="bi bi-currency-exchange"></i>
-
             <select
               id="currency"
               name="currency"
@@ -128,9 +99,7 @@
               required
             >
               @for (item of currencies; track item) {
-                <option [value]="item">
-                  {{ item }}
-                </option>
+                <option [value]="item">{{ item }}</option>
               }
             </select>
           </div>
@@ -138,25 +107,18 @@
           <span class="field-hint"> Currency in which the client loan is issued. </span>
         </div>
 
-        <!-- =========================
-             Principal Amount
-        ========================== -->
-
+        <!-- Principal Amount -->
         <div class="form-group">
-          <label for="principalAmount">
-            Principal Amount
-            <span class="required">*</span>
-          </label>
+          <label for="principalAmount"> Principal Amount <span class="required">*</span> </label>
 
           <div class="input-wrapper amount-input">
             <span class="currency-prefix">{{ currency }}</span>
-
             <input
               id="principalAmount"
               type="number"
               name="principalAmount"
               [(ngModel)]="principalAmount"
-              min="0"
+              min="0.01"
               step="0.01"
               placeholder="0.00"
               required
@@ -166,15 +128,9 @@
           <span class="field-hint"> Original amount issued to the client. </span>
         </div>
 
-        <!-- =========================
-             Interest Rate
-        ========================== -->
-
+        <!-- Interest Rate -->
         <div class="form-group">
-          <label for="interestRate">
-            Interest Rate
-            <span class="required">*</span>
-          </label>
+          <label for="interestRate"> Interest Rate <span class="required">*</span> </label>
 
           <div class="input-wrapper amount-input">
             <input
@@ -187,26 +143,18 @@
               placeholder="0.00"
               required
             />
-
             <span class="currency-prefix">%</span>
           </div>
 
           <span class="field-hint"> Interest rate applicable to this client loan. </span>
         </div>
 
-        <!-- =========================
-             Funding Source
-        ========================== -->
-
+        <!-- Funding Source -->
         <div class="form-group">
-          <label for="fundingSource">
-            Funding Source
-            <span class="required">*</span>
-          </label>
+          <label for="fundingSource"> Funding Source <span class="required">*</span> </label>
 
           <div class="input-wrapper">
             <i class="bi bi-wallet2"></i>
-
             <select
               id="fundingSource"
               name="fundingSource"
@@ -225,20 +173,15 @@
           <span class="field-hint"> Source from which the client loan will be funded. </span>
         </div>
 
-        <!-- =========================
-             Funding Bank Account
-        ========================== -->
-
+        <!-- Funding Bank Account -->
         @if (fundingSource === 'BANK_ACCOUNT') {
           <div class="form-group">
             <label for="fundingBankAccountId">
-              Funding Bank Account
-              <span class="required">*</span>
+              Funding Bank Account <span class="required">*</span>
             </label>
 
             <div class="input-wrapper">
               <i class="bi bi-bank"></i>
-
               <select
                 id="fundingBankAccountId"
                 name="fundingBankAccountId"
@@ -255,10 +198,7 @@
 
                 @for (account of bankAccounts; track account.id) {
                   <option [ngValue]="account.id">
-                    {{ account.bankName }}
-                    -
-                    {{ account.accountName }}
-                    -
+                    {{ account.bankName }} - {{ account.accountName }} -
                     {{ account.accountNumber }}
                   </option>
                 }
@@ -276,19 +216,13 @@
             }
           </div>
         }
-        <!-- =========================
-             Date Issued
-        ========================== -->
 
+        <!-- Date Issued -->
         <div class="form-group">
-          <label for="dateIssued">
-            Date Issued
-            <span class="required">*</span>
-          </label>
+          <label for="dateIssued"> Date Issued <span class="required">*</span> </label>
 
           <div class="input-wrapper">
             <i class="bi bi-calendar3"></i>
-
             <input
               id="dateIssued"
               type="date"
@@ -299,32 +233,51 @@
           </div>
         </div>
 
-        <!-- =========================
-             Due Date
-        ========================== -->
-
+        <!-- Due Date -->
         <div class="form-group">
-          <label for="dueDate"> Due Date </label>
+          <label for="dueDate">Due Date</label>
 
           <div class="input-wrapper">
             <i class="bi bi-calendar-event"></i>
-
-            <input id="dueDate" type="date" name="dueDate" [(ngModel)]="dueDate" />
+            <input
+              id="dueDate"
+              type="date"
+              name="dueDate"
+              [(ngModel)]="dueDate"
+              [min]="dateIssued"
+            />
           </div>
 
-          <span class="field-hint"> Optional repayment due date. </span>
+          <span class="field-hint">Optional repayment due date.</span>
         </div>
 
-        <!-- =========================
-             Reference
-        ========================== -->
+        <!-- Affect Account Balances -->
+        <div class="form-group full-width affect-balances-group">
+          <div class="affect-balances-option">
+            <input
+              id="affectBalances"
+              type="checkbox"
+              name="affectBalances"
+              [(ngModel)]="affectBalances"
+            />
 
+            <label for="affectBalances">
+              <span class="affect-balances-title"> Affect Account Balances </span>
+
+              <span class="affect-balances-description">
+                When enabled, apply the client loan transaction to the relevant account balances
+                according to the backend's processing rules.
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Reference -->
         <div class="form-group">
-          <label for="reference"> Reference </label>
+          <label for="reference">Reference</label>
 
           <div class="input-wrapper">
             <i class="bi bi-upc-scan"></i>
-
             <input
               id="reference"
               type="text"
@@ -337,16 +290,12 @@
           <span class="field-hint"> Optional reference for this client loan. </span>
         </div>
 
-        <!-- =========================
-             Description
-        ========================== -->
-
+        <!-- Description -->
         <div class="form-group full-width">
-          <label for="description"> Description </label>
+          <label for="description">Description</label>
 
           <div class="input-wrapper textarea-wrapper">
             <i class="bi bi-card-text"></i>
-
             <textarea
               id="description"
               name="description"
@@ -372,8 +321,11 @@
             !branchId ||
             !clientName.trim() ||
             !clientPhone.trim() ||
+            !currency ||
             principalAmount <= 0 ||
-            !dateIssued
+            interestRate < 0 ||
+            !dateIssued ||
+            (fundingSource === 'BANK_ACCOUNT' && (!fundingBankAccountId || bankAccountsLoading))
           "
         >
           @if (loading) {

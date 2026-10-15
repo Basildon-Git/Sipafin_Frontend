@@ -1,429 +1,730 @@
-<div class="dashboard">
-  <!-- ================================================
-       HEADER
-       ================================================= -->
+<div class="dashboard-page">
+  <!-- Hero Header -->
+  <div class="dashboard-hero">
+    <div class="hero-content">
+      <span class="hero-eyebrow">
+        <i class="bi bi-calendar3 me-1"></i>
+        {{ today | date: 'EEEE, dd MMMM yyyy' }}
+      </span>
 
-  <div class="dashboard-header">
-    <div>
-      <div class="welcome-label">FINANCIAL OVERVIEW</div>
+      <h4 class="welcome-title">{{ greeting }}, {{ fullName }}</h4>
+      <p class="welcome-subtitle">Here's an overview of your financial position.</p>
 
-      <h1>Welcome back, Basildon</h1>
-
-      <p>Here's what's happening with your finances today.</p>
+      @if (dashboard) {
+        <span class="date-range">
+          <i class="bi bi-clock-history me-1"></i>
+          Data period:
+          {{ dashboard.fromDate | date: 'dd MMM yyyy' }}
+          -
+          {{ dashboard.toDate | date: 'dd MMM yyyy' }}
+        </span>
+      }
     </div>
 
     <div class="header-actions">
-      <div class="date-display">
-        <i class="bi bi-calendar3"></i>
+      <button
+        type="button"
+        class="btn hero-btn-ghost"
+        (click)="loadDashboard()"
+        [disabled]="loading"
+      >
+        <i class="bi bi-arrow-clockwise me-1" [class.spin]="loading"></i>
+        {{ loading ? 'Refreshing...' : 'Refresh' }}
+      </button>
 
-        <span>
-          {{ today | date: 'EEEE, dd MMMM yyyy' }}
-        </span>
-      </div>
-
-      <button class="primary-button">
-        <i class="bi bi-plus-lg"></i>
+      <button type="button" class="btn hero-btn-solid" (click)="openNewTransaction()">
+        <i class="bi bi-plus-lg me-1"></i>
         New Transaction
       </button>
     </div>
   </div>
 
-  <!-- ================================================
-       KPI CARDS
-       ================================================= -->
-
-  <section class="stats-grid">
-    @for (stat of stats; track stat.title) {
-      <div class="stat-card">
-        <div class="stat-top">
-          <div
-            class="stat-icon"
-            [class.primary]="stat.type === 'primary'"
-            [class.blue]="stat.type === 'blue'"
-            [class.green]="stat.type === 'green'"
-            [class.orange]="stat.type === 'orange'"
-          >
-            <i class="bi {{ stat.icon }}"></i>
-          </div>
-
-          <span class="stat-change">
-            {{ stat.change }}
-          </span>
-        </div>
-
-        <div class="stat-title">
-          {{ stat.title }}
-        </div>
-
-        <div class="stat-value">
-          {{ stat.value }}
-        </div>
-
-        <div class="stat-description">
-          {{ stat.description }}
-        </div>
-      </div>
-    }
-  </section>
-
-  <!-- ================================================
-       MAIN GRID
-       ================================================= -->
-
-  <div class="main-grid">
-    <!-- Cash Flow -->
-    <section class="card cash-flow-card">
-      <div class="card-header">
-        <div>
-          <h2>Cash Flow Overview</h2>
-
-          <p>Inflows and outflows across all banks</p>
-        </div>
-
-        <select>
-          <option>This Month</option>
-          <option>Last Month</option>
-          <option>Last 3 Months</option>
-          <option>This Year</option>
-        </select>
-      </div>
-
-      <div class="chart-area">
-        <div class="chart-summary">
-          <div>
-            <span>Total Inflows</span>
-            <strong>$1.24M</strong>
-          </div>
-
-          <div>
-            <span>Total Outflows</span>
-            <strong>$824K</strong>
-          </div>
-
-          <div>
-            <span>Net Cash Flow</span>
-            <strong class="positive"> +$416K </strong>
+  <!-- Loading Skeleton -->
+  @if (loading && !dashboard) {
+    <div class="row g-3 mb-4">
+      @for (n of [1, 2, 3, 4]; track n) {
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="skeleton-card">
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line medium"></div>
           </div>
         </div>
+      }
+    </div>
+  }
 
-        <!-- Chart placeholder -->
-
-        <div class="chart">
-          <div class="chart-y-axis">
-            <span>$500K</span>
-            <span>$400K</span>
-            <span>$300K</span>
-            <span>$200K</span>
-            <span>$100K</span>
-            <span>$0</span>
-          </div>
-
-          <div class="chart-body">
-            <div class="grid-line line-1"></div>
-            <div class="grid-line line-2"></div>
-            <div class="grid-line line-3"></div>
-            <div class="grid-line line-4"></div>
-            <div class="grid-line line-5"></div>
-            <div class="grid-line line-6"></div>
-
-            <div class="bars">
-              <div class="bar-group">
-                <div class="bar inflow" style="height: 55%"></div>
-                <div class="bar outflow" style="height: 35%"></div>
-                <span>Jan</span>
-              </div>
-
-              <div class="bar-group">
-                <div class="bar inflow" style="height: 70%"></div>
-                <div class="bar outflow" style="height: 45%"></div>
-                <span>Feb</span>
-              </div>
-
-              <div class="bar-group">
-                <div class="bar inflow" style="height: 48%"></div>
-                <div class="bar outflow" style="height: 40%"></div>
-                <span>Mar</span>
-              </div>
-
-              <div class="bar-group">
-                <div class="bar inflow" style="height: 82%"></div>
-                <div class="bar outflow" style="height: 53%"></div>
-                <span>Apr</span>
-              </div>
-
-              <div class="bar-group">
-                <div class="bar inflow" style="height: 66%"></div>
-                <div class="bar outflow" style="height: 44%"></div>
-                <span>May</span>
-              </div>
-
-              <div class="bar-group">
-                <div class="bar inflow" style="height: 90%"></div>
-                <div class="bar outflow" style="height: 48%"></div>
-                <span>Jun</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="chart-legend">
-          <span>
-            <i class="legend-dot inflow"></i>
-            Inflows
-          </span>
-
-          <span>
-            <i class="legend-dot outflow"></i>
-            Outflows
-          </span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Bank Balances -->
-
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Bank Balances</h2>
-
-          <p>Current position by bank</p>
-        </div>
-
-        <button class="icon-action">
-          <i class="bi bi-three-dots"></i>
-        </button>
-      </div>
-
-      <div class="bank-list">
-        @for (bank of banks; track bank.name) {
-          <div class="bank-row">
-            <div class="bank-logo">
-              {{ bank.name.charAt(0) }}
-            </div>
-
-            <div class="bank-info">
-              <strong>
-                {{ bank.name }}
-              </strong>
-
-              <span>
-                {{ bank.account }}
-              </span>
-
-              <div class="balance-progress">
-                <div class="balance-progress-bar" [style.width.%]="bank.percentage"></div>
-              </div>
-            </div>
-
-            <div class="bank-balance">
-              {{ bank.balance }}
-            </div>
-          </div>
-        }
-      </div>
-
-      <button class="view-link">
-        View all banks
-        <i class="bi bi-arrow-right"></i>
-      </button>
-    </section>
-  </div>
-
-  <!-- ================================================
-       LOWER GRID
-       ================================================= -->
-
-  <div class="lower-grid">
-    <!-- Recent Activity -->
-
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Recent Activity</h2>
-
-          <p>Latest financial transactions</p>
-        </div>
-
-        <button class="view-link">View all</button>
-      </div>
-
-      <div class="activity-list">
-        @for (activity of activities; track activity.title + activity.time) {
-          <div class="activity-row">
-            <div
-              class="activity-icon"
-              [class.deposit]="activity.type === 'deposit'"
-              [class.withdrawal]="activity.type === 'withdrawal'"
-              [class.transfer]="activity.type === 'transfer'"
-            >
-              @if (activity.type === 'deposit') {
-                <i class="bi bi-arrow-down-left"></i>
-              }
-
-              @if (activity.type === 'withdrawal') {
-                <i class="bi bi-arrow-up-right"></i>
-              }
-
-              @if (activity.type === 'transfer') {
-                <i class="bi bi-arrow-left-right"></i>
-              }
-            </div>
-
-            <div class="activity-info">
-              <strong>
-                {{ activity.title }}
-              </strong>
-
-              <span>
-                {{ activity.description }}
-              </span>
-            </div>
-
-            <div class="activity-amount">
-              <strong
-                [class.positive]="activity.amount.startsWith('+')"
-                [class.negative]="activity.amount.startsWith('-')"
-              >
-                {{ activity.amount }}
-              </strong>
-
-              <span>
-                {{ activity.time }}
-              </span>
-            </div>
-          </div>
-        }
-      </div>
-    </section>
-
-    <!-- Cash Floats -->
-
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2>Cash Floats</h2>
-
-          <p>Current branch float positions</p>
-        </div>
-
-        <button class="icon-action">
-          <i class="bi bi-three-dots"></i>
-        </button>
-      </div>
-
-      <div class="float-list">
-        @for (float of cashFloats; track float.location) {
-          <div class="float-item">
-            <div class="float-header">
-              <div>
-                <strong>
-                  {{ float.location }}
-                </strong>
-
-                <span>
-                  {{ float.status }}
-                </span>
-              </div>
-
-              <strong>
-                {{ float.balance }}
-              </strong>
-            </div>
-
-            <div class="float-progress">
-              <div
-                class="float-progress-bar"
-                [class.low]="float.percentage < 50"
-                [style.width.%]="float.percentage"
-              ></div>
-            </div>
-
-            <div class="float-footer">
-              <span> Utilisation </span>
-
-              <span> {{ float.percentage }}% </span>
-            </div>
-          </div>
-        }
-      </div>
-
-      <button class="view-link">
-        Manage cash floats
-        <i class="bi bi-arrow-right"></i>
-      </button>
-    </section>
-  </div>
-
-  <!-- ================================================
-       QUICK ACTIONS
-       ================================================= -->
-
-  <section class="quick-actions">
-    <div class="quick-header">
+  @if (errorMessage && !dashboard && !loading) {
+    <div class="dashboard-error">
+      <i class="bi bi-exclamation-circle"></i>
       <div>
-        <h2>Quick Actions</h2>
-
-        <p>Frequently used operations</p>
+        <strong>Unable to load dashboard</strong>
+        <p>{{ errorMessage }}</p>
+        <button class="btn btn-primary btn-sm" (click)="loadDashboard()">Try Again</button>
       </div>
     </div>
+  }
 
-    <div class="quick-grid">
-      <button class="quick-action">
-        <div class="quick-icon blue">
-          <i class="bi bi-arrow-down-left"></i>
-        </div>
-
+  @if (dashboard; as d) {
+    <!-- Financial Position -->
+    <section class="dashboard-section">
+      <div class="section-heading">
         <div>
-          <strong> Record Deposit </strong>
+          <h5>Financial Position</h5>
+          <p>Available balances across your accounts and cash floats.</p>
+        </div>
+      </div>
 
-          <span> Add incoming funds </span>
+      <div class="row g-3">
+        <!-- Total Liquidity -->
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="summary-card liquidity-card">
+            <div class="summary-card-top">
+              <div>
+                <span class="summary-label">Total Liquidity</span>
+                <p class="summary-description">Bank and float combined per currency</p>
+              </div>
+              <div class="summary-icon liquidity-icon">
+                <i class="bi bi-wallet2"></i>
+              </div>
+            </div>
+
+            <div class="currency-list">
+              @for (item of d.totalLiquidity; track item.currency) {
+                <div class="liquidity-row">
+                  <div class="currency-row">
+                    <span class="currency-code">{{ item.currency }}</span>
+                    <strong>{{ formatAmount(item.amount) }}</strong>
+                  </div>
+
+                  <div class="split-bar" title="Bank vs Float split">
+                    <span class="split-bank" [style.width.%]="bankShare(item.currency)"></span>
+                    <span class="split-float" [style.width.%]="floatShare(item.currency)"></span>
+                  </div>
+
+                  <div class="split-legend">
+                    <span><i class="dot dot-bank"></i>Bank {{ bankShare(item.currency) }}%</span>
+                    <span><i class="dot dot-float"></i>Float {{ floatShare(item.currency) }}%</span>
+                  </div>
+                </div>
+              } @empty {
+                <p class="empty-message">No liquidity data available.</p>
+              }
+            </div>
+          </div>
         </div>
 
-        <i class="bi bi-arrow-right"></i>
-      </button>
+        <!-- Bank Balances -->
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="summary-card">
+            <div class="summary-card-top">
+              <div>
+                <span class="summary-label">Bank Balances</span>
+                <p class="summary-description">Balances held in bank accounts</p>
+              </div>
+              <div class="summary-icon bank-icon">
+                <i class="bi bi-bank"></i>
+              </div>
+            </div>
 
-      <button class="quick-action">
-        <div class="quick-icon orange">
-          <i class="bi bi-arrow-up-right"></i>
+            <div class="currency-list">
+              @for (item of d.bankBalances; track item.currency) {
+                <div class="currency-row">
+                  <span class="currency-code">{{ item.currency }}</span>
+                  <strong>{{ formatAmount(item.amount) }}</strong>
+                </div>
+              } @empty {
+                <p class="empty-message">No bank balances available.</p>
+              }
+            </div>
+
+            <button class="card-link" (click)="openBanks()">
+              View bank accounts <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+          </div>
         </div>
 
+        <!-- Float Balances -->
+        <div class="col-12 col-md-12 col-xl-4">
+          <div class="summary-card">
+            <div class="summary-card-top">
+              <div>
+                <span class="summary-label">Cash Floats</span>
+                <p class="summary-description">Available float balances</p>
+              </div>
+              <div class="summary-icon float-icon">
+                <i class="bi bi-cash-stack"></i>
+              </div>
+            </div>
+
+            <div class="currency-list">
+              @for (item of d.floatBalances; track item.currency) {
+                <div class="currency-row">
+                  <span class="currency-code">{{ item.currency }}</span>
+                  <strong>{{ formatAmount(item.amount) }}</strong>
+                </div>
+              } @empty {
+                <p class="empty-message">No float balances available.</p>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loan Overview -->
+    <section class="dashboard-section">
+      <div class="section-heading">
         <div>
-          <strong> Record Withdrawal </strong>
-
-          <span> Record outgoing funds </span>
+          <h5>Loan Overview</h5>
+          <p>Track your investor liabilities and client receivables.</p>
         </div>
 
-        <i class="bi bi-arrow-right"></i>
-      </button>
+        <button class="btn btn-outline-primary btn-sm" (click)="openLoans()">
+          View Loans
+          <i class="bi bi-arrow-right ms-1"></i>
+        </button>
+      </div>
 
-      <button class="quick-action">
-        <div class="quick-icon purple">
-          <i class="bi bi-arrow-left-right"></i>
+      <div class="row g-3">
+        <!-- Investor Loans -->
+        <div class="col-12 col-xl-6">
+          <div class="summary-card loan-card">
+            <div class="loan-heading">
+              <div class="summary-icon investor-icon">
+                <i class="bi bi-arrow-down-left-circle"></i>
+              </div>
+              <div>
+                <h6>Investor Loans</h6>
+                <p>Funds received from investors</p>
+              </div>
+              <span class="loan-count-pill">{{ d.investorLoans.totalLoans }} loans</span>
+            </div>
+
+            @if (d.investorLoans; as loan) {
+              <div class="progress-block">
+                <div class="progress-label">
+                  <span>Repayment progress</span>
+                  <strong>{{ repaidPercent(loan) }}%</strong>
+                </div>
+                <div class="progress-track">
+                  <span class="progress-fill" [style.width.%]="repaidPercent(loan)"></span>
+                </div>
+              </div>
+
+              <div class="status-bar" title="Loan status distribution">
+                <span
+                  class="seg seg-active"
+                  [style.width.%]="segmentWidth(loan, loan.activeLoans)"
+                ></span>
+                <span
+                  class="seg seg-partial"
+                  [style.width.%]="segmentWidth(loan, loan.partiallyPaidLoans)"
+                ></span>
+                <span
+                  class="seg seg-paid"
+                  [style.width.%]="segmentWidth(loan, loan.paidLoans)"
+                ></span>
+                <span
+                  class="seg seg-cancelled"
+                  [style.width.%]="segmentWidth(loan, loan.cancelledLoans)"
+                ></span>
+              </div>
+
+              <div class="loan-stats">
+                <div>
+                  <span><i class="dot dot-active"></i>Active</span>
+                  <strong>{{ loan.activeLoans }}</strong>
+                </div>
+                <div>
+                  <span><i class="dot dot-partial"></i>Partially Paid</span>
+                  <strong>{{ loan.partiallyPaidLoans }}</strong>
+                </div>
+                <div>
+                  <span><i class="dot dot-paid"></i>Paid</span>
+                  <strong>{{ loan.paidLoans }}</strong>
+                </div>
+                <div>
+                  <span><i class="dot dot-cancelled"></i>Cancelled</span>
+                  <strong>{{ loan.cancelledLoans }}</strong>
+                </div>
+              </div>
+
+              <div class="loan-financials">
+                <div>
+                  <span>Total Principal</span>
+                  <strong>{{ formatAmount(loan.totalPrincipal) }}</strong>
+                </div>
+                <div>
+                  <span>Total Payable</span>
+                  <strong>{{ formatAmount(loan.totalPayable) }}</strong>
+                </div>
+                <div>
+                  <span>Outstanding</span>
+                  <strong class="outstanding-value">
+                    {{ formatAmount(loan.totalOutstanding) }}
+                  </strong>
+                </div>
+              </div>
+            }
+          </div>
         </div>
 
+        <!-- Client Loans -->
+        <div class="col-12 col-xl-6">
+          <div class="summary-card loan-card">
+            <div class="loan-heading">
+              <div class="summary-icon client-icon">
+                <i class="bi bi-arrow-up-right-circle"></i>
+              </div>
+              <div>
+                <h6>Client Loans</h6>
+                <p>Funds issued to clients</p>
+              </div>
+              <span class="loan-count-pill">{{ d.clientLoans.totalLoans }} loans</span>
+            </div>
+
+            @if (d.clientLoans; as loan) {
+              <div class="progress-block">
+                <div class="progress-label">
+                  <span>Collection progress</span>
+                  <strong>{{ repaidPercent(loan) }}%</strong>
+                </div>
+                <div class="progress-track">
+                  <span
+                    class="progress-fill fill-teal"
+                    [style.width.%]="repaidPercent(loan)"
+                  ></span>
+                </div>
+              </div>
+
+              <div class="status-bar" title="Loan status distribution">
+                <span
+                  class="seg seg-active"
+                  [style.width.%]="segmentWidth(loan, loan.activeLoans)"
+                ></span>
+                <span
+                  class="seg seg-partial"
+                  [style.width.%]="segmentWidth(loan, loan.partiallyPaidLoans)"
+                ></span>
+                <span
+                  class="seg seg-paid"
+                  [style.width.%]="segmentWidth(loan, loan.paidLoans)"
+                ></span>
+                <span
+                  class="seg seg-cancelled"
+                  [style.width.%]="segmentWidth(loan, loan.cancelledLoans)"
+                ></span>
+              </div>
+
+              <div class="loan-stats">
+                <div>
+                  <span><i class="dot dot-active"></i>Active</span>
+                  <strong>{{ loan.activeLoans }}</strong>
+                </div>
+                <div>
+                  <span><i class="dot dot-partial"></i>Partially Paid</span>
+                  <strong>{{ loan.partiallyPaidLoans }}</strong>
+                </div>
+                <div>
+                  <span><i class="dot dot-paid"></i>Paid</span>
+                  <strong>{{ loan.paidLoans }}</strong>
+                </div>
+                <div>
+                  <span><i class="dot dot-cancelled"></i>Cancelled</span>
+                  <strong>{{ loan.cancelledLoans }}</strong>
+                </div>
+              </div>
+
+              <div class="loan-financials">
+                <div>
+                  <span>Total Principal</span>
+                  <strong>{{ formatAmount(loan.totalPrincipal) }}</strong>
+                </div>
+                <div>
+                  <span>Total Receivable</span>
+                  <strong>{{ formatAmount(loan.totalReceivable) }}</strong>
+                </div>
+                <div>
+                  <span>Outstanding</span>
+                  <strong class="outstanding-value">
+                    {{ formatAmount(loan.totalOutstanding) }}
+                  </strong>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Activity Overview -->
+    <section class="dashboard-section">
+      <div class="section-heading">
         <div>
-          <strong> Transfer Funds </strong>
-
-          <span> Move money between banks </span>
+          <h5>Transaction Activity</h5>
+          <p>Activity recorded for the selected dashboard period.</p>
         </div>
+      </div>
 
-        <i class="bi bi-arrow-right"></i>
-      </button>
+      <div class="row g-3">
+        @for (group of activityGroups; track group.title) {
+          <div class="col-12 col-lg-6 col-xl-4">
+            <div class="activity-panel">
+              <div class="activity-panel-header">
+                <div class="activity-icon" [class]="'activity-icon ' + group.tone + '-icon'">
+                  <i class="bi" [class]="'bi ' + group.icon"></i>
+                </div>
+                <div>
+                  <h6>{{ group.title }}</h6>
+                  <p>{{ group.description }}</p>
+                </div>
+              </div>
 
-      <button class="quick-action">
-        <div class="quick-icon green">
-          <i class="bi bi-file-earmark-bar-graph"></i>
-        </div>
+              <div class="activity-list">
+                @for (item of group.items; track item.label) {
+                  <div class="activity-row">
+                    <span class="activity-row-label">
+                      <i class="bi" [class]="'bi ' + item.icon"></i>
+                      {{ item.label }}
+                    </span>
+                    <strong>{{ formatAmount(item.value) }}</strong>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
 
+    <!-- Reconciliation Summary -->
+    <section class="dashboard-section">
+      <div class="section-heading">
         <div>
-          <strong> Generate Report </strong>
-
-          <span> View financial reports </span>
+          <h5>Bank Reconciliation Overview</h5>
+          <p>Monitor reconciliation status and outstanding differences.</p>
         </div>
 
-        <i class="bi bi-arrow-right"></i>
-      </button>
-    </div>
-  </section>
+        <button class="btn btn-outline-primary btn-sm" (click)="openReconciliations()">
+          View Reconciliations
+          <i class="bi bi-arrow-right ms-1"></i>
+        </button>
+      </div>
+
+      @if (d.reconciliation; as r) {
+        @if (r.unresolvedCount > 0) {
+          <div class="attention-banner">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>
+              <strong
+                >{{ r.unresolvedCount }} unresolved reconciliation{{
+                  r.unresolvedCount > 1 ? 's' : ''
+                }}</strong
+              >
+              <span>
+                A total of {{ formatAmount(r.totalUnreconciledAmount) }} is still unreconciled.
+              </span>
+            </div>
+            <button class="btn btn-sm attention-btn" (click)="setTab('unresolved')">Review</button>
+          </div>
+        }
+
+        <div class="row g-3 mb-4">
+          <!-- Donut -->
+          <div class="col-12 col-lg-5 col-xl-4">
+            <div class="summary-card donut-card">
+              <span class="summary-label">Reconciliation Status</span>
+              <p class="summary-description">Distribution across all records</p>
+
+              <div class="donut-wrap">
+                <div class="donut" [style.background]="reconciliationDonut">
+                  <div class="donut-center">
+                    <strong>{{ balancedPercent }}%</strong>
+                    <span>Balanced</span>
+                  </div>
+                </div>
+
+                <ul class="donut-legend">
+                  @for (item of reconciliationLegend; track item.label) {
+                    <li>
+                      <span class="legend-name">
+                        <i class="dot" [style.background]="item.color"></i>
+                        {{ item.label }}
+                      </span>
+                      <strong>{{ item.count }}</strong>
+                    </li>
+                  }
+                  <li class="legend-total">
+                    <span class="legend-name">Total</span>
+                    <strong>{{ r.totalReconciliations }}</strong>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Differences -->
+          <div class="col-12 col-lg-7 col-xl-8">
+            <div class="row g-3 h-100">
+              <div class="col-12 col-md-6">
+                <div class="difference-card">
+                  <span>Total Difference</span>
+                  <strong>{{ formatAmount(r.totalDifference) }}</strong>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="difference-card">
+                  <span>Total Reconciled</span>
+                  <strong class="text-success">{{ formatAmount(r.totalReconciledAmount) }}</strong>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="difference-card">
+                  <span>Total Short Amount</span>
+                  <strong class="text-danger">{{ formatAmount(r.totalShortAmount) }}</strong>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="difference-card">
+                  <span>Unreconciled Amount</span>
+                  <strong class="text-danger">{{ formatAmount(r.totalUnreconciledAmount) }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabbed Tables -->
+        <div class="data-card">
+          <div class="tab-bar">
+            <button
+              type="button"
+              class="tab-btn"
+              [class.active]="activeTab === 'unresolved'"
+              (click)="setTab('unresolved')"
+            >
+              Unresolved
+              <span class="count-badge" [class.count-danger]="r.unresolvedItems.length > 0">
+                {{ r.unresolvedItems.length }}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="tab-btn"
+              [class.active]="activeTab === 'recent'"
+              (click)="setTab('recent')"
+            >
+              Recent
+              <span class="count-badge">{{ r.recentReconciliations.length }}</span>
+            </button>
+
+            <button
+              type="button"
+              class="tab-btn"
+              [class.active]="activeTab === 'health'"
+              (click)="setTab('health')"
+            >
+              Account Health
+              <span class="count-badge">{{ r.bankAccountHealth.length }}</span>
+            </button>
+          </div>
+
+          <!-- Unresolved -->
+          @if (activeTab === 'unresolved') {
+            <div class="data-card-header">
+              <div>
+                <h6>Unresolved Reconciliations</h6>
+                <p>Accounts requiring reconciliation follow-up.</p>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table dashboard-table align-middle">
+                <thead>
+                  <tr>
+                    <th>Bank / Account</th>
+                    <th>Account Number</th>
+                    <th>Date</th>
+                    <th>Currency</th>
+                    <th>System Balance</th>
+                    <th>Statement Balance</th>
+                    <th>Difference</th>
+                    <th>Unreconciled</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of r.unresolvedItems; track item.reconciliationId) {
+                    <tr>
+                      <td>
+                        <strong>{{ item.bankName }}</strong>
+                        <small class="table-subtext">{{ item.accountName }}</small>
+                      </td>
+                      <td>{{ item.accountNumber }}</td>
+                      <td>{{ formatDate(item.reconciliationDate) }}</td>
+                      <td>
+                        <span class="currency-code">{{ item.currency }}</span>
+                      </td>
+                      <td>{{ formatAmount(item.systemBalanceBefore) }}</td>
+                      <td>{{ formatAmount(item.statementBalance) }}</td>
+                      <td class="text-danger fw-semibold">
+                        {{ formatAmount(item.difference) }}
+                      </td>
+                      <td class="text-danger fw-semibold">
+                        {{ formatAmount(item.unreconciledAmount) }}
+                      </td>
+                      <td>
+                        <span
+                          class="status-badge"
+                          [class]="statusClass(item.status || 'UNRESOLVED')"
+                        >
+                          {{ statusLabel(item.status || 'UNRESOLVED') }}
+                        </span>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="9" class="empty-table">
+                        <i class="bi bi-check-circle me-1"></i>
+                        No unresolved reconciliations.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <!-- Recent -->
+          @if (activeTab === 'recent') {
+            <div class="data-card-header">
+              <div>
+                <h6>Recent Reconciliations</h6>
+                <p>Latest reconciliation records.</p>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table dashboard-table align-middle">
+                <thead>
+                  <tr>
+                    <th>Bank</th>
+                    <th>Account</th>
+                    <th>Date</th>
+                    <th>Currency</th>
+                    <th>Statement Balance</th>
+                    <th>Difference</th>
+                    <th>Reconciled</th>
+                    <th>Status</th>
+                    <th>Actioned By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of r.recentReconciliations; track item.reconciliationId) {
+                    <tr>
+                      <td>{{ item.bankName }}</td>
+                      <td>
+                        <strong>{{ item.accountName }}</strong>
+                        <small class="table-subtext">{{ item.accountNumber }}</small>
+                      </td>
+                      <td>{{ formatDate(item.reconciliationDate) }}</td>
+                      <td>
+                        <span class="currency-code">{{ item.currency }}</span>
+                      </td>
+                      <td>{{ formatAmount(item.statementBalance) }}</td>
+                      <td
+                        [class.text-danger]="item.difference < 0"
+                        [class.text-success]="item.difference > 0"
+                      >
+                        {{ formatAmount(item.difference) }}
+                      </td>
+                      <td>{{ formatAmount(item.reconciledAmount) }}</td>
+                      <td>
+                        <span class="status-badge" [class]="statusClass(item.status)">
+                          {{ statusLabel(item.status) }}
+                        </span>
+                      </td>
+                      <td>{{ item.actionedBy || 'N/A' }}</td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="9" class="empty-table">No recent reconciliation records.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <!-- Health -->
+          @if (activeTab === 'health') {
+            <div class="data-card-header">
+              <div>
+                <h6>Bank Account Health</h6>
+                <p>Current balances and latest reconciliation status for each account.</p>
+              </div>
+              <button class="btn btn-outline-primary btn-sm" (click)="openBanks()">
+                View Banks
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table dashboard-table align-middle">
+                <thead>
+                  <tr>
+                    <th>Bank</th>
+                    <th>Account</th>
+                    <th>Account Number</th>
+                    <th>Currency</th>
+                    <th>System Balance</th>
+                    <th>Last Reconciled</th>
+                    <th>Days Since</th>
+                    <th>Unreconciled</th>
+                    <th>Health</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of r.bankAccountHealth; track item.bankAccountId) {
+                    <tr>
+                      <td>{{ item.bankName }}</td>
+                      <td>{{ item.accountName }}</td>
+                      <td>{{ item.accountNumber }}</td>
+                      <td>
+                        <span class="currency-code">{{ item.currency }}</span>
+                      </td>
+                      <td>{{ formatAmount(item.currentSystemBalance) }}</td>
+                      <td>{{ formatDate(item.lastReconciliationDate) }}</td>
+                      <td>
+                        {{
+                          item.daysSinceLastReconciliation < 0
+                            ? '—'
+                            : item.daysSinceLastReconciliation
+                        }}
+                      </td>
+                      <td [class.text-danger]="item.lastUnreconciledAmount > 0">
+                        {{ formatAmount(item.lastUnreconciledAmount) }}
+                      </td>
+                      <td>
+                        <span class="status-badge" [class]="statusClass(item.healthStatus)">
+                          {{ healthLabel(item.healthStatus) }}
+                        </span>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="9" class="empty-table">
+                        No bank account health data available.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
 </div>

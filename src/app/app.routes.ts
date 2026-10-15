@@ -38,6 +38,8 @@ import { ClientLoans } from './pages/banking/client-loans/client-loans';
 import { NewClientLoan } from './pages/banking/new-client-loan/new-client-loan';
 import { NewClientLoanTransactions } from './pages/banking/new-client-loan-transactions/new-client-loan-transactions';
 import { ClientLoanTransactions } from './pages/banking/client-loan-transactions/client-loan-transactions';
+import { NewStatement } from './pages/banking/new-statement/new-statement';
+import { NewReconciliation } from './pages/banking/new-reconciliation/new-reconciliation';
 
 export const routes: Routes = [
   {
@@ -239,6 +241,14 @@ export const routes: Routes = [
       {
         path: 'petty-cash-accounts/new',
         component: NewPettyCashBranchAccount,
+      },
+      {
+        path: 'banking/new-bank-statement',
+        component: NewStatement,
+      },
+      {
+        path: 'banking/new-bank-reconciliation/:id/:bankAccountId',
+        component: NewReconciliation,
       },
     ],
   },

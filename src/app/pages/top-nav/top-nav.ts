@@ -111,7 +111,7 @@ export class TopNav {
         this.loggedUserName = '';
         this.initials = '';
 
-        this.router.navigateByUrl('login');
+        this.router.navigateByUrl('');
 
         Swal.fire({
           toast: true,

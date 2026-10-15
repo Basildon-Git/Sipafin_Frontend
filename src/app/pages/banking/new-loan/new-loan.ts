@@ -29,6 +29,7 @@ export interface CreateLoanRequest {
   interestRate: number;
   dateReceived: string;
   dueDate: string | null;
+  affectBalances: boolean;
   reference: string;
   description: string;
   actionedBy: string;
@@ -61,28 +62,20 @@ export class NewLoan {
   private readonly toastr = inject(ToastrService);
   private readonly masterService = inject(Master);
 
-  // =========================
   // Loan fields
-  // =========================
-
   currency = 'USD';
   principalAmount = 0;
   interestRate = 0;
   dateReceived = this.getToday();
   dueDate = '';
+  affectBalances = true;
   reference = '';
   description = '';
 
-  // =========================
   // Currency options
-  // =========================
-
   currencies = ['USD', 'ZIG', 'ZAR', 'EUR'];
 
-  // =========================
   // Investor
-  // =========================
-
   investorId: number | null = null;
   investorSearch = '';
   investorSelected = false;
@@ -107,16 +100,10 @@ export class NewLoan {
       );
   });
 
-  // =========================
   // Branch
-  // =========================
-
   branchId: number | null = null;
-
   branchSearch = '';
-
   branchSelected = false;
-
   branchSearchStarted = false;
 
   branches = signal<Branch[]>([]);
@@ -138,29 +125,17 @@ export class NewLoan {
       );
   });
 
-  // =========================
   // Form state
-  // =========================
-
   loading = false;
-
   loadingInvestors = false;
-
   loadingBranches = false;
-
-  // =========================
-  // Constructor
-  // =========================
 
   constructor() {
     this.loadInvestors();
     this.loadBranches();
   }
 
-  // =========================
   // Load investors
-  // =========================
-
   loadInvestors(): void {
     this.loadingInvestors = true;
 
@@ -171,7 +146,6 @@ export class NewLoan {
         this.investors.set(response.data ?? []);
         this.loadingInvestors = false;
       },
-
       error: (error) => {
         this.loadingInvestors = false;
 
@@ -185,10 +159,7 @@ export class NewLoan {
     });
   }
 
-  // =========================
   // Load branches
-  // =========================
-
   loadBranches(): void {
     this.loadingBranches = true;
 
@@ -198,11 +169,8 @@ export class NewLoan {
       next: (response) => {
         this.branches.set(response.data ?? []);
         this.loadingBranches = false;
-
-        // Try to use the branch stored in localStorage
         this.loadLocalBranch();
       },
-
       error: (error) => {
         this.loadingBranches = false;
 
@@ -216,10 +184,7 @@ export class NewLoan {
     });
   }
 
-  // =========================
   // Load branch from localStorage
-  // =========================
-
   loadLocalBranch(): void {
     const storedBranchId = localStorage.getItem('branchId');
 
@@ -245,12 +210,10 @@ export class NewLoan {
     this.branchSearchStarted = false;
   }
 
-  // =========================
   // Investor search
-  // =========================
-
   onInvestorSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
+
     this.investorSearch = input.value;
     this.investorId = null;
     this.investorSelected = false;
@@ -267,37 +230,25 @@ export class NewLoan {
 
   selectInvestor(investor: Investor): void {
     this.investorId = investor.id;
-
     this.investorSearch = `${investor.fullName} (${investor.phoneNumber})`;
-
     this.investorSelected = true;
-
     this.investorSearchStarted = false;
   }
 
   clearInvestor(): void {
     this.investorId = null;
-
     this.investorSearch = '';
-
     this.investorSelected = false;
-
     this.investorSearchStarted = false;
   }
 
-  // =========================
   // Branch search
-  // =========================
-
   onBranchSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
 
     this.branchSearch = input.value;
-
     this.branchId = null;
-
     this.branchSelected = false;
-
     this.branchSearchStarted = input.value.trim().length > 0;
   }
 
@@ -311,46 +262,37 @@ export class NewLoan {
 
   selectBranch(branch: Branch): void {
     this.branchId = branch.id;
-
     this.branchSearch = `${branch.name} (${branch.code})`;
-
     this.branchSelected = true;
-
     this.branchSearchStarted = false;
   }
 
   clearBranch(): void {
     this.branchId = null;
-
     this.branchSearch = '';
-
     this.branchSelected = false;
-
     this.branchSearchStarted = false;
   }
 
-  // =========================
   // Navigation
-  // =========================
-
   goBack(): void {
     this.router.navigate(['/loans']);
   }
 
-  // =========================
   // Create loan
-  // =========================
-
   createLoan(): void {
     if (
       !this.investorId ||
       !this.branchId ||
       !this.currency ||
-      this.principalAmount <= 0 ||
+      !Number.isFinite(Number(this.principalAmount)) ||
+      Number(this.principalAmount) <= 0 ||
+      !Number.isFinite(Number(this.interestRate)) ||
+      Number(this.interestRate) < 0 ||
       !this.dateReceived
     ) {
       this.toastr.warning(
-        'Please select an investor and branch, select a currency and enter a valid principal amount.',
+        'Please select an investor and branch, select a currency, and enter a valid principal amount and interest rate.',
         'Validation',
       );
 
@@ -363,13 +305,14 @@ export class NewLoan {
       investorId: this.investorId,
       branchId: this.branchId,
       currency: this.currency,
-      principalAmount: Number(this.principalAmount) || 0,
-      interestRate: Number(this.interestRate) || 0,
+      principalAmount: Number(this.principalAmount),
+      interestRate: Number(this.interestRate),
       dateReceived: this.dateReceived,
       dueDate: this.dueDate || null,
+      affectBalances: this.affectBalances,
       reference: this.reference.trim(),
       description: this.description.trim(),
-      actionedBy: actionedBy,
+      actionedBy,
     };
 
     console.log('CreateLoanRequest:', request);
@@ -381,11 +324,11 @@ export class NewLoan {
     this.http.post(endpoint, request).subscribe({
       next: (response) => {
         console.log('Loan created successfully:', response);
+
         this.loading = false;
         this.toastr.success('Loan created successfully.', 'Success');
         this.router.navigate(['/loans']);
       },
-
       error: (error) => {
         this.loading = false;
 
@@ -399,10 +342,7 @@ export class NewLoan {
     });
   }
 
-  // =========================
-  // Today
-  // =========================
-
+  // Today's date in local time
   private getToday(): string {
     const today = new Date();
     const year = today.getFullYear();

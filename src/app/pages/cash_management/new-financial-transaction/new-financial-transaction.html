@@ -39,6 +39,72 @@
     </div>
   </div>
 
+  <div class="branch-float-card mb-2">
+    <div class="float-main">
+      <div class="float-heading">
+        <div class="float-icon">
+          <i class="bi bi-wallet2"></i>
+        </div>
+
+        <div>
+          <span class="float-label">BRANCH FLOAT</span>
+          <h5>Available Balance</h5>
+        </div>
+      </div>
+
+      @if (loading) {
+        <div class="balance-loading">
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Loading balance...
+        </div>
+      } @else if (account) {
+        <div class="balance-amount">
+          <span class="currency">{{ account.currency }}</span>
+          <span>{{ formatBalance(account.currentBalance) }}</span>
+        </div>
+
+        <div class="balance-status">
+          <span class="status-dot"></span>
+          Active account
+        </div>
+      } @else {
+        <div class="balance-error">
+          {{ error || 'Branch float information unavailable.' }}
+        </div>
+      }
+    </div>
+
+    @if (account && !loading) {
+      <div class="float-divider"></div>
+
+      <div class="float-details">
+        <div class="detail-item">
+          <span class="detail-label"> <i class="bi bi-building me-2"></i>Branch </span>
+          <span class="detail-value">{{ account.branchName }}</span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label"> <i class="bi bi-upc-scan me-2"></i>Branch Code </span>
+          <span class="detail-value">{{ account.branchCode }}</span>
+        </div>
+
+
+        <div class="detail-item">
+          <span class="detail-label"> <i class="bi bi-clock-history me-2"></i>Last Updated </span>
+          <span class="detail-value">
+            {{ account.updatedAt | date: 'dd MMM yyyy, HH:mm' }}
+          </span>
+        </div>
+      </div>
+    }
+
+    @if (error && !loading && !account) {
+      <div class="float-error-icon">
+        <i class="bi bi-exclamation-circle"></i>
+      </div>
+    }
+  </div>
+
   <!-- ERROR -->
   @if (errorMessage) {
     <div class="error-message">
