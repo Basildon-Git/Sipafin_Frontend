@@ -39,6 +39,7 @@
     </div>
   </div>
 
+  <!-- BRANCH FLOAT BALANCE -->
   <div class="branch-float-card mb-2">
     <div class="float-main">
       <div class="float-heading">
@@ -79,21 +80,19 @@
 
       <div class="float-details">
         <div class="detail-item">
-          <span class="detail-label"> <i class="bi bi-building me-2"></i>Branch </span>
+          <span class="detail-label">
+            <i class="bi bi-building me-2"></i>
+            Branch
+          </span>
           <span class="detail-value">{{ account.branchName }}</span>
         </div>
 
         <div class="detail-item">
-          <span class="detail-label"> <i class="bi bi-upc-scan me-2"></i>Branch Code </span>
-          <span class="detail-value">{{ account.branchCode }}</span>
-        </div>
-
-
-        <div class="detail-item">
-          <span class="detail-label"> <i class="bi bi-clock-history me-2"></i>Last Updated </span>
-          <span class="detail-value">
-            {{ account.updatedAt | date: 'dd MMM yyyy, HH:mm' }}
+          <span class="detail-label">
+            <i class="bi bi-upc-scan me-2"></i>
+            Branch Code
           </span>
+          <span class="detail-value">{{ account.branchCode }}</span>
         </div>
       </div>
     }
@@ -118,14 +117,17 @@
   }
 
   <!-- =====================================================
-       BANK WITHDRAWALS
+       CUSTOMER WITHDRAWALS
+       Customer sends/card-transfers money to bank.
+       Branch gives cash out.
+       Cash/Float OUT, Bank IN.
        ===================================================== -->
 
   <div class="cashbook-card">
     <div class="section-header withdrawal-header">
       <div>
-        <h3>Withdrawals — Float → Bank</h3>
-        <span>Individual bank accounts</span>
+        <h3>Withdrawals — Cash Out, Bank In</h3>
+        <span>Customer withdrawals by bank account</span>
       </div>
 
       <button type="button" class="add-button" (click)="openTransactionForm('BANK_WITHDRAWAL')">
@@ -147,7 +149,6 @@
             }
 
             <th class="total-column">Total</th>
-
             <th class="action-column">Action</th>
           </tr>
         </thead>
@@ -206,14 +207,17 @@
   </div>
 
   <!-- =====================================================
-       BANK DEPOSITS
+       CUSTOMER DEPOSITS
+       Customer brings cash.
+       Branch sends money from bank.
+       Cash/Float IN, Bank OUT.
        ===================================================== -->
 
   <div class="cashbook-card">
     <div class="section-header deposit-header">
       <div>
-        <h3>Deposits — Bank → Float</h3>
-        <span>Individual bank accounts</span>
+        <h3>Deposits — Cash In, Bank Out</h3>
+        <span>Customer deposits by bank account</span>
       </div>
 
       <button type="button" class="add-button" (click)="openTransactionForm('BANK_DEPOSIT')">
@@ -235,7 +239,6 @@
             }
 
             <th class="total-column">Total</th>
-
             <th class="action-column">Action</th>
           </tr>
         </thead>
@@ -325,25 +328,11 @@
         <tbody>
           @for (transaction of floatTransferTransactions; track transaction.id) {
             <tr>
-              <td>
-                {{ transaction.date | date: 'dd/MM/yyyy' }}
-              </td>
-
-              <td>
-                {{ transaction.typeLabel }}
-              </td>
-
-              <td>
-                {{ transaction.context }}
-              </td>
-
-              <td>
-                {{ transaction.reference || '-' }}
-              </td>
-
-              <td>
-                {{ transaction.description || '-' }}
-              </td>
+              <td>{{ transaction.date | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ transaction.typeLabel }}</td>
+              <td>{{ transaction.context }}</td>
+              <td>{{ transaction.reference || '-' }}</td>
+              <td>{{ transaction.description || '-' }}</td>
 
               <td>
                 <span
@@ -387,7 +376,6 @@
 
   <!-- =====================================================
        LOANS RECEIVED
-       IMPORTANT: OUTSIDE THE MODAL
        ===================================================== -->
 
   <div class="cashbook-card">
@@ -415,28 +403,14 @@
         <tbody>
           @for (transaction of loanReceivedDisplayTransactions; track transaction.id) {
             <tr>
-              <td>
-                {{ transaction.date | date: 'dd/MM/yyyy' }}
-              </td>
+              <td>{{ transaction.date | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ transaction.typeLabel }}</td>
+              <td>{{ transaction.description || '-' }}</td>
+              <td>{{ transaction.reference || '-' }}</td>
+              <td>{{ transaction.transaction?.actionedBy || '-' }}</td>
 
               <td>
-                {{ transaction.typeLabel }}
-              </td>
-
-              <td>
-                {{ transaction.description || '-' }}
-              </td>
-
-              <td>
-                {{ transaction.reference || '-' }}
-              </td>
-
-              <td>
-                {{ transaction.transaction?.actionedBy || '-' }}
-              </td>
-
-              <td>
-                <span class="direction-badge direction-in"> IN </span>
+                <span class="direction-badge direction-in">IN</span>
               </td>
 
               <td class="amount-column amount-in">
@@ -484,28 +458,14 @@
         <tbody>
           @for (transaction of loanRepaymentDisplayTransactions; track transaction.id) {
             <tr>
-              <td>
-                {{ transaction.date | date: 'dd/MM/yyyy' }}
-              </td>
+              <td>{{ transaction.date | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ transaction.typeLabel }}</td>
+              <td>{{ transaction.description || '-' }}</td>
+              <td>{{ transaction.reference || '-' }}</td>
+              <td>{{ transaction.transaction?.actionedBy || '-' }}</td>
 
               <td>
-                {{ transaction.typeLabel }}
-              </td>
-
-              <td>
-                {{ transaction.description || '-' }}
-              </td>
-
-              <td>
-                {{ transaction.reference || '-' }}
-              </td>
-
-              <td>
-                {{ transaction.transaction?.actionedBy || '-' }}
-              </td>
-
-              <td>
-                <span class="direction-badge direction-out"> OUT </span>
+                <span class="direction-badge direction-out">OUT</span>
               </td>
 
               <td class="amount-column amount-out">
@@ -525,8 +485,8 @@
   </div>
 
   <!-- =====================================================
-     CLIENT LOANS
-     ===================================================== -->
+       CLIENT LOANS
+       ===================================================== -->
 
   <div class="cashbook-card">
     <div class="section-header">
@@ -557,25 +517,19 @@
         <tbody>
           @for (loan of clientLoans; track loan.id) {
             <tr>
-              <td>
-                {{ loan.dateIssued | date: 'dd/MM/yyyy' }}
-              </td>
+              <td>{{ loan.dateIssued | date: 'dd/MM/yyyy' }}</td>
 
               <td>
                 <strong>{{ loan.clientName }}</strong>
               </td>
 
-              <td>
-                {{ loan.clientPhone || '-' }}
-              </td>
+              <td>{{ loan.clientPhone || '-' }}</td>
 
               <td>
                 {{ loan.fundingSource === 'BRANCH_FLOAT' ? 'Branch Float' : 'Bank Account' }}
 
                 @if (loan.fundingSource === 'BANK_ACCOUNT') {
-                  <small>
-                    {{ loan.fundingBankAccountName || '-' }}
-                  </small>
+                  <small>{{ loan.fundingBankAccountName || '-' }}</small>
                 }
               </td>
 
@@ -675,25 +629,11 @@
         <tbody>
           @for (transaction of currencyExchangeTransactions; track transaction.id) {
             <tr>
-              <td>
-                {{ transaction.date | date: 'dd/MM/yyyy' }}
-              </td>
-
-              <td>
-                {{ transaction.typeLabel }}
-              </td>
-
-              <td>
-                {{ transaction.context }}
-              </td>
-
-              <td>
-                {{ transaction.reference || '-' }}
-              </td>
-
-              <td>
-                {{ transaction.description || '-' }}
-              </td>
+              <td>{{ transaction.date | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ transaction.typeLabel }}</td>
+              <td>{{ transaction.context }}</td>
+              <td>{{ transaction.reference || '-' }}</td>
+              <td>{{ transaction.description || '-' }}</td>
 
               <td>
                 <span
@@ -764,25 +704,11 @@
         <tbody>
           @for (transaction of expenseTransactions; track transaction.id) {
             <tr>
-              <td>
-                {{ transaction.date | date: 'dd/MM/yyyy' }}
-              </td>
-
-              <td>
-                {{ transaction.context }}
-              </td>
-
-              <td>
-                {{ transaction.context }}
-              </td>
-
-              <td>
-                {{ transaction.reference || '-' }}
-              </td>
-
-              <td>
-                {{ transaction.description || '-' }}
-              </td>
+              <td>{{ transaction.date | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ transaction.context }}</td>
+              <td>{{ transaction.context }}</td>
+              <td>{{ transaction.reference || '-' }}</td>
+              <td>{{ transaction.description || '-' }}</td>
 
               <td class="amount-column amount-out">
                 {{ formatAmount(transaction.amount) }}
@@ -842,9 +768,7 @@
         <tbody>
           @for (transaction of adjustmentTransactions; track transaction.id) {
             <tr>
-              <td>
-                {{ transaction.date | date: 'dd/MM/yyyy' }}
-              </td>
+              <td>{{ transaction.date | date: 'dd/MM/yyyy' }}</td>
 
               <td>
                 <span
@@ -856,13 +780,8 @@
                 </span>
               </td>
 
-              <td>
-                {{ transaction.reference || '-' }}
-              </td>
-
-              <td>
-                {{ transaction.description || '-' }}
-              </td>
+              <td>{{ transaction.reference || '-' }}</td>
+              <td>{{ transaction.description || '-' }}</td>
 
               <td class="amount-column">
                 {{ formatAmount(transaction.amount) }}
@@ -955,8 +874,6 @@
 
   <!-- =====================================================
        TRANSACTION MODAL
-       IMPORTANT:
-       EVERYTHING FROM HERE IS ONLY THE FORM
        ===================================================== -->
 
   @if (showTransactionForm) {
@@ -1147,7 +1064,6 @@
 
                 <select [(ngModel)]="transactionForm.paidFrom">
                   <option value="BRANCH_FLOAT">Branch Float</option>
-
                   <option value="BANK_ACCOUNT">Bank Account</option>
                 </select>
               </div>
@@ -1203,7 +1119,6 @@
 
                 <select [(ngModel)]="transactionForm.paymentSource">
                   <option value="BRANCH_FLOAT">Branch Float</option>
-
                   <option value="BANK_ACCOUNT">Bank Account</option>
                 </select>
               </div>

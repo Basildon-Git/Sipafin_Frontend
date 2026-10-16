@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { Master } from '../../../core/services/master';
 
 type Currency = 'USD' | 'ZIG' | 'ZAR' | 'EUR';
@@ -208,7 +208,6 @@ export class NewFinancialTransaction implements OnInit {
   branchFloat: BranchFloat | null = null;
 
   selectedCurrency: Currency = 'USD';
-
   selectedWeekStart = this.getMonday(new Date());
 
   days: DayColumn[] = [];
@@ -221,41 +220,28 @@ export class NewFinancialTransaction implements OnInit {
   floatTransactions: FloatTransaction[] = [];
   bankTransactions: BankTransaction[] = [];
 
-  /**
-   * Dedicated loan cash movements.
-   *
-   * LOAN_RECEIVED:
-   * Money received by the branch from a lender.
-   *
-   * LOAN_REPAYMENT:
-   * Money paid by the branch back to a lender.
-   *
-   * CLIENT LOAN REPAYMENT:
-   * Money received from clients.
-   */
   loanReceivedTransactions: FloatTransaction[] = [];
   loanRepaymentTransactions: FloatTransaction[] = [];
   clientLoanRepaymentTransactions: FloatTransaction[] = [];
 
-  /**
-   * Client loan portfolio returned by:
-   *
-   * /api/v1/client-loans/branch/{branchId}/currency/{currency}
-   */
   clientLoans: ClientLoan[] = [];
+
   displayTransactions: DisplayTransaction[] = [];
   summaryRows: SummaryRow[] = [];
+
   loading = false;
   saving = false;
+
   errorMessage = '';
+  error = '';
+
   showTransactionForm = false;
   selectedTransactionType: TransactionType | null = null;
   formTitle = '';
 
   transactionForm = this.createEmptyForm();
 
-  account: any = null;
-  error = '';
+  account: BranchFloat | null = null;
 
   ngOnInit(): void {
     this.branchId = this.getBranchId();
@@ -279,21 +265,24 @@ export class NewFinancialTransaction implements OnInit {
 
     this.http.get<any>(url).subscribe({
       next: (response) => {
-        const accounts = response?.data ?? [];
-        this.account =
-          accounts.find((item: any) => item.currency === 'USD' && item.active) ??
-          accounts.find((item: any) => item.active) ??
-          null;
+        const accounts: BranchFloat[] = response?.data ?? [];
 
+        this.branchFloat =
+          accounts.find((item) => item.currency === this.selectedCurrency && item.active) ?? null;
+
+        this.account = this.branchFloat;
         this.loading = false;
 
-        if (!this.account) {
-          this.error = 'No active branch float account was found.';
+        if (!this.branchFloat) {
+          this.error = `No active ${this.selectedCurrency} branch float account was found.`;
         }
       },
       error: (err) => {
         console.error('Failed to load branch float:', err);
+
         this.error = err?.error?.message || 'Failed to load branch float account.';
+        this.branchFloat = null;
+        this.account = null;
         this.loading = false;
       },
     });
@@ -305,10 +294,6 @@ export class NewFinancialTransaction implements OnInit {
       maximumFractionDigits: 2,
     });
   }
-
-  // ---------------------------------------------------------
-  // INITIAL DATA
-  // ---------------------------------------------------------
 
   private loadInitialData(): void {
     this.loading = true;
@@ -322,30 +307,22 @@ export class NewFinancialTransaction implements OnInit {
     }).subscribe({
       next: (response) => {
         this.branches = response.branches?.data ?? [];
-
         this.bankAccounts = response.bankAccounts?.data ?? [];
 
         this.selectedBranch =
           this.branches.find((branch) => Number(branch.id) === Number(this.branchId)) ?? null;
 
         this.filterBankAccounts();
-
         this.loadWeekData();
       },
-
       error: (error) => {
         console.error('Failed to load initial financial data', error);
 
         this.errorMessage = error?.error?.message || 'Failed to load financial transaction data.';
-
         this.loading = false;
       },
     });
   }
-
-  // ---------------------------------------------------------
-  // WEEK DATA
-  // ---------------------------------------------------------
 
   private loadWeekData(): void {
     if (!this.branchId) {
@@ -369,7 +346,6 @@ export class NewFinancialTransaction implements OnInit {
 
         responses.forEach((response, index) => {
           const requestedDate = this.days[index].date;
-
           const data: FloatTransaction[] = response?.data ?? [];
 
           data.forEach((transaction) => {
@@ -386,23 +362,16 @@ export class NewFinancialTransaction implements OnInit {
         });
 
         this.floatTransactions = this.sortTransactions(Array.from(transactionMap.values()));
-
         this.loadLoanTransactions();
       },
-
       error: (error) => {
         console.error('Failed to load float transactions', error);
 
         this.floatTransactions = [];
-
         this.loadLoanTransactions();
       },
     });
   }
-
-  // ---------------------------------------------------------
-  // BANK TRANSACTIONS
-  // ---------------------------------------------------------
 
   private loadBankTransactions(): void {
     if (!this.branchId) {
@@ -428,16 +397,15 @@ export class NewFinancialTransaction implements OnInit {
           this.filterBankAccounts();
           this.buildDisplayTransactions();
           this.buildSummary();
+
           this.loading = false;
         },
-
         error: (error) => {
           console.error('Failed to load bank transactions', error);
 
           this.bankTransactions = [];
 
           this.buildDisplayTransactions();
-
           this.buildSummary();
 
           this.loading = false;
@@ -445,19 +413,11 @@ export class NewFinancialTransaction implements OnInit {
       });
   }
 
-  // ---------------------------------------------------------
-  // BANK ACCOUNTS
-  // ---------------------------------------------------------
-
   filterBankAccounts(): void {
     this.filteredBankAccounts = this.bankAccounts.filter(
       (account) => account.active && account.currency === this.selectedCurrency,
     );
   }
-
-  // ---------------------------------------------------------
-  // LOAN TRANSACTIONS
-  // ---------------------------------------------------------
 
   private loadLoanTransactions(): void {
     if (!this.branchId) {
@@ -467,26 +427,38 @@ export class NewFinancialTransaction implements OnInit {
     const baseUrl = this.masterService.getBackendService();
 
     forkJoin({
-      received: this.http.get<any>(
-        `${baseUrl}api/v1/money-movements/float/loans-received/branch/${this.branchId}/currency/${this.selectedCurrency}`,
-      ),
+      received: this.http
+        .get<any>(
+          `${baseUrl}api/v1/money-movements/float/loans-received/branch/${this.branchId}/currency/${this.selectedCurrency}`,
+        )
+        .pipe(
+          catchError((error) => {
+            console.error('Failed to load loan received transactions', error);
+            return of({ data: [] });
+          }),
+        ),
 
-      repayments: this.http.get<any>(
-        `${baseUrl}api/v1/money-movements/float/loan-repayments/branch/${this.branchId}/currency/${this.selectedCurrency}`,
-      ),
+      repayments: this.http
+        .get<any>(
+          `${baseUrl}api/v1/money-movements/float/loan-repayments/branch/${this.branchId}/currency/${this.selectedCurrency}`,
+        )
+        .pipe(
+          catchError((error) => {
+            console.error('Failed to load loan repayment transactions', error);
+            return of({ data: [] });
+          }),
+        ),
 
-      /**
-       * IMPORTANT:
-       *
-       * This endpoint name may differ in your backend.
-       *
-       * The important part is that client repayments should
-       * come from an actual transaction endpoint, NOT from
-       * loan.updatedAt.
-       */
-      clientLoanRepayments: this.http.get<any>(
-        `${baseUrl}api/v1/money-movements/float/client-loan-repayments/branch/${this.branchId}/currency/${this.selectedCurrency}`,
-      ),
+      clientLoanRepayments: this.http
+        .get<any>(
+          `${baseUrl}api/v1/money-movements/float/client-loan-repayments/branch/${this.branchId}/currency/${this.selectedCurrency}`,
+        )
+        .pipe(
+          catchError((error) => {
+            console.error('Failed to load client loan repayment transactions', error);
+            return of({ data: [] });
+          }),
+        ),
     }).subscribe({
       next: (response) => {
         this.loanReceivedTransactions = this.prepareLoanTransactions(response.received?.data ?? []);
@@ -501,18 +473,11 @@ export class NewFinancialTransaction implements OnInit {
 
         this.loadClientLoans();
       },
-
       error: (error) => {
         console.error('Failed to load loan transactions', error);
 
         this.loanReceivedTransactions = [];
         this.loanRepaymentTransactions = [];
-
-        /**
-         * If the backend does not yet have the client-loan
-         * repayment endpoint, keep this empty rather than
-         * incorrectly using updatedAt.
-         */
         this.clientLoanRepaymentTransactions = [];
 
         this.loadClientLoans();
@@ -542,10 +507,6 @@ export class NewFinancialTransaction implements OnInit {
     return this.sortTransactions(Array.from(map.values()));
   }
 
-  // ---------------------------------------------------------
-  // CLIENT LOANS
-  // ---------------------------------------------------------
-
   private loadClientLoans(): void {
     if (!this.branchId) {
       return;
@@ -569,7 +530,6 @@ export class NewFinancialTransaction implements OnInit {
 
           this.loadBankTransactions();
         },
-
         error: (error) => {
           console.error('Failed to load client loans', error);
 
@@ -580,18 +540,10 @@ export class NewFinancialTransaction implements OnInit {
       });
   }
 
-  // ---------------------------------------------------------
-  // DISPLAY TRANSACTIONS
-  // ---------------------------------------------------------
-
   private buildDisplayTransactions(): void {
     const result: DisplayTransaction[] = [];
 
     for (const transaction of this.floatTransactions) {
-      /**
-       * Dedicated loan records are displayed separately
-       * below so they are not duplicated.
-       */
       if (
         transaction.transactionType === 'LOAN_RECEIVED' ||
         transaction.transactionType === 'LOAN_REPAYMENT' ||
@@ -601,7 +553,6 @@ export class NewFinancialTransaction implements OnInit {
       }
 
       let context = '';
-
       let bankAccountId: number | undefined;
 
       if (
@@ -653,7 +604,6 @@ export class NewFinancialTransaction implements OnInit {
       });
     }
 
-    // LOAN RECEIVED
     for (const transaction of this.loanReceivedTransactions) {
       result.push({
         id: `LOAN-RECEIVED-${transaction.id}`,
@@ -669,7 +619,6 @@ export class NewFinancialTransaction implements OnInit {
       });
     }
 
-    // LOAN REPAYMENT
     for (const transaction of this.loanRepaymentTransactions) {
       result.push({
         id: `LOAN-REPAYMENT-${transaction.id}`,
@@ -685,7 +634,6 @@ export class NewFinancialTransaction implements OnInit {
       });
     }
 
-    // CLIENT LOAN REPAYMENT
     for (const transaction of this.clientLoanRepaymentTransactions) {
       result.push({
         id: `CLIENT-LOAN-REPAYMENT-${transaction.id}`,
@@ -713,6 +661,16 @@ export class NewFinancialTransaction implements OnInit {
   }
 
   private findBankTransaction(floatTransaction: FloatTransaction): BankTransaction | undefined {
+    if (floatTransaction.transactionGroupId) {
+      const groupMatch = this.bankTransactions.find(
+        (bank) => bank.transactionGroupId === floatTransaction.transactionGroupId,
+      );
+
+      if (groupMatch) {
+        return groupMatch;
+      }
+    }
+
     const expectedType =
       floatTransaction.transactionType === 'BANK_WITHDRAWAL' ? 'CASH_WITHDRAWAL' : 'CASH_DEPOSIT';
 
@@ -737,16 +695,12 @@ export class NewFinancialTransaction implements OnInit {
     return matches[0];
   }
 
-  // ---------------------------------------------------------
-  // TRANSACTION SECTIONS
-  // ---------------------------------------------------------
-
   get withdrawalTransactions(): DisplayTransaction[] {
-    return this.displayTransactions.filter((transaction) => transaction.type === 'BANK_WITHDRAWAL');
+    return this.displayTransactions.filter((transaction) => transaction.type === 'BANK_DEPOSIT');
   }
 
   get depositTransactions(): DisplayTransaction[] {
-    return this.displayTransactions.filter((transaction) => transaction.type === 'BANK_DEPOSIT');
+    return this.displayTransactions.filter((transaction) => transaction.type === 'BANK_WITHDRAWAL');
   }
 
   get floatTransferTransactions(): DisplayTransaction[] {
@@ -785,10 +739,6 @@ export class NewFinancialTransaction implements OnInit {
     );
   }
 
-  // ---------------------------------------------------------
-  // BANK DAILY TOTALS
-  // ---------------------------------------------------------
-
   getBankDailyTotal(
     transactions: DisplayTransaction[],
     bankAccountId: number,
@@ -817,10 +767,6 @@ export class NewFinancialTransaction implements OnInit {
     return transactions.reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
   }
 
-  // ---------------------------------------------------------
-  // CLIENT LOAN HELPERS
-  // ---------------------------------------------------------
-
   get clientLoansFromFloat(): ClientLoan[] {
     return this.clientLoans.filter((loan) => loan.fundingSource === 'BRANCH_FLOAT');
   }
@@ -829,27 +775,13 @@ export class NewFinancialTransaction implements OnInit {
     return this.clientLoans.filter((loan) => loan.fundingSource === 'BANK_ACCOUNT');
   }
 
-  /**
-   * Amount already received from a client.
-   *
-   * Example:
-   *
-   * totalReceivable = 256
-   * outstandingBalance = 246
-   *
-   * received = 10
-   */
   getClientLoanReceivedAmount(loan: ClientLoan): number {
     const totalReceivable = Number(loan.totalReceivable || 0);
     const outstandingBalance = Number(loan.outstandingBalance || 0);
+
     return Math.max(0, totalReceivable - outstandingBalance);
   }
 
-  /**
-   * Total principal currently issued from branch float.
-   *
-   * This is the amount that leaves the float.
-   */
   getClientLoanIssuedTotal(): number {
     return this.clientLoansFromFloat.reduce(
       (sum, loan) => sum + Number(loan.principalAmount || 0),
@@ -857,15 +789,6 @@ export class NewFinancialTransaction implements OnInit {
     );
   }
 
-  /**
-   * Total currently received from clients
-   * according to the loan portfolio.
-   *
-   * NOTE:
-   * This is a cumulative portfolio figure.
-   * For daily cash summary use the actual
-   * clientLoanRepaymentTransactions.
-   */
   getClientLoanReceivedTotal(): number {
     return this.clientLoansFromFloat.reduce(
       (sum, loan) => sum + this.getClientLoanReceivedAmount(loan),
@@ -873,10 +796,6 @@ export class NewFinancialTransaction implements OnInit {
     );
   }
 
-  /**
-   * Total outstanding client-loan principal/receivable
-   * for branch-float funded loans.
-   */
   getClientLoanOutstandingTotal(): number {
     return this.clientLoansFromFloat.reduce(
       (sum, loan) => sum + Number(loan.outstandingBalance || 0),
@@ -884,9 +803,6 @@ export class NewFinancialTransaction implements OnInit {
     );
   }
 
-  /**
-   * Total principal issued from float.
-   */
   getClientLoanPrincipalTotal(): number {
     return this.clientLoansFromFloat.reduce(
       (sum, loan) => sum + Number(loan.principalAmount || 0),
@@ -894,9 +810,6 @@ export class NewFinancialTransaction implements OnInit {
     );
   }
 
-  /**
-   * Total interest expected.
-   */
   getClientLoanInterestTotal(): number {
     return this.clientLoansFromFloat.reduce(
       (sum, loan) => sum + Number(loan.interestAmount || 0),
@@ -904,9 +817,6 @@ export class NewFinancialTransaction implements OnInit {
     );
   }
 
-  /**
-   * Total amount receivable.
-   */
   getClientLoanReceivableTotal(): number {
     return this.clientLoansFromFloat.reduce(
       (sum, loan) => sum + Number(loan.totalReceivable || 0),
@@ -914,59 +824,36 @@ export class NewFinancialTransaction implements OnInit {
     );
   }
 
-  // ---------------------------------------------------------
-  // DAILY CLIENT LOAN VALUES
-  // ---------------------------------------------------------
-
   private getClientLoansIssuedForDate(date: string): number {
     return this.clientLoansFromFloat
       .filter((loan) => loan.dateIssued === date)
       .reduce((sum, loan) => sum + Number(loan.principalAmount || 0), 0);
   }
 
-  /**
-   * IMPORTANT:
-   *
-   * Do NOT calculate daily repayments using:
-   *
-   * loan.updatedAt
-   *
-   * because updatedAt does not prove that a repayment
-   * happened on that date.
-   *
-   * Instead use the actual client-loan repayment
-   * transactions.
-   */
   private getClientLoanRepaymentsForDate(date: string): number {
     return this.clientLoanRepaymentTransactions
       .filter((transaction) => transaction.transactionDate === date)
       .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
   }
 
-  // ---------------------------------------------------------
-  // SUMMARY
-  // ---------------------------------------------------------
-
   private buildSummary(): void {
     const rows: SummaryRow[] = [];
 
     const openingValues: number[] = [];
 
-    const bankWithdrawalValues: number[] = [];
+    const customerDepositValues: number[] = [];
     const transferInValues: number[] = [];
     const exchangeInValues: number[] = [];
     const adjustmentInValues: number[] = [];
     const loanReceivedValues: number[] = [];
-
     const clientLoanRepaymentValues: number[] = [];
 
-    const bankDepositValues: number[] = [];
+    const customerWithdrawalValues: number[] = [];
     const transferOutValues: number[] = [];
     const exchangeOutValues: number[] = [];
     const expenseValues: number[] = [];
     const adjustmentOutValues: number[] = [];
     const loanRepaymentValues: number[] = [];
-
     const clientLoanIssuedValues: number[] = [];
 
     let previousClosing: number | null = null;
@@ -976,23 +863,7 @@ export class NewFinancialTransaction implements OnInit {
         (transaction) => transaction.transactionDate === day.date,
       );
 
-      /**
-       * CLIENT LOAN ISSUED
-       *
-       * Only BRANCH_FLOAT funded loans affect
-       * branch float.
-       *
-       * BANK_ACCOUNT funded loans are deliberately
-       * excluded from the float summary.
-       */
       const clientLoansIssued = this.getClientLoansIssuedForDate(day.date);
-
-      /**
-       * CLIENT LOAN REPAYMENT
-       *
-       * Money received from clients back into
-       * branch float.
-       */
       const clientLoanRepayments = this.getClientLoanRepaymentsForDate(day.date);
 
       const opening = this.calculateOpeningBalance(
@@ -1002,41 +873,29 @@ export class NewFinancialTransaction implements OnInit {
         index,
       );
 
-      const bankWithdrawals = this.sumTransactions(dayTransactions, 'BANK_WITHDRAWAL', 'IN');
+      const customerDeposits = this.sumTransactions(dayTransactions, 'BANK_WITHDRAWAL', 'IN');
       const transfersIn = this.sumTransactions(dayTransactions, 'BRANCH_TRANSFER_IN', 'IN');
       const loansReceived = this.sumLoanTransactions(this.loanReceivedTransactions, day.date);
       const exchangeIn = this.sumTransactions(dayTransactions, 'CURRENCY_EXCHANGE_IN', 'IN');
       const adjustmentIn = this.sumDirectionAndType(dayTransactions, 'ADJUSTMENT', 'IN');
-      const bankDeposits = this.sumTransactions(dayTransactions, 'BANK_DEPOSIT', 'OUT');
+
+      const customerWithdrawals = this.sumTransactions(dayTransactions, 'BANK_DEPOSIT', 'OUT');
       const transfersOut = this.sumTransactions(dayTransactions, 'BRANCH_TRANSFER_OUT', 'OUT');
       const loanRepayments = this.sumLoanTransactions(this.loanRepaymentTransactions, day.date);
       const exchangeOut = this.sumTransactions(dayTransactions, 'CURRENCY_EXCHANGE_OUT', 'OUT');
       const expenses = this.sumTransactions(dayTransactions, 'EXPENSE', 'OUT');
       const adjustmentOut = this.sumDirectionAndType(dayTransactions, 'ADJUSTMENT', 'OUT');
 
-      /**
-       * TOTAL INFLOW
-       *
-       * Client loan repayments are IN because
-       * clients are paying money back into the float.
-       */
       const totalInflow =
-        bankWithdrawals +
+        customerDeposits +
         transfersIn +
         loansReceived +
         clientLoanRepayments +
         exchangeIn +
         adjustmentIn;
 
-      /**
-       * TOTAL OUTFLOW
-       *
-       * Client loans issued from branch float
-       * are OUT because money leaves the float
-       * and goes to the client.
-       */
       const totalOutflow =
-        bankDeposits +
+        customerWithdrawals +
         transfersOut +
         loanRepayments +
         clientLoansIssued +
@@ -1047,13 +906,15 @@ export class NewFinancialTransaction implements OnInit {
       const closing = opening + totalInflow - totalOutflow;
 
       openingValues.push(opening);
-      bankWithdrawalValues.push(bankWithdrawals);
+
+      customerDepositValues.push(customerDeposits);
       transferInValues.push(transfersIn);
       exchangeInValues.push(exchangeIn);
       adjustmentInValues.push(adjustmentIn);
       loanReceivedValues.push(loansReceived);
       clientLoanRepaymentValues.push(clientLoanRepayments);
-      bankDepositValues.push(bankDeposits);
+
+      customerWithdrawalValues.push(customerWithdrawals);
       transferOutValues.push(transfersOut);
       exchangeOutValues.push(exchangeOut);
       expenseValues.push(expenses);
@@ -1064,10 +925,6 @@ export class NewFinancialTransaction implements OnInit {
       previousClosing = closing;
     });
 
-    // -------------------------------------------------------
-    // INFLOW ROWS
-    // -------------------------------------------------------
-
     rows.push({
       key: 'opening',
       label: 'OPENING BALANCE',
@@ -1077,10 +934,10 @@ export class NewFinancialTransaction implements OnInit {
     });
 
     rows.push({
-      key: 'bankWithdrawals',
-      label: 'BANK WITHDRAWALS',
-      values: bankWithdrawalValues,
-      total: this.total(bankWithdrawalValues),
+      key: 'customerDeposits',
+      label: 'CUSTOMER DEPOSITS',
+      values: customerDepositValues,
+      total: this.total(customerDepositValues),
     });
 
     rows.push({
@@ -1119,7 +976,7 @@ export class NewFinancialTransaction implements OnInit {
     });
 
     const totalInflowValues = this.sumArrays([
-      bankWithdrawalValues,
+      customerDepositValues,
       transferInValues,
       loanReceivedValues,
       clientLoanRepaymentValues,
@@ -1135,15 +992,11 @@ export class NewFinancialTransaction implements OnInit {
       bold: true,
     });
 
-    // -------------------------------------------------------
-    // OUTFLOW ROWS
-    // -------------------------------------------------------
-
     rows.push({
-      key: 'bankDeposits',
-      label: 'BANK DEPOSITS',
-      values: bankDepositValues,
-      total: this.total(bankDepositValues),
+      key: 'customerWithdrawals',
+      label: 'CUSTOMER WITHDRAWALS',
+      values: customerWithdrawalValues,
+      total: this.total(customerWithdrawalValues),
     });
 
     rows.push({
@@ -1189,7 +1042,7 @@ export class NewFinancialTransaction implements OnInit {
     });
 
     const totalOutflowValues = this.sumArrays([
-      bankDepositValues,
+      customerWithdrawalValues,
       transferOutValues,
       loanRepaymentValues,
       clientLoanIssuedValues,
@@ -1206,15 +1059,10 @@ export class NewFinancialTransaction implements OnInit {
       bold: true,
     });
 
-    // -------------------------------------------------------
-    // CLOSING
-    // -------------------------------------------------------
-
     const closingValues: number[] = [];
 
     for (let i = 0; i < this.days.length; i++) {
       const opening = openingValues[i] ?? 0;
-
       const closing = opening + (totalInflowValues[i] ?? 0) - (totalOutflowValues[i] ?? 0);
 
       closingValues.push(closing);
@@ -1239,10 +1087,6 @@ export class NewFinancialTransaction implements OnInit {
     this.summaryRows = rows;
   }
 
-  // ---------------------------------------------------------
-  // OPENING BALANCE
-  // ---------------------------------------------------------
-
   private calculateOpeningBalance(
     date: string,
     transactions: FloatTransaction[],
@@ -1259,7 +1103,6 @@ export class NewFinancialTransaction implements OnInit {
 
     if (transactions.length > 0) {
       const sorted = this.sortTransactions(transactions);
-
       const last = sorted[sorted.length - 1];
 
       const totalIn = sorted
@@ -1285,10 +1128,6 @@ export class NewFinancialTransaction implements OnInit {
 
     return 0;
   }
-
-  // ---------------------------------------------------------
-  // SUM HELPERS
-  // ---------------------------------------------------------
 
   private sumTransactions(
     transactions: FloatTransaction[],
@@ -1321,15 +1160,10 @@ export class NewFinancialTransaction implements OnInit {
     return this.sumTransactions(transactions, type, direction);
   }
 
-  // ---------------------------------------------------------
-  // TRANSACTION FORMS
-  // ---------------------------------------------------------
-
   openTransactionForm(type: TransactionType, bankAccountId?: number): void {
     this.selectedTransactionType = type;
 
     this.transactionForm = this.createEmptyForm();
-
     this.transactionForm.date = this.formatDateForInput(new Date());
 
     if (bankAccountId) {
@@ -1338,11 +1172,11 @@ export class NewFinancialTransaction implements OnInit {
 
     switch (type) {
       case 'BANK_WITHDRAWAL':
-        this.formTitle = 'Bank Withdrawal — Float to Bank';
+        this.formTitle = 'Customer Withdrawal — Cash Out, Bank In';
         break;
 
       case 'BANK_DEPOSIT':
-        this.formTitle = 'Bank Deposit — Bank to Float';
+        this.formTitle = 'Customer Deposit — Cash In, Bank Out';
         break;
 
       case 'FLOAT_TRANSFER':
@@ -1375,9 +1209,7 @@ export class NewFinancialTransaction implements OnInit {
     }
 
     this.showTransactionForm = false;
-
     this.selectedTransactionType = null;
-
     this.formTitle = '';
   }
 
@@ -1388,13 +1220,11 @@ export class NewFinancialTransaction implements OnInit {
 
     if (!this.transactionForm.date) {
       this.errorMessage = 'Transaction date is required.';
-
       return;
     }
 
     if (!this.transactionForm.amount && this.selectedTransactionType !== 'CURRENCY_EXCHANGE') {
       this.errorMessage = 'Amount is required.';
-
       return;
     }
 
@@ -1405,7 +1235,13 @@ export class NewFinancialTransaction implements OnInit {
         !this.transactionForm.exchangeRate)
     ) {
       this.errorMessage = 'Received amount, paid amount and exchange rate are required.';
+      return;
+    }
 
+    const endpoint = this.getSaveEndpoint();
+
+    if (!endpoint) {
+      this.errorMessage = 'Invalid transaction type.';
       return;
     }
 
@@ -1413,27 +1249,24 @@ export class NewFinancialTransaction implements OnInit {
     this.errorMessage = '';
 
     const payload = this.buildPayload();
-
-    const endpoint = this.getSaveEndpoint();
-
     const baseUrl = this.masterService.getBackendService();
 
     this.http.post(`${baseUrl}${endpoint}`, payload).subscribe({
       next: () => {
         this.saving = false;
-
         this.showTransactionForm = false;
-
         this.selectedTransactionType = null;
+
+        if (this.branchId) {
+          this.loadBranchFloat(this.branchId);
+        }
 
         this.loadWeekData();
       },
-
       error: (error) => {
         console.error('Failed to save transaction', error);
 
         this.saving = false;
-
         this.errorMessage = error?.error?.message || 'Failed to save transaction.';
       },
     });
@@ -1441,22 +1274,10 @@ export class NewFinancialTransaction implements OnInit {
 
   private buildPayload(): any {
     const actionedBy = localStorage.getItem('username') || '';
-
     const form = this.transactionForm;
 
     switch (this.selectedTransactionType) {
       case 'BANK_WITHDRAWAL':
-        return {
-          branchId: this.branchId,
-          currency: this.selectedCurrency,
-          bankAccountId: form.bankAccountId,
-          amount: Number(form.amount),
-          transactionDate: form.date,
-          reference: form.reference,
-          description: form.description,
-          actionedBy,
-        };
-
       case 'BANK_DEPOSIT':
         return {
           branchId: this.branchId,
@@ -1498,26 +1319,11 @@ export class NewFinancialTransaction implements OnInit {
         };
 
       case 'EXPENSE':
-        if (form.paymentSource === 'BANK_ACCOUNT') {
-          return {
-            branchId: this.branchId,
-            currency: this.selectedCurrency,
-            paymentSource: 'BANK_ACCOUNT',
-            bankAccountId: form.bankAccountId,
-            amount: Number(form.amount),
-            transactionDate: form.date,
-            category: form.category,
-            reference: form.reference,
-            description: form.description,
-            actionedBy,
-          };
-        }
-
         return {
           branchId: this.branchId,
           currency: this.selectedCurrency,
-          paymentSource: 'BRANCH_FLOAT',
-          bankAccountId: null,
+          paymentSource: form.paymentSource,
+          bankAccountId: form.paymentSource === 'BANK_ACCOUNT' ? form.bankAccountId : null,
           amount: Number(form.amount),
           transactionDate: form.date,
           category: form.category,
@@ -1584,10 +1390,6 @@ export class NewFinancialTransaction implements OnInit {
     }
   }
 
-  // ---------------------------------------------------------
-  // WEEK
-  // ---------------------------------------------------------
-
   buildWeek(): void {
     const monday = new Date(this.selectedWeekStart);
 
@@ -1638,12 +1440,12 @@ export class NewFinancialTransaction implements OnInit {
   onCurrencyChange(): void {
     this.filterBankAccounts();
 
+    if (this.branchId) {
+      this.loadBranchFloat(this.branchId);
+    }
+
     this.loadWeekData();
   }
-
-  // ---------------------------------------------------------
-  // HELPERS
-  // ---------------------------------------------------------
 
   private getBranchId(): number | null {
     const value = localStorage.getItem('branchId');
@@ -1665,17 +1467,12 @@ export class NewFinancialTransaction implements OnInit {
       amount: null,
 
       receivedCurrency: this.selectedCurrency,
-
       receivedAmount: null,
 
       paidCurrency: this.selectedCurrency,
-
       paidAmount: null,
-
       exchangeRate: null,
-
       paidFrom: 'BRANCH_FLOAT' as MoneySource,
-
       paidBankAccountId: null,
 
       paymentSource: 'BRANCH_FLOAT' as MoneySource,
@@ -1695,7 +1492,6 @@ export class NewFinancialTransaction implements OnInit {
     result.setHours(0, 0, 0, 0);
 
     const day = result.getDay();
-
     const diff = day === 0 ? -6 : 1 - day;
 
     result.setDate(result.getDate() + diff);
@@ -1705,9 +1501,7 @@ export class NewFinancialTransaction implements OnInit {
 
   private formatDateForInput(date: Date): string {
     const year = date.getFullYear();
-
     const month = String(date.getMonth() + 1).padStart(2, '0');
-
     const day = String(date.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
@@ -1733,7 +1527,6 @@ export class NewFinancialTransaction implements OnInit {
       }
 
       const aCreated = a.createdAt || '';
-
       const bCreated = b.createdAt || '';
 
       return aCreated.localeCompare(bCreated);
@@ -1752,11 +1545,11 @@ export class NewFinancialTransaction implements OnInit {
 
   transactionTypeLabel(type: string): string {
     switch (type) {
-      case 'BANK_WITHDRAWAL':
-        return 'Bank Withdrawal';
-
       case 'BANK_DEPOSIT':
-        return 'Bank Deposit';
+        return 'Customer Withdrawal';
+
+      case 'BANK_WITHDRAWAL':
+        return 'Customer Deposit';
 
       case 'BRANCH_TRANSFER_IN':
         return 'Float Transfer In';
