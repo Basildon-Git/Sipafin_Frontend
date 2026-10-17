@@ -54,6 +54,7 @@ export interface CreateBranchFloatRequest {
 export interface UpdateBranchFloatRequest {
   branchId: number;
   currency: string;
+  openingBalance: number;
   active: boolean;
   actionedBy: string;
 }
@@ -79,13 +80,14 @@ export class NewPettyCashBranchAccount {
   floatAccountId: number | null = null;
   isEditMode = false;
   loadingAccount = false;
+  accountLoadFailed = false;
 
   // ================================
   // FORM
   // ================================
 
   currency = 'USD';
-  openingBalance = 0;
+  openingBalance: number | null = 0;
   active = true;
 
   // ================================
@@ -138,12 +140,6 @@ export class NewPettyCashBranchAccount {
   // ================================
 
   constructor() {
-    /*
-     * Check whether the route contains an ID.
-     * If it does, load the existing float account.
-     * Otherwise, continue with normal create mode.
-     */
-
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
 
@@ -163,18 +159,22 @@ export class NewPettyCashBranchAccount {
       } else {
         this.floatAccountId = null;
         this.isEditMode = false;
+        this.loadingAccount = false;
+        this.accountLoadFailed = false;
+
+        this.currency = 'USD';
+        this.openingBalance = 0;
+        this.active = true;
+
+        this.branchId = null;
+        this.branchSearch = '';
+        this.branchSelected = false;
+        this.branchSearchStarted = false;
 
         this.loadLocalBranch();
+        this.resolveSelectedBranch();
       }
     });
-
-    /*
-     * Always load branches.
-     *
-     * This is needed for:
-     * 1. Displaying the branch name/code when branchId exists.
-     * 2. Allowing manual branch selection.
-     */
 
     this.loadBranches();
   }
@@ -185,6 +185,7 @@ export class NewPettyCashBranchAccount {
 
   loadFloatAccount(id: number): void {
     this.loadingAccount = true;
+    this.accountLoadFailed = false;
 
     const endpoint = this.masterService.getBackendService() + `api/v1/branch-floats/${id}`;
 
@@ -192,13 +193,17 @@ export class NewPettyCashBranchAccount {
 
     this.http.get<BranchFloatResponse>(endpoint).subscribe({
       next: (response) => {
+        if (this.floatAccountId !== id || !this.isEditMode) {
+          return;
+        }
+
         const account = response.data;
 
         if (!account) {
           this.loadingAccount = false;
+          this.accountLoadFailed = true;
 
           this.toastr.error('Float account details not found.', 'Error');
-
           return;
         }
 
@@ -214,7 +219,10 @@ export class NewPettyCashBranchAccount {
         this.branchSearchStarted = false;
 
         this.currency = account.currency ?? 'USD';
+
+        // Current balance is editable
         this.openingBalance = account.currentBalance ?? 0;
+
         this.active = account.active;
 
         this.loadingAccount = false;
@@ -223,7 +231,12 @@ export class NewPettyCashBranchAccount {
       },
 
       error: (error) => {
+        if (this.floatAccountId !== id || !this.isEditMode) {
+          return;
+        }
+
         this.loadingAccount = false;
+        this.accountLoadFailed = true;
 
         console.error('Failed to load branch float account:', error);
         console.error('Status:', error.status);
@@ -240,7 +253,7 @@ export class NewPettyCashBranchAccount {
   // ================================
 
   loadLocalBranch(): void {
-    // Do not override an existing account's branch.
+    // Do not override the existing account's branch
     if (this.isEditMode) {
       return;
     }
@@ -251,7 +264,6 @@ export class NewPettyCashBranchAccount {
 
     if (!storedBranchId) {
       console.log('No branchId found in localStorage. Manual branch selection will be available.');
-
       return;
     }
 
@@ -259,18 +271,44 @@ export class NewPettyCashBranchAccount {
 
     if (!Number.isInteger(parsedBranchId) || parsedBranchId <= 0) {
       console.warn('Invalid branchId found in localStorage:', storedBranchId);
-
       return;
     }
 
     this.branchId = parsedBranchId;
 
     console.log('Branch ID loaded from localStorage:', this.branchId);
+  }
 
-    /*
-     * The branch details will be resolved after
-     * loadBranches() completes.
-     */
+  // ================================
+  // RESOLVE SELECTED BRANCH
+  // ================================
+
+  resolveSelectedBranch(): void {
+    if (this.isEditMode || !this.branchId || this.loadingBranches) {
+      return;
+    }
+
+    const branch = this.branches().find((item) => item.id === this.branchId);
+
+    if (branch) {
+      this.branchSearch = `${branch.name} (${branch.code})`;
+      this.branchSelected = true;
+      this.branchSearchStarted = false;
+
+      console.log('Automatically selected branch:', branch);
+    } else if (this.branches().length > 0) {
+      console.warn('Assigned branch was not found in active branches:', this.branchId);
+
+      this.branchId = null;
+      this.branchSearch = '';
+      this.branchSelected = false;
+      this.branchSearchStarted = false;
+
+      this.toastr.warning(
+        'Your assigned branch could not be found. Please select a branch.',
+        'Branch Information',
+      );
+    }
   }
 
   // ================================
@@ -287,56 +325,15 @@ export class NewPettyCashBranchAccount {
     this.http.get<BranchResponse>(endpoint).subscribe({
       next: (response) => {
         this.branches.set(response.data ?? []);
-
         this.loadingBranches = false;
 
         /*
-         * In edit mode, the branch is already populated
-         * from GET /api/v1/branch-floats/{id}.
-         *
-         * Do not replace it with the user's local branch.
+         * Only resolve the local branch in create mode.
+         * In edit mode, GET by ID provides the branch.
          */
 
-        if (this.isEditMode) {
-          return;
-        }
-
-        /*
-         * If a branchId was found in localStorage,
-         * automatically resolve and display that branch.
-         */
-
-        if (this.branchId) {
-          const branch = this.branches().find((item) => item.id === this.branchId);
-
-          if (branch) {
-            this.branchSearch = `${branch.name} (${branch.code})`;
-            this.branchSelected = true;
-            this.branchSearchStarted = false;
-
-            console.log('Automatically selected branch:', branch);
-          } else {
-            /*
-             * branchId exists but the branch was not returned.
-             * Allow the user to search for another branch.
-             */
-
-            console.warn(
-              'Branch from localStorage was not found in active branches:',
-              this.branchId,
-            );
-
-            this.branchSearch = '';
-            this.branchSelected = false;
-            this.branchSearchStarted = false;
-
-            this.toastr.warning(
-              'Your assigned branch could not be found. Please select a branch.',
-              'Branch Information',
-            );
-
-            this.branchId = null;
-          }
+        if (!this.isEditMode) {
+          this.resolveSelectedBranch();
         }
       },
 
@@ -364,11 +361,6 @@ export class NewPettyCashBranchAccount {
 
     this.branchSearchStarted = this.branchSearch.trim().length > 0;
 
-    /*
-     * If the user starts typing a different branch,
-     * remove the automatically selected branch.
-     */
-
     this.branchId = null;
     this.branchSelected = false;
   }
@@ -378,11 +370,6 @@ export class NewPettyCashBranchAccount {
   // ================================
 
   onBranchFocus(): void {
-    /*
-     * If there is no search text, don't show the
-     * results dropdown.
-     */
-
     if (!this.branchSearch.trim()) {
       this.branchSearchStarted = false;
     }
@@ -425,11 +412,23 @@ export class NewPettyCashBranchAccount {
   }
 
   // ================================
+  // VALIDATE BALANCE
+  // ================================
+
+  isBalanceValid(): boolean {
+    return (
+      this.openingBalance !== null &&
+      Number.isFinite(Number(this.openingBalance)) &&
+      Number(this.openingBalance) >= 0
+    );
+  }
+
+  // ================================
   // SAVE FLOAT ACCOUNT
   // ================================
 
   saveFloatAccount(): void {
-    if (this.loading || this.loadingAccount) {
+    if (this.loading || this.loadingAccount || this.accountLoadFailed) {
       return;
     }
 
@@ -445,23 +444,12 @@ export class NewPettyCashBranchAccount {
   // ================================
 
   createFloatAccount(): void {
-    /*
-     * Use the branch selected in the form.
-     *
-     * The assigned branch is already selected
-     * automatically during initial loading.
-     *
-     * This also allows manual branch changes
-     * without localStorage overriding them.
-     */
-
     // ================================
     // VALIDATE BRANCH
     // ================================
 
     if (!this.branchId) {
       this.toastr.warning('Please select a branch.', 'Validation');
-
       return;
     }
 
@@ -473,7 +461,6 @@ export class NewPettyCashBranchAccount {
 
     if (!actionedBy.trim()) {
       this.toastr.warning('User information was not found. Please login again.', 'Validation');
-
       return;
     }
 
@@ -481,11 +468,8 @@ export class NewPettyCashBranchAccount {
     // VALIDATE BALANCE
     // ================================
 
-    const balance = Number(this.openingBalance);
-
-    if (this.openingBalance === null || !Number.isFinite(balance) || balance < 0) {
+    if (!this.isBalanceValid()) {
       this.toastr.warning('Please enter a valid opening balance.', 'Validation');
-
       return;
     }
 
@@ -496,7 +480,7 @@ export class NewPettyCashBranchAccount {
     const request: CreateBranchFloatRequest = {
       branchId: this.branchId,
       currency: this.currency,
-      openingBalance: balance,
+      openingBalance: Number(this.openingBalance),
       actionedBy: actionedBy.trim(),
     };
 
@@ -545,9 +529,12 @@ export class NewPettyCashBranchAccount {
   // ================================
 
   updateFloatAccount(): void {
+    // ================================
+    // VALIDATE ACCOUNT ID
+    // ================================
+
     if (!this.floatAccountId) {
       this.toastr.warning('Float account ID is missing.', 'Validation');
-
       return;
     }
 
@@ -557,7 +544,15 @@ export class NewPettyCashBranchAccount {
 
     if (!this.branchId) {
       this.toastr.warning('Please select a branch.', 'Validation');
+      return;
+    }
 
+    // ================================
+    // VALIDATE BALANCE
+    // ================================
+
+    if (!this.isBalanceValid()) {
+      this.toastr.warning('Please enter a valid current balance.', 'Validation');
       return;
     }
 
@@ -569,7 +564,6 @@ export class NewPettyCashBranchAccount {
 
     if (!actionedBy.trim()) {
       this.toastr.warning('User information was not found. Please login again.', 'Validation');
-
       return;
     }
 
@@ -580,6 +574,7 @@ export class NewPettyCashBranchAccount {
     const request: UpdateBranchFloatRequest = {
       branchId: this.branchId,
       currency: this.currency,
+      openingBalance: Number(this.openingBalance),
       active: this.active,
       actionedBy: actionedBy.trim(),
     };
@@ -597,13 +592,13 @@ export class NewPettyCashBranchAccount {
 
     console.log('Updating branch float account:', endpoint);
 
-    this.http.put(endpoint, request).subscribe({
+    this.http.put<any>(endpoint, request).subscribe({
       next: (response) => {
         console.log('Branch float account updated successfully:', response);
 
         this.loading = false;
 
-        this.toastr.success('Float account updated successfully.', 'Success');
+        this.toastr.success(response?.message || 'Float account updated successfully.', 'Success');
 
         this.router.navigate(['/cash-floats']);
       },

@@ -36,7 +36,7 @@
         <p>
           {{
             isEditMode
-              ? 'Update the branch and currency details below.'
+              ? 'Update the branch, currency and current balance below.'
               : 'Enter the branch, currency and opening balance below.'
           }}
         </p>
@@ -46,6 +46,13 @@
         <div class="text-center py-4">
           <i class="bi bi-arrow-repeat spinning"></i>
           <span class="ms-2">Loading float account details...</span>
+        </div>
+      } @else if (accountLoadFailed) {
+        <div class="text-center py-4">
+          <p class="text-danger">Unable to load float account details.</p>
+          <button type="button" class="btn-secondary" (click)="goBack()">
+            Back to Petty Cash Accounts
+          </button>
         </div>
       } @else {
         <!-- BRANCH -->
@@ -157,10 +164,7 @@
           <div class="form-group">
             <label for="openingBalance">
               {{ isEditMode ? 'Current Balance' : 'Opening Balance' }}
-
-              @if (!isEditMode) {
-                <span class="required">*</span>
-              }
+              <span class="required">*</span>
             </label>
 
             <div class="amount-input">
@@ -175,16 +179,15 @@
                 min="0"
                 class="form-control"
                 [(ngModel)]="openingBalance"
-                [readonly]="isEditMode"
               />
             </div>
 
             <span class="field-hint">
-              @if (isEditMode) {
-                Current float balance. This field cannot be updated here.
-              } @else {
-                Opening balance for this float account.
-              }
+              {{
+                isEditMode
+                  ? 'Update the current balance for this float account.'
+                  : 'Opening balance for this float account.'
+              }}
             </span>
           </div>
         </div>
@@ -223,10 +226,7 @@
         class="btn-primary"
         (click)="saveFloatAccount()"
         [disabled]="
-          loading ||
-          loadingAccount ||
-          !branchId ||
-          (!isEditMode && (openingBalance === null || openingBalance < 0))
+          loading || loadingAccount || accountLoadFailed || !branchId || !isBalanceValid()
         "
       >
         @if (loading) {

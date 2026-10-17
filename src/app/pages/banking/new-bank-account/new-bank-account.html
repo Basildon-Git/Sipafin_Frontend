@@ -46,6 +46,13 @@
           <i class="bi bi-arrow-repeat spinning"></i>
           <span class="ms-2">Loading account details...</span>
         </div>
+      } @else if (accountLoadFailed) {
+        <div class="text-center py-4">
+          <p class="text-danger">Unable to load account details.</p>
+          <button type="button" class="btn-secondary" (click)="goBack()">
+            Back to Banking Accounts
+          </button>
+        </div>
       } @else {
         <!-- BANK -->
         <div class="form-group">
@@ -98,7 +105,13 @@
                 } @else {
                   <div class="no-banks">
                     <i class="bi bi-search"></i>
-                    <span>No active banks found</span>
+                    <span>
+                      @if (loadingBanks) {
+                        Loading banks...
+                      } @else {
+                        No active banks found
+                      }
+                    </span>
                   </div>
                 }
               </div>
@@ -248,7 +261,10 @@
 
           <!-- CURRENT BALANCE -->
           <div class="form-group">
-            <label for="currentBalance"> Current Balance </label>
+            <label for="currentBalance">
+              {{ isEditMode ? 'Current Balance' : 'Opening Balance' }}
+              <span class="required">*</span>
+            </label>
 
             <div class="amount-input">
               <span class="currency-prefix">
@@ -262,16 +278,15 @@
                 min="0"
                 class="form-control"
                 [(ngModel)]="currentBalance"
-                [readonly]="isEditMode"
               />
             </div>
 
             <span class="field-hint">
-              @if (isEditMode) {
-                Current account balance. This field cannot be updated here.
-              } @else {
-                Opening/current balance for this account.
-              }
+              {{
+                isEditMode
+                  ? 'Update the current balance for this bank account.'
+                  : 'Opening balance for this account.'
+              }}
             </span>
           </div>
 
@@ -316,7 +331,8 @@
           </div>
 
           <label class="switch">
-            <input type="checkbox" [(ngModel)]="active" />
+            <input type="checkbox" [(ngModel)]="active" [disabled]="!isEditMode" />
+
             <span class="slider"></span>
           </label>
         </div>
@@ -334,7 +350,13 @@
         class="btn-primary"
         (click)="saveBankAccount()"
         [disabled]="
-          loading || loadingAccount || !bankId || !accountName.trim() || !accountNumber.trim()
+          loading ||
+          loadingAccount ||
+          accountLoadFailed ||
+          !bankId ||
+          !accountName.trim() ||
+          !accountNumber.trim() ||
+          !isBalanceValid()
         "
       >
         @if (loading) {

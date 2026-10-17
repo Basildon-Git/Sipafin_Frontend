@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -76,6 +76,7 @@ export interface UpdateBankAccountRequest {
   accountName: string;
   accountNumber: string;
   currency: string;
+  openingBalance: number;
   active: boolean;
   actionedBy: string;
 }
@@ -107,6 +108,7 @@ export class NewBankAccount {
   accountId: number | null = null;
   isEditMode = false;
   loadingAccount = false;
+  accountLoadFailed = false;
 
   // ================================
   // FORM
@@ -115,10 +117,10 @@ export class NewBankAccount {
   accountName = '';
   accountNumber = '';
   currency = 'USD';
-  currentBalance = 0;
+  currentBalance: number | null = 0;
 
   // Commission rate
-  commissionRate = 0;
+  commissionRate: number | null = 0;
 
   active = true;
 
@@ -156,7 +158,7 @@ export class NewBankAccount {
   // FILTERED BANKS
   // ================================
 
-  filteredBanks = computed(() => {
+  filteredBanks(): Bank[] {
     const search = this.bankSearch.trim().toLowerCase();
 
     if (!search || !this.bankSearchStarted) {
@@ -168,13 +170,13 @@ export class NewBankAccount {
         bank.active &&
         (bank.name.toLowerCase().includes(search) || bank.code.toLowerCase().includes(search)),
     );
-  });
+  }
 
   // ================================
   // FILTERED BRANCHES
   // ================================
 
-  filteredBranches = computed(() => {
+  filteredBranches(): Branch[] {
     const search = this.branchSearch.trim().toLowerCase();
 
     if (!search || !this.branchSearchStarted) {
@@ -188,7 +190,7 @@ export class NewBankAccount {
           branch.code.toLowerCase().includes(search) ||
           (branch.location ?? '').toLowerCase().includes(search)),
     );
-  });
+  }
 
   // ================================
   // CONSTRUCTOR
@@ -199,7 +201,6 @@ export class NewBankAccount {
     this.loadBranches();
     this.loadLocalBranch();
 
-    // Check route for edit mode
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
 
@@ -219,6 +220,20 @@ export class NewBankAccount {
       } else {
         this.accountId = null;
         this.isEditMode = false;
+        this.loadingAccount = false;
+        this.accountLoadFailed = false;
+
+        this.bankId = null;
+        this.bankSearch = '';
+        this.bankSelected = false;
+        this.bankSearchStarted = false;
+
+        this.accountName = '';
+        this.accountNumber = '';
+        this.currency = 'USD';
+        this.currentBalance = 0;
+        this.commissionRate = 0;
+        this.active = true;
       }
     });
   }
@@ -229,24 +244,33 @@ export class NewBankAccount {
 
   loadBankAccount(id: number): void {
     this.loadingAccount = true;
+    this.accountLoadFailed = false;
 
     const endpoint = this.masterService.getBackendService() + `api/v1/bank-accounts/${id}`;
 
     this.http.get<BankAccountResponse>(endpoint).subscribe({
       next: (response) => {
+        if (this.accountId !== id || !this.isEditMode) {
+          return;
+        }
+
         const account = response.data;
 
         if (!account) {
           this.loadingAccount = false;
+          this.accountLoadFailed = true;
+
           this.toastr.error('Bank account details not found.', 'Error');
           return;
         }
 
+        // Populate bank
         this.bankId = account.bankId;
         this.bankSearch = `${account.bankName} (${account.bankCode})`;
         this.bankSelected = true;
         this.bankSearchStarted = false;
 
+        // Populate form
         this.accountName = account.accountName ?? '';
         this.accountNumber = account.accountNumber ?? '';
         this.currency = account.currency ?? 'USD';
@@ -259,7 +283,12 @@ export class NewBankAccount {
       },
 
       error: (error) => {
+        if (this.accountId !== id || !this.isEditMode) {
+          return;
+        }
+
         this.loadingAccount = false;
+        this.accountLoadFailed = true;
 
         console.error('Failed to load bank account:', error);
         console.error('Status:', error.status);
@@ -372,8 +401,6 @@ export class NewBankAccount {
   }
 
   onBankFocus(): void {
-    // Do not display banks just because
-    // the field received focus.
     if (!this.bankSearch.trim()) {
       this.bankSearchStarted = false;
     }
@@ -381,7 +408,6 @@ export class NewBankAccount {
 
   selectBank(bank: Bank): void {
     this.bankId = bank.id;
-
     this.bankSearch = `${bank.name} (${bank.code})`;
 
     this.bankSelected = true;
@@ -410,8 +436,6 @@ export class NewBankAccount {
   }
 
   onBranchFocus(): void {
-    // Do not display branches just because
-    // the field received focus.
     if (!this.branchSearch.trim()) {
       this.branchSearchStarted = false;
     }
@@ -419,7 +443,6 @@ export class NewBankAccount {
 
   selectBranch(branch: Branch): void {
     this.branchId = branch.id;
-
     this.branchSearch = `${branch.name} (${branch.code})`;
 
     this.branchSelected = true;
@@ -442,11 +465,23 @@ export class NewBankAccount {
   }
 
   // ================================
-  // SUBMIT FORM
+  // VALIDATE BALANCE
+  // ================================
+
+  isBalanceValid(): boolean {
+    return (
+      this.currentBalance !== null &&
+      Number.isFinite(Number(this.currentBalance)) &&
+      Number(this.currentBalance) >= 0
+    );
+  }
+
+  // ================================
+  // SAVE BANK ACCOUNT
   // ================================
 
   saveBankAccount(): void {
-    if (this.loading || this.loadingAccount) {
+    if (this.loading || this.loadingAccount || this.accountLoadFailed) {
       return;
     }
 
@@ -464,7 +499,11 @@ export class NewBankAccount {
   createBankAccount(): void {
     if (!this.bankId || !this.accountName.trim() || !this.accountNumber.trim()) {
       this.toastr.warning('Bank, account name and account number are required.', 'Validation');
+      return;
+    }
 
+    if (!this.isBalanceValid()) {
+      this.toastr.warning('Please enter a valid non-negative opening balance.', 'Validation');
       return;
     }
 
@@ -473,8 +512,7 @@ export class NewBankAccount {
       !Number.isFinite(Number(this.commissionRate)) ||
       Number(this.commissionRate) < 0
     ) {
-      this.toastr.warning('Enter a valid non-negative commission rate.', 'Validation');
-
+      this.toastr.warning('Commission rate cannot be negative.', 'Validation');
       return;
     }
 
@@ -485,7 +523,7 @@ export class NewBankAccount {
       accountName: this.accountName.trim(),
       accountNumber: this.accountNumber.trim(),
       currency: this.currency,
-      openingBalance: Number(this.currentBalance) || 0,
+      openingBalance: Number(this.currentBalance),
       actionedBy,
     };
 
@@ -510,7 +548,6 @@ export class NewBankAccount {
             'Bank account was created, but its ID could not be retrieved. Commission account was not created.',
             'Error',
           );
-
           return;
         }
 
@@ -545,7 +582,11 @@ export class NewBankAccount {
 
     if (!this.bankId || !this.accountName.trim() || !this.accountNumber.trim()) {
       this.toastr.warning('Bank, account name and account number are required.', 'Validation');
+      return;
+    }
 
+    if (!this.isBalanceValid()) {
+      this.toastr.warning('Please enter a valid non-negative opening balance.', 'Validation');
       return;
     }
 
@@ -556,6 +597,7 @@ export class NewBankAccount {
       accountName: this.accountName.trim(),
       accountNumber: this.accountNumber.trim(),
       currency: this.currency,
+      openingBalance: Number(this.currentBalance),
       active: this.active,
       actionedBy,
     };
@@ -621,7 +663,7 @@ export class NewBankAccount {
   private createCommissionAccount(bankAccountId: number, actionedBy: string): void {
     const commissionRequest: CreateCommissionAccountRequest = {
       bankAccountId,
-      commissionRate: Number(this.commissionRate) || 0,
+      commissionRate: Number(this.commissionRate),
       actionedBy,
     };
 
