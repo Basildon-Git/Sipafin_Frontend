@@ -243,6 +243,10 @@ export const routes: Routes = [
         component: NewPettyCashBranchAccount,
       },
       {
+        path: 'petty-cash-accounts/edit/:id',
+        component: NewPettyCashBranchAccount,
+      },
+      {
         path: 'banking/new-bank-statement',
         component: NewStatement,
       },

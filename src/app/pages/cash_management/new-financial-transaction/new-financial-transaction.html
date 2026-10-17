@@ -740,50 +740,120 @@
        ADJUSTMENTS
        ===================================================== -->
 
+<!--  <div class="cashbook-card">-->
+<!--    <div class="section-header">-->
+<!--      <div>-->
+<!--        <h3>Float Adjustments</h3>-->
+<!--        <span>Individual balance adjustments</span>-->
+<!--      </div>-->
+
+<!--      <button type="button" class="add-button" (click)="openTransactionForm('FLOAT_ADJUSTMENT')">-->
+<!--        + Adjustment-->
+<!--      </button>-->
+<!--    </div>-->
+
+<!--    <div class="table-wrapper">-->
+<!--      <table class="transaction-table">-->
+<!--        <thead>-->
+<!--          <tr>-->
+<!--            <th>Date</th>-->
+<!--            <th>Direction</th>-->
+<!--            <th>Reference</th>-->
+<!--            <th>Description</th>-->
+<!--            <th class="amount-column">Amount</th>-->
+<!--            <th class="action-column">Action</th>-->
+<!--          </tr>-->
+<!--        </thead>-->
+
+<!--        <tbody>-->
+<!--          @for (transaction of adjustmentTransactions; track transaction.id) {-->
+<!--            <tr>-->
+<!--              <td>{{ transaction.date | date: 'dd/MM/yyyy' }}</td>-->
+
+<!--              <td>-->
+<!--                <span-->
+<!--                  class="direction-badge"-->
+<!--                  [class.direction-in]="transaction.direction === 'IN'"-->
+<!--                  [class.direction-out]="transaction.direction === 'OUT'"-->
+<!--                >-->
+<!--                  {{ transaction.direction }}-->
+<!--                </span>-->
+<!--              </td>-->
+
+<!--              <td>{{ transaction.reference || '-' }}</td>-->
+<!--              <td>{{ transaction.description || '-' }}</td>-->
+
+<!--              <td class="amount-column">-->
+<!--                {{ formatAmount(transaction.amount) }}-->
+<!--              </td>-->
+
+<!--              <td class="action-cell">-->
+<!--                <button-->
+<!--                  type="button"-->
+<!--                  class="small-add-button"-->
+<!--                  (click)="openTransactionForm('FLOAT_ADJUSTMENT')"-->
+<!--                >-->
+<!--                  +-->
+<!--                </button>-->
+<!--              </td>-->
+<!--            </tr>-->
+<!--          }-->
+
+<!--          @if (adjustmentTransactions.length === 0) {-->
+<!--            <tr>-->
+<!--              <td colspan="6" class="empty-row">No adjustments recorded.</td>-->
+<!--            </tr>-->
+<!--          }-->
+<!--        </tbody>-->
+<!--      </table>-->
+<!--    </div>-->
+<!--  </div>-->
+
+  <!-- =====================================================
+          REVENUE
+          ===================================================== -->
+
   <div class="cashbook-card">
     <div class="section-header">
       <div>
-        <h3>Float Adjustments</h3>
-        <span>Individual balance adjustments</span>
+        <h3>Revenue</h3>
+        <span>Income received into branch float or bank account</span>
       </div>
 
-      <button type="button" class="add-button" (click)="openTransactionForm('FLOAT_ADJUSTMENT')">
-        + Adjustment
+      <button type="button" class="add-button" (click)="openTransactionForm('REVENUE')">
+        + Revenue
       </button>
     </div>
 
     <div class="table-wrapper">
       <table class="transaction-table">
         <thead>
-          <tr>
-            <th>Date</th>
-            <th>Direction</th>
-            <th>Reference</th>
-            <th>Description</th>
-            <th class="amount-column">Amount</th>
-            <th class="action-column">Action</th>
-          </tr>
+        <tr>
+          <th>Date</th>
+          <th>Source</th>
+          <th>Reference</th>
+          <th>Description</th>
+          <th>Direction</th>
+          <th class="amount-column">Amount</th>
+          <th class="action-column">Action</th>
+        </tr>
         </thead>
 
         <tbody>
-          @for (transaction of adjustmentTransactions; track transaction.id) {
+          @for (transaction of revenueTransactions; track transaction.id) {
             <tr>
               <td>{{ transaction.date | date: 'dd/MM/yyyy' }}</td>
-
-              <td>
-                <span
-                  class="direction-badge"
-                  [class.direction-in]="transaction.direction === 'IN'"
-                  [class.direction-out]="transaction.direction === 'OUT'"
-                >
-                  {{ transaction.direction }}
-                </span>
-              </td>
-
+              <td>{{ transaction.context }}</td>
               <td>{{ transaction.reference || '-' }}</td>
               <td>{{ transaction.description || '-' }}</td>
 
-              <td class="amount-column">
+              <td>
+                    <span class="direction-badge direction-in">
+                      IN
+                    </span>
+              </td>
+
+              <td class="amount-column amount-in">
                 {{ formatAmount(transaction.amount) }}
               </td>
 
@@ -791,7 +861,7 @@
                 <button
                   type="button"
                   class="small-add-button"
-                  (click)="openTransactionForm('FLOAT_ADJUSTMENT')"
+                  (click)="openTransactionForm('REVENUE')"
                 >
                   +
                 </button>
@@ -799,9 +869,9 @@
             </tr>
           }
 
-          @if (adjustmentTransactions.length === 0) {
+          @if (revenueTransactions.length === 0) {
             <tr>
-              <td colspan="6" class="empty-row">No adjustments recorded.</td>
+              <td colspan="7" class="empty-row">No revenue recorded.</td>
             </tr>
           }
         </tbody>
@@ -1010,7 +1080,10 @@
               <div class="form-group">
                 <label>Received Currency</label>
 
-                <select [(ngModel)]="transactionForm.receivedCurrency">
+                <select
+                  [(ngModel)]="transactionForm.receivedCurrency"
+                  (ngModelChange)="calculatePaidAmount()"
+                >
                   @for (currency of currencies; track currency) {
                     <option [value]="currency">
                       {{ currency }}
@@ -1027,25 +1100,23 @@
                   min="0"
                   step="0.01"
                   [(ngModel)]="transactionForm.receivedAmount"
+                  (ngModelChange)="calculatePaidAmount()"
                 />
               </div>
 
               <div class="form-group">
                 <label>Paid Currency</label>
 
-                <select [(ngModel)]="transactionForm.paidCurrency">
+                <select
+                  [(ngModel)]="transactionForm.paidCurrency"
+                  (ngModelChange)="calculatePaidAmount()"
+                >
                   @for (currency of currencies; track currency) {
                     <option [value]="currency">
                       {{ currency }}
                     </option>
                   }
                 </select>
-              </div>
-
-              <div class="form-group">
-                <label>Paid Amount</label>
-
-                <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.paidAmount" />
               </div>
 
               <div class="form-group">
@@ -1056,6 +1127,23 @@
                   min="0"
                   step="0.000001"
                   [(ngModel)]="transactionForm.exchangeRate"
+                  (ngModelChange)="calculatePaidAmount()"
+                />
+
+                <small>
+                  Paid amount = Received amount × Exchange rate
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label>Paid Amount</label>
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [(ngModel)]="transactionForm.paidAmount"
+                  readonly
                 />
               </div>
 
@@ -1068,6 +1156,21 @@
                 </select>
               </div>
             </div>
+
+            @if (transactionForm.receivedAmount && transactionForm.paidAmount) {
+              <div class="exchange-summary">
+                Customer gives
+                <strong>
+                  {{ formatAmount(transactionForm.receivedAmount) }}
+                  {{ transactionForm.receivedCurrency }}
+                </strong>
+                and business pays
+                <strong>
+                  {{ formatAmount(transactionForm.paidAmount) }}
+                  {{ transactionForm.paidCurrency }}
+                </strong>.
+              </div>
+            }
 
             @if (transactionForm.paidFrom === 'BANK_ACCOUNT') {
               <div class="form-group">
@@ -1109,7 +1212,6 @@
               <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>
             </div>
           }
-
           <!-- EXPENSE -->
 
           @if (isExpenseForm()) {
@@ -1183,14 +1285,85 @@
 
           <!-- FLOAT ADJUSTMENT -->
 
-          @if (isAdjustmentForm()) {
+<!--          @if (isAdjustmentForm()) {-->
+<!--            <div class="form-grid">-->
+<!--              <div class="form-group">-->
+<!--                <label>Direction</label>-->
+
+<!--                <select [(ngModel)]="transactionForm.direction">-->
+<!--                  <option value="IN">IN</option>-->
+<!--                  <option value="OUT">OUT</option>-->
+<!--                </select>-->
+<!--              </div>-->
+
+<!--              <div class="form-group">-->
+<!--                <label>Amount</label>-->
+
+<!--                <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.amount" />-->
+<!--              </div>-->
+
+<!--              <div class="form-group">-->
+<!--                <label>Transaction Date</label>-->
+
+<!--                <input type="date" [(ngModel)]="transactionForm.date" />-->
+<!--              </div>-->
+
+<!--              <div class="form-group">-->
+<!--                <label>Reference</label>-->
+
+<!--                <input type="text" [(ngModel)]="transactionForm.reference" />-->
+<!--              </div>-->
+<!--            </div>-->
+
+<!--            <div class="form-group">-->
+<!--              <label>Description</label>-->
+
+<!--              <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>-->
+<!--            </div>-->
+<!--          }-->
+
+          <!-- REVENUE -->
+
+          @if (isRevenueForm()) {
             <div class="form-grid">
               <div class="form-group">
-                <label>Direction</label>
+                <label>Revenue Source</label>
 
-                <select [(ngModel)]="transactionForm.direction">
-                  <option value="IN">IN</option>
-                  <option value="OUT">OUT</option>
+                <select [(ngModel)]="transactionForm.source">
+                  <option value="BRANCH_FLOAT">Branch Float</option>
+                  <option value="BANK_ACCOUNT">Bank Account</option>
+                </select>
+              </div>
+
+              @if (transactionForm.source === 'BANK_ACCOUNT') {
+                <div class="form-group">
+                  <label>Bank Account</label>
+
+                  <select [(ngModel)]="transactionForm.bankAccountId">
+                    <option [ngValue]="null">Select bank account</option>
+
+                    @for (account of filteredBankAccounts; track account.id) {
+                      <option [ngValue]="account.id">
+                        {{ account.bankName }}
+                        -
+                        {{ account.accountName }}
+                        -
+                        {{ account.accountNumber }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              }
+
+              <div class="form-group">
+                <label>Revenue Category</label>
+
+                <select [(ngModel)]="transactionForm.revenueCategory">
+                  @for (category of revenueCategories; track category) {
+                    <option [value]="category">
+                      {{ category }}
+                    </option>
+                  }
                 </select>
               </div>
 
@@ -1201,7 +1374,7 @@
               </div>
 
               <div class="form-group">
-                <label>Transaction Date</label>
+                <label>Revenue Date</label>
 
                 <input type="date" [(ngModel)]="transactionForm.date" />
               </div>

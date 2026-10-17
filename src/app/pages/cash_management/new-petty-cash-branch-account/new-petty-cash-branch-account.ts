@@ -1,7 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 
 import { Master } from '../../../core/services/master';
@@ -24,10 +24,37 @@ interface BranchResponse {
   timestamp: string;
 }
 
+interface BranchFloat {
+  id: number;
+  branchId: number;
+  branchName: string;
+  branchCode: string;
+  currency: string;
+  currentBalance: number;
+  active: boolean;
+  actionedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface BranchFloatResponse {
+  status: number;
+  message: string;
+  data: BranchFloat;
+  timestamp: string;
+}
+
 export interface CreateBranchFloatRequest {
   branchId: number;
   currency: string;
   openingBalance: number;
+  actionedBy: string;
+}
+
+export interface UpdateBranchFloatRequest {
+  branchId: number;
+  currency: string;
+  active: boolean;
   actionedBy: string;
 }
 
@@ -43,6 +70,15 @@ export class NewPettyCashBranchAccount {
   private readonly toastr = inject(ToastrService);
   private readonly masterService = inject(Master);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  // ================================
+  // EDIT MODE
+  // ================================
+
+  floatAccountId: number | null = null;
+  isEditMode = false;
+  loadingAccount = false;
 
   // ================================
   // FORM
@@ -50,6 +86,7 @@ export class NewPettyCashBranchAccount {
 
   currency = 'USD';
   openingBalance = 0;
+  active = true;
 
   // ================================
   // BRANCH
@@ -80,7 +117,7 @@ export class NewPettyCashBranchAccount {
   // FILTERED BRANCHES
   // ================================
 
-  filteredBranches = computed(() => {
+  filteredBranches(): Branch[] {
     const search = this.branchSearch.trim().toLowerCase();
 
     if (!search || !this.branchSearchStarted) {
@@ -94,7 +131,7 @@ export class NewPettyCashBranchAccount {
           branch.code.toLowerCase().includes(search) ||
           (branch.location ?? '').toLowerCase().includes(search)),
     );
-  });
+  }
 
   // ================================
   // CONSTRUCTOR
@@ -102,20 +139,100 @@ export class NewPettyCashBranchAccount {
 
   constructor() {
     /*
-     * First try to get the user's assigned branch
-     * from localStorage.
+     * Check whether the route contains an ID.
+     * If it does, load the existing float account.
+     * Otherwise, continue with normal create mode.
      */
-    this.loadLocalBranch();
+
+    this.route.paramMap.subscribe((params) => {
+      const id = params.get('id');
+
+      if (id !== null) {
+        const parsedId = Number(id);
+
+        if (!Number.isInteger(parsedId) || parsedId <= 0) {
+          this.toastr.error('Invalid float account ID.', 'Error');
+          this.goBack();
+          return;
+        }
+
+        this.floatAccountId = parsedId;
+        this.isEditMode = true;
+
+        this.loadFloatAccount(parsedId);
+      } else {
+        this.floatAccountId = null;
+        this.isEditMode = false;
+
+        this.loadLocalBranch();
+      }
+    });
 
     /*
      * Always load branches.
      *
      * This is needed for:
      * 1. Displaying the branch name/code when branchId exists.
-     * 2. Allowing manual branch selection when branchId
-     *    does not exist.
+     * 2. Allowing manual branch selection.
      */
+
     this.loadBranches();
+  }
+
+  // ================================
+  // LOAD FLOAT ACCOUNT BY ID
+  // ================================
+
+  loadFloatAccount(id: number): void {
+    this.loadingAccount = true;
+
+    const endpoint = this.masterService.getBackendService() + `api/v1/branch-floats/${id}`;
+
+    console.log('Loading branch float account:', endpoint);
+
+    this.http.get<BranchFloatResponse>(endpoint).subscribe({
+      next: (response) => {
+        const account = response.data;
+
+        if (!account) {
+          this.loadingAccount = false;
+
+          this.toastr.error('Float account details not found.', 'Error');
+
+          return;
+        }
+
+        // ================================
+        // POPULATE FORM
+        // ================================
+
+        this.branchId = account.branchId;
+
+        this.branchSearch = `${account.branchName} (${account.branchCode})`;
+
+        this.branchSelected = true;
+        this.branchSearchStarted = false;
+
+        this.currency = account.currency ?? 'USD';
+        this.openingBalance = account.currentBalance ?? 0;
+        this.active = account.active;
+
+        this.loadingAccount = false;
+
+        console.log('Branch float account loaded successfully:', account);
+      },
+
+      error: (error) => {
+        this.loadingAccount = false;
+
+        console.error('Failed to load branch float account:', error);
+        console.error('Status:', error.status);
+        console.error('URL:', error.url);
+        console.error('Response:', error.error);
+
+        this.toastr.error(error?.error?.message || 'Failed to load float account.', 'Error');
+      },
+    });
   }
 
   // ================================
@@ -123,6 +240,11 @@ export class NewPettyCashBranchAccount {
   // ================================
 
   loadLocalBranch(): void {
+    // Do not override an existing account's branch.
+    if (this.isEditMode) {
+      return;
+    }
+
     const storedBranchId = localStorage.getItem('branchId');
 
     console.log('Stored branchId:', storedBranchId);
@@ -169,9 +291,21 @@ export class NewPettyCashBranchAccount {
         this.loadingBranches = false;
 
         /*
+         * In edit mode, the branch is already populated
+         * from GET /api/v1/branch-floats/{id}.
+         *
+         * Do not replace it with the user's local branch.
+         */
+
+        if (this.isEditMode) {
+          return;
+        }
+
+        /*
          * If a branchId was found in localStorage,
          * automatically resolve and display that branch.
          */
+
         if (this.branchId) {
           const branch = this.branches().find((item) => item.id === this.branchId);
 
@@ -186,6 +320,7 @@ export class NewPettyCashBranchAccount {
              * branchId exists but the branch was not returned.
              * Allow the user to search for another branch.
              */
+
             console.warn(
               'Branch from localStorage was not found in active branches:',
               this.branchId,
@@ -200,10 +335,6 @@ export class NewPettyCashBranchAccount {
               'Branch Information',
             );
 
-            /*
-             * Clear the invalid ID so that the user can
-             * select another branch.
-             */
             this.branchId = null;
           }
         }
@@ -213,7 +344,6 @@ export class NewPettyCashBranchAccount {
         this.loadingBranches = false;
 
         console.error('Failed to load active branches:', error);
-
         console.error('Status:', error.status);
         console.error('URL:', error.url);
         console.error('Response:', error.error);
@@ -238,10 +368,9 @@ export class NewPettyCashBranchAccount {
      * If the user starts typing a different branch,
      * remove the automatically selected branch.
      */
-    if (this.branchSelected) {
-      this.branchId = null;
-      this.branchSelected = false;
-    }
+
+    this.branchId = null;
+    this.branchSelected = false;
   }
 
   // ================================
@@ -253,6 +382,7 @@ export class NewPettyCashBranchAccount {
      * If there is no search text, don't show the
      * results dropdown.
      */
+
     if (!this.branchSearch.trim()) {
       this.branchSearchStarted = false;
     }
@@ -291,7 +421,23 @@ export class NewPettyCashBranchAccount {
   // ================================
 
   goBack(): void {
-    this.router.navigate(['/petty-cash-accounts']);
+    this.router.navigate(['/cash-floats']);
+  }
+
+  // ================================
+  // SAVE FLOAT ACCOUNT
+  // ================================
+
+  saveFloatAccount(): void {
+    if (this.loading || this.loadingAccount) {
+      return;
+    }
+
+    if (this.isEditMode) {
+      this.updateFloatAccount();
+    } else {
+      this.createFloatAccount();
+    }
   }
 
   // ================================
@@ -300,24 +446,14 @@ export class NewPettyCashBranchAccount {
 
   createFloatAccount(): void {
     /*
-     * First check localStorage again.
+     * Use the branch selected in the form.
      *
-     * If it has a valid branchId, use it.
+     * The assigned branch is already selected
+     * automatically during initial loading.
      *
-     * If it doesn't, use the branch selected
-     * manually from the search.
+     * This also allows manual branch changes
+     * without localStorage overriding them.
      */
-    const storedBranchId = localStorage.getItem('branchId');
-
-    if (storedBranchId) {
-      const parsedBranchId = Number(storedBranchId);
-
-      if (Number.isInteger(parsedBranchId) && parsedBranchId > 0) {
-        this.branchId = parsedBranchId;
-
-        console.log('Using branchId from localStorage:', this.branchId);
-      }
-    }
 
     // ================================
     // VALIDATE BRANCH
@@ -347,7 +483,7 @@ export class NewPettyCashBranchAccount {
 
     const balance = Number(this.openingBalance);
 
-    if (isNaN(balance) || balance < 0) {
+    if (this.openingBalance === null || !Number.isFinite(balance) || balance < 0) {
       this.toastr.warning('Please enter a valid opening balance.', 'Validation');
 
       return;
@@ -384,7 +520,7 @@ export class NewPettyCashBranchAccount {
 
         this.toastr.success('Float account created successfully.', 'Success');
 
-        this.router.navigate(['/petty-cash-accounts']);
+        this.router.navigate(['/cash-floats']);
       },
 
       error: (error) => {
@@ -398,6 +534,91 @@ export class NewPettyCashBranchAccount {
 
         this.toastr.error(
           error?.error?.message || error?.error?.error || 'Failed to create float account.',
+          'Error',
+        );
+      },
+    });
+  }
+
+  // ================================
+  // UPDATE FLOAT ACCOUNT
+  // ================================
+
+  updateFloatAccount(): void {
+    if (!this.floatAccountId) {
+      this.toastr.warning('Float account ID is missing.', 'Validation');
+
+      return;
+    }
+
+    // ================================
+    // VALIDATE BRANCH
+    // ================================
+
+    if (!this.branchId) {
+      this.toastr.warning('Please select a branch.', 'Validation');
+
+      return;
+    }
+
+    // ================================
+    // ACTIONED BY
+    // ================================
+
+    const actionedBy = localStorage.getItem('username') || localStorage.getItem('fullName') || '';
+
+    if (!actionedBy.trim()) {
+      this.toastr.warning('User information was not found. Please login again.', 'Validation');
+
+      return;
+    }
+
+    // ================================
+    // REQUEST
+    // ================================
+
+    const request: UpdateBranchFloatRequest = {
+      branchId: this.branchId,
+      currency: this.currency,
+      active: this.active,
+      actionedBy: actionedBy.trim(),
+    };
+
+    console.log('UpdateBranchFloatRequest:', request);
+
+    // ================================
+    // SUBMIT
+    // ================================
+
+    this.loading = true;
+
+    const endpoint =
+      this.masterService.getBackendService() + `api/v1/branch-floats/${this.floatAccountId}`;
+
+    console.log('Updating branch float account:', endpoint);
+
+    this.http.put(endpoint, request).subscribe({
+      next: (response) => {
+        console.log('Branch float account updated successfully:', response);
+
+        this.loading = false;
+
+        this.toastr.success('Float account updated successfully.', 'Success');
+
+        this.router.navigate(['/cash-floats']);
+      },
+
+      error: (error) => {
+        this.loading = false;
+
+        console.error('Failed to update branch float account:', error);
+
+        console.error('Status:', error.status);
+        console.error('URL:', error.url);
+        console.error('Response:', error.error);
+
+        this.toastr.error(
+          error?.error?.message || error?.error?.error || 'Failed to update float account.',
           'Error',
         );
       },

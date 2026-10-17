@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Master } from '../../../core/services/master';
 
@@ -40,12 +40,43 @@ interface BranchResponse {
   timestamp: string;
 }
 
+interface BankAccount {
+  id: number;
+  bankId: number;
+  bankName: string;
+  bankCode: string;
+  accountName: string;
+  accountNumber: string;
+  currency: string;
+  currentBalance: number;
+  active: boolean;
+  actionedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface BankAccountResponse {
+  status: number;
+  message: string;
+  data: BankAccount;
+  timestamp: string;
+}
+
 export interface CreateBankAccountRequest {
   bankId: number;
   accountName: string;
   accountNumber: string;
   currency: string;
   openingBalance: number;
+  actionedBy: string;
+}
+
+export interface UpdateBankAccountRequest {
+  bankId: number;
+  accountName: string;
+  accountNumber: string;
+  currency: string;
+  active: boolean;
   actionedBy: string;
 }
 
@@ -67,6 +98,15 @@ export class NewBankAccount {
   private readonly toastr = inject(ToastrService);
   private readonly masterService = inject(Master);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  // ================================
+  // EDIT MODE
+  // ================================
+
+  accountId: number | null = null;
+  isEditMode = false;
+  loadingAccount = false;
 
   // ================================
   // FORM
@@ -158,6 +198,77 @@ export class NewBankAccount {
     this.loadBanks();
     this.loadBranches();
     this.loadLocalBranch();
+
+    // Check route for edit mode
+    this.route.paramMap.subscribe((params) => {
+      const id = params.get('id');
+
+      if (id !== null) {
+        const parsedId = Number(id);
+
+        if (!Number.isInteger(parsedId) || parsedId <= 0) {
+          this.toastr.error('Invalid bank account ID.', 'Error');
+          this.goBack();
+          return;
+        }
+
+        this.accountId = parsedId;
+        this.isEditMode = true;
+
+        this.loadBankAccount(parsedId);
+      } else {
+        this.accountId = null;
+        this.isEditMode = false;
+      }
+    });
+  }
+
+  // ================================
+  // LOAD BANK ACCOUNT BY ID
+  // ================================
+
+  loadBankAccount(id: number): void {
+    this.loadingAccount = true;
+
+    const endpoint = this.masterService.getBackendService() + `api/v1/bank-accounts/${id}`;
+
+    this.http.get<BankAccountResponse>(endpoint).subscribe({
+      next: (response) => {
+        const account = response.data;
+
+        if (!account) {
+          this.loadingAccount = false;
+          this.toastr.error('Bank account details not found.', 'Error');
+          return;
+        }
+
+        this.bankId = account.bankId;
+        this.bankSearch = `${account.bankName} (${account.bankCode})`;
+        this.bankSelected = true;
+        this.bankSearchStarted = false;
+
+        this.accountName = account.accountName ?? '';
+        this.accountNumber = account.accountNumber ?? '';
+        this.currency = account.currency ?? 'USD';
+        this.currentBalance = account.currentBalance ?? 0;
+        this.active = account.active;
+
+        this.loadingAccount = false;
+
+        console.log('Bank account loaded successfully:', account);
+      },
+
+      error: (error) => {
+        this.loadingAccount = false;
+
+        console.error('Failed to load bank account:', error);
+        console.error('Status:', error.status);
+        console.error('URL:', error.url);
+        console.error('Response:', error.error);
+
+        this.toastr.error(error?.error?.message || 'Failed to load bank account.', 'Error');
+      },
+    });
   }
 
   // ================================
@@ -330,6 +441,26 @@ export class NewBankAccount {
     this.router.navigate(['/bank-accounts']);
   }
 
+  // ================================
+  // SUBMIT FORM
+  // ================================
+
+  saveBankAccount(): void {
+    if (this.loading || this.loadingAccount) {
+      return;
+    }
+
+    if (this.isEditMode) {
+      this.updateBankAccount();
+    } else {
+      this.createBankAccount();
+    }
+  }
+
+  // ================================
+  // CREATE BANK ACCOUNT
+  // ================================
+
   createBankAccount(): void {
     if (!this.bankId || !this.accountName.trim() || !this.accountNumber.trim()) {
       this.toastr.warning('Bank, account name and account number are required.', 'Validation');
@@ -337,8 +468,12 @@ export class NewBankAccount {
       return;
     }
 
-    if (this.commissionRate < 0) {
-      this.toastr.warning('Commission rate cannot be negative.', 'Validation');
+    if (
+      this.commissionRate === null ||
+      !Number.isFinite(Number(this.commissionRate)) ||
+      Number(this.commissionRate) < 0
+    ) {
+      this.toastr.warning('Enter a valid non-negative commission rate.', 'Validation');
 
       return;
     }
@@ -392,6 +527,67 @@ export class NewBankAccount {
 
         this.toastr.error(
           error?.error?.message || error?.error?.error || 'Failed to create bank account.',
+          'Error',
+        );
+      },
+    });
+  }
+
+  // ================================
+  // UPDATE BANK ACCOUNT
+  // ================================
+
+  updateBankAccount(): void {
+    if (!this.accountId) {
+      this.toastr.warning('Bank account ID is missing.', 'Validation');
+      return;
+    }
+
+    if (!this.bankId || !this.accountName.trim() || !this.accountNumber.trim()) {
+      this.toastr.warning('Bank, account name and account number are required.', 'Validation');
+
+      return;
+    }
+
+    const actionedBy = localStorage.getItem('username') || '';
+
+    const request: UpdateBankAccountRequest = {
+      bankId: this.bankId,
+      accountName: this.accountName.trim(),
+      accountNumber: this.accountNumber.trim(),
+      currency: this.currency,
+      active: this.active,
+      actionedBy,
+    };
+
+    console.log('UpdateBankAccountRequest:', request);
+
+    this.loading = true;
+
+    const endpoint =
+      this.masterService.getBackendService() + `api/v1/bank-accounts/${this.accountId}`;
+
+    this.http.put<any>(endpoint, request).subscribe({
+      next: (response) => {
+        this.loading = false;
+
+        console.log('Bank account updated successfully:', response);
+
+        this.toastr.success(response?.message || 'Bank account updated successfully.', 'Success');
+
+        this.router.navigate(['/bank-accounts']);
+      },
+
+      error: (error) => {
+        this.loading = false;
+
+        console.error('Failed to update bank account:', error);
+        console.error('Status:', error.status);
+        console.error('URL:', error.url);
+        console.error('Response:', error.error);
+
+        this.toastr.error(
+          error?.error?.message || error?.error?.error || 'Failed to update bank account.',
           'Error',
         );
       },

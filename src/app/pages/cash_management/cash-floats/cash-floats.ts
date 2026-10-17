@@ -295,7 +295,11 @@ export class CashFloats {
   // ============================================================
 
   back(): void {
-    this.router.navigate(['/financial-transactions']);
+    this.router.navigate(['/cash-floats']);
+  }
+
+  editAccount(id: number): void {
+    this.router.navigate(['/petty-cash-accounts/edit/', id]);
   }
 
   // ============================================================

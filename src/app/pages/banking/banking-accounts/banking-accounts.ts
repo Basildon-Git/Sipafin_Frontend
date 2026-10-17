@@ -195,8 +195,8 @@ export class BankingAccounts {
     this.router.navigate(['/bank-accounts', account.id]);
   }
 
-  editAccount(account: BankingAccount): void {
-    this.router.navigate(['/bank-accounts', account.id, 'edit']);
+  editAccount(id: number): void {
+    this.router.navigate(['/bank-accounts/edit/', id]);
   }
 
   toggleStatus(account: BankingAccount): void {

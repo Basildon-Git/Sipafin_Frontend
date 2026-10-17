@@ -310,7 +310,7 @@
               <th>STATUS</th>
               <!-- <th>ACTIONED BY</th>
               <th>CREATED</th> -->
-              <!-- <th>ACTIONS</th> -->
+              <th>ACTIONS</th>
             </tr>
           </thead>
 
@@ -375,6 +375,17 @@
 
                 <!-- ACTIONS -->
 
+                <td class="actions-cell">
+                  <button
+                    type="button"
+                    class="table-action view-action"
+                    title="View account"
+                    (click)="editAccount(account.id)"
+                  >
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                </td>
+
                 <!-- <td class="actions-cell">
                   <button
                     type="button"
@@ -416,7 +427,7 @@
           @if (filteredAccounts().length === 0) {
             <tbody>
               <tr>
-                <td colspan="8" class="no-results">
+                <td colspan="6" class="no-results">
                   <i class="bi bi-search"></i>
 
                   <span> No float accounts match your search or filters. </span>
