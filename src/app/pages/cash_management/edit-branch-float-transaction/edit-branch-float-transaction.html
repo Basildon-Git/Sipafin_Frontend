@@ -1,0 +1,224 @@
+<div class="edit-transaction-page">
+  <div class="page-header">
+    <div class="page-heading">
+      <button
+        type="button"
+        class="back-button"
+        (click)="cancel()"
+        aria-label="Back to float transactions"
+      >
+        <i class="bi bi-arrow-left"></i>
+      </button>
+
+      <div class="page-icon">
+        <i class="bi bi-pencil-square"></i>
+      </div>
+
+      <div>
+        <h2>Edit Float Transaction</h2>
+        <p>Update the transaction amount and additional information.</p>
+      </div>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert-message alert-error" role="alert">
+      <i class="bi bi-exclamation-circle-fill"></i>
+      <span>{{ errorMessage() }}</span>
+
+      @if (!transaction() && !loading()) {
+        <button type="button" class="alert-action" (click)="reload()">Retry</button>
+      }
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert-message alert-success" role="status">
+      <i class="bi bi-check-circle-fill"></i>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-card">
+      <span class="loading-spinner"></span>
+      <span>Loading transaction details...</span>
+    </div>
+  } @else if (transaction(); as record) {
+    <div class="transaction-summary-card">
+      <div class="summary-top">
+        <div>
+          <span class="field-label">Transaction ID</span>
+          <h3>#{{ record.id }}</h3>
+        </div>
+
+        <span class="status-badge">
+          {{ record.status }}
+        </span>
+      </div>
+
+      <div class="summary-details">
+        <div class="summary-item">
+          <span class="field-label">Branch</span>
+          <strong>{{ record.branchName }}</strong>
+          <small>Code: {{ record.branchCode }}</small>
+        </div>
+
+        <div class="summary-item">
+          <span class="field-label">Currency</span>
+          <strong>{{ record.currency }}</strong>
+        </div>
+
+        <div class="summary-item">
+          <span class="field-label">Transaction Type</span>
+          <strong>{{ formatTransactionType(record.transactionType) }}</strong>
+        </div>
+
+        <div class="summary-item">
+          <span class="field-label">Direction</span>
+          <strong>{{ record.direction }}</strong>
+        </div>
+
+        <div class="summary-item">
+          <span class="field-label">Transaction Date</span>
+          <strong>{{ record.transactionDate | date: 'dd MMM yyyy' }}</strong>
+        </div>
+
+        <div class="summary-item">
+          <span class="field-label">Balance After</span>
+          <strong>
+            {{ record.balanceAfter | number: '1.2-2' }}
+            {{ record.currency }}
+          </strong>
+        </div>
+      </div>
+
+      <div class="readonly-notice">
+        <i class="bi bi-lock-fill"></i>
+        Branch, currency, transaction type, direction, transaction date, status and balance are
+        read-only.
+      </div>
+    </div>
+
+    <form class="edit-form-card" #transactionForm="ngForm" (ngSubmit)="saveChanges()">
+      <div class="form-card-header">
+        <div>
+          <h3>Editable Transaction Details</h3>
+          <p>Only the amount, reference and description can be edited.</p>
+        </div>
+
+        <span class="required-note"> <span>*</span> Required fields </span>
+      </div>
+
+      <div class="form-content">
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="amount">
+              Amount ({{ record.currency }}) <span class="required">*</span>
+            </label>
+
+            <div class="amount-input-wrapper">
+              <span class="currency-prefix">{{ record.currency }}</span>
+              <input
+                id="amount"
+                name="amount"
+                type="number"
+                class="form-control amount-input"
+                [(ngModel)]="form.amount"
+                min="0.01"
+                step="0.01"
+                required
+                #amount="ngModel"
+              />
+            </div>
+
+            @if (amount.invalid && amount.touched) {
+              <small class="field-error"> Enter an amount greater than zero. </small>
+            }
+          </div>
+
+          <div class="form-field">
+            <label for="reference">Reference</label>
+            <input
+              id="reference"
+              name="reference"
+              type="text"
+              class="form-control"
+              [(ngModel)]="form.reference"
+              maxlength="150"
+              placeholder="Enter transaction reference"
+            />
+          </div>
+
+          <div class="form-field full-width">
+            <label for="description">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              class="form-control"
+              [(ngModel)]="form.description"
+              rows="4"
+              maxlength="1000"
+              placeholder="Enter transaction description"
+            ></textarea>
+            <small class="field-hint">
+              Provide a clear explanation of the float transaction.
+            </small>
+          </div>
+        </div>
+
+        <div class="system-info-section">
+          <div class="form-section-title">
+            <i class="bi bi-shield-lock"></i>
+            System Information
+          </div>
+
+          <div class="system-info-grid">
+            <div class="system-info-item">
+              <span>Transaction Group ID</span>
+              <strong>{{ record.transactionGroupId || '—' }}</strong>
+            </div>
+
+            <div class="system-info-item">
+              <span>Created At</span>
+              <strong>{{ record.createdAt | date: 'dd MMM yyyy, HH:mm' }}</strong>
+            </div>
+
+            <div class="system-info-item">
+              <span>Last Updated</span>
+              <strong>{{ record.updatedAt | date: 'dd MMM yyyy, HH:mm' }}</strong>
+            </div>
+
+            <div class="system-info-item">
+              <span>Actioned By</span>
+              <strong>{{ form.actionedBy || 'Not available' }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <p class="footer-hint">
+          <i class="bi bi-info-circle"></i>
+          The logged-in username will be sent as actionedBy.
+        </p>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="saving()">
+            Cancel
+          </button>
+
+          <button type="submit" class="btn-save" [disabled]="saving() || transactionForm.invalid">
+            @if (saving()) {
+              <span class="button-spinner"></span>
+              Saving...
+            } @else {
+              <i class="bi bi-check2-circle"></i>
+              Save Changes
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+  }
+</div>

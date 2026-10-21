@@ -116,13 +116,7 @@
     <div class="loading-box">Loading transactions...</div>
   }
 
-  <!-- =====================================================
-       CUSTOMER WITHDRAWALS
-       Customer sends/card-transfers money to bank.
-       Branch gives cash out.
-       Cash/Float OUT, Bank IN.
-       ===================================================== -->
-
+  <!-- CUSTOMER WITHDRAWALS -->
   <div class="cashbook-card">
     <div class="section-header withdrawal-header">
       <div>
@@ -138,19 +132,19 @@
     <div class="table-wrapper">
       <table class="cashbook-table">
         <thead>
-          <tr>
-            <th class="description-column">Bank / Account</th>
+        <tr>
+          <th class="description-column">Bank / Account</th>
 
-            @for (day of days; track day.date) {
-              <th class="day-column">
-                {{ day.key }}
-                <small>{{ day.date | date: 'dd/MM' }}</small>
-              </th>
-            }
+          @for (day of days; track day.date) {
+            <th class="day-column">
+              {{ day.key }}
+              <small>{{ day.date | date: 'dd/MM' }}</small>
+            </th>
+          }
 
-            <th class="total-column">Total</th>
-            <th class="action-column">Action</th>
-          </tr>
+          <th class="total-column">Total</th>
+          <th class="action-column">Action</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -164,9 +158,7 @@
 
               @for (day of days; track day.date) {
                 <td class="amount-cell">
-                  {{
-                    formatAmount(getBankDailyTotal(withdrawalTransactions, account.id, day.date))
-                  }}
+                  {{ formatAmount(getBankDailyTotal(withdrawalTransactions, account.id, day.date)) }}
                 </td>
               }
 
@@ -186,33 +178,23 @@
             </tr>
           }
 
-          <tr class="section-total-row">
-            <td>TOTAL WITHDRAWALS</td>
+        <tr class="section-total-row">
+          <td>TOTAL WITHDRAWALS</td>
 
-            @for (day of days; track day.date) {
-              <td>
-                {{ formatAmount(getSectionDayTotal(withdrawalTransactions, day.date)) }}
-              </td>
-            }
+          @for (day of days; track day.date) {
+            <td>{{ formatAmount(getSectionDayTotal(withdrawalTransactions, day.date)) }}</td>
+          }
 
-            <td>
-              {{ formatAmount(getSectionTotal(withdrawalTransactions)) }}
-            </td>
+          <td>{{ formatAmount(getSectionTotal(withdrawalTransactions)) }}</td>
 
-            <td></td>
-          </tr>
+          <td></td>
+        </tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- =====================================================
-       CUSTOMER DEPOSITS
-       Customer brings cash.
-       Branch sends money from bank.
-       Cash/Float IN, Bank OUT.
-       ===================================================== -->
-
+  <!-- CUSTOMER DEPOSITS -->
   <div class="cashbook-card">
     <div class="section-header deposit-header">
       <div>
@@ -228,19 +210,19 @@
     <div class="table-wrapper">
       <table class="cashbook-table">
         <thead>
-          <tr>
-            <th class="description-column">Bank / Account</th>
+        <tr>
+          <th class="description-column">Bank / Account</th>
 
-            @for (day of days; track day.date) {
-              <th class="day-column">
-                {{ day.key }}
-                <small>{{ day.date | date: 'dd/MM' }}</small>
-              </th>
-            }
+          @for (day of days; track day.date) {
+            <th class="day-column">
+              {{ day.key }}
+              <small>{{ day.date | date: 'dd/MM' }}</small>
+            </th>
+          }
 
-            <th class="total-column">Total</th>
-            <th class="action-column">Action</th>
-          </tr>
+          <th class="total-column">Total</th>
+          <th class="action-column">Action</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -274,30 +256,23 @@
             </tr>
           }
 
-          <tr class="section-total-row">
-            <td>TOTAL DEPOSITS</td>
+        <tr class="section-total-row">
+          <td>TOTAL DEPOSITS</td>
 
-            @for (day of days; track day.date) {
-              <td>
-                {{ formatAmount(getSectionDayTotal(depositTransactions, day.date)) }}
-              </td>
-            }
+          @for (day of days; track day.date) {
+            <td>{{ formatAmount(getSectionDayTotal(depositTransactions, day.date)) }}</td>
+          }
 
-            <td>
-              {{ formatAmount(getSectionTotal(depositTransactions)) }}
-            </td>
+          <td>{{ formatAmount(getSectionTotal(depositTransactions)) }}</td>
 
-            <td></td>
-          </tr>
+          <td></td>
+        </tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- =====================================================
-       FLOAT TRANSFERS
-       ===================================================== -->
-
+  <!-- FLOAT TRANSFERS -->
   <div class="cashbook-card">
     <div class="section-header">
       <div>
@@ -313,16 +288,16 @@
     <div class="table-wrapper">
       <table class="transaction-table">
         <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Branch</th>
-            <th>Reference</th>
-            <th>Description</th>
-            <th>Direction</th>
-            <th class="amount-column">Amount</th>
-            <th class="action-column">Action</th>
-          </tr>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Branch</th>
+          <th>Reference</th>
+          <th>Description</th>
+          <th>Direction</th>
+          <th class="amount-column">Amount</th>
+          <th class="action-column">Action</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -374,10 +349,84 @@
     </div>
   </div>
 
-  <!-- =====================================================
-       LOANS RECEIVED
-       ===================================================== -->
+  <!-- MONEY MOVEMENTS -->
+  <div class="cashbook-card">
+    <div class="section-header">
+      <div>
+        <h3>Money Movements</h3>
+        <span>Transfers between branch floats and bank accounts</span>
+      </div>
 
+      <button type="button" class="add-button" (click)="openTransactionForm('MONEY_MOVEMENT')">
+        + Money Movement
+      </button>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="transaction-table">
+        <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Account / Branch</th>
+          <th>Reference</th>
+          <th>Description</th>
+          <th>Direction</th>
+          <th class="amount-column">Amount</th>
+          <th class="action-column">Action</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (transaction of moneyMovementTransactions; track transaction.id) {
+            <tr>
+              <td>{{ transaction.date | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ transaction.typeLabel }}</td>
+              <td>{{ transaction.context }}</td>
+              <td>{{ transaction.reference || '-' }}</td>
+              <td>{{ transaction.description || '-' }}</td>
+
+              <td>
+                <span
+                  class="direction-badge"
+                  [class.direction-in]="transaction.direction === 'IN'"
+                  [class.direction-out]="transaction.direction === 'OUT'"
+                >
+                  {{ transaction.direction }}
+                </span>
+              </td>
+
+              <td
+                class="amount-column"
+                [class.amount-in]="transaction.direction === 'IN'"
+                [class.amount-out]="transaction.direction === 'OUT'"
+              >
+                {{ formatAmount(transaction.amount) }}
+              </td>
+
+              <td class="action-cell">
+                <button
+                  type="button"
+                  class="small-add-button"
+                  (click)="openTransactionForm('MONEY_MOVEMENT')"
+                >
+                  +
+                </button>
+              </td>
+            </tr>
+          }
+
+          @if (moneyMovementTransactions.length === 0) {
+            <tr>
+              <td colspan="8" class="empty-row">No money movements recorded.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LOANS RECEIVED -->
   <div class="cashbook-card">
     <div class="section-header">
       <div>
@@ -389,15 +438,15 @@
     <div class="table-wrapper">
       <table class="transaction-table">
         <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Reference</th>
-            <th>Actioned By</th>
-            <th>Direction</th>
-            <th class="amount-column">Amount</th>
-          </tr>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Reference</th>
+          <th>Actioned By</th>
+          <th>Direction</th>
+          <th class="amount-column">Amount</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -429,10 +478,7 @@
     </div>
   </div>
 
-  <!-- =====================================================
-       LOAN REPAYMENTS
-       ===================================================== -->
-
+  <!-- LOAN REPAYMENTS -->
   <div class="cashbook-card">
     <div class="section-header">
       <div>
@@ -444,15 +490,15 @@
     <div class="table-wrapper">
       <table class="transaction-table">
         <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Reference</th>
-            <th>Actioned By</th>
-            <th>Direction</th>
-            <th class="amount-column">Amount</th>
-          </tr>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Reference</th>
+          <th>Actioned By</th>
+          <th>Direction</th>
+          <th class="amount-column">Amount</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -484,10 +530,7 @@
     </div>
   </div>
 
-  <!-- =====================================================
-       CLIENT LOANS
-       ===================================================== -->
-
+  <!-- CLIENT LOANS -->
   <div class="cashbook-card">
     <div class="section-header">
       <div>
@@ -499,19 +542,19 @@
     <div class="table-wrapper">
       <table class="transaction-table">
         <thead>
-          <tr>
-            <th>Date</th>
-            <th>Client</th>
-            <th>Phone</th>
-            <th>Funding Source</th>
-            <th>Principal</th>
-            <th>Interest</th>
-            <th>Total Receivable</th>
-            <th>Outstanding</th>
-            <th>Received</th>
-            <th>Status</th>
-            <th>Due Date</th>
-          </tr>
+        <tr>
+          <th>Date</th>
+          <th>Client</th>
+          <th>Phone</th>
+          <th>Funding Source</th>
+          <th>Principal</th>
+          <th>Interest</th>
+          <th>Total Receivable</th>
+          <th>Outstanding</th>
+          <th>Received</th>
+          <th>Status</th>
+          <th>Due Date</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -595,10 +638,7 @@
     </div>
   </div>
 
-  <!-- =====================================================
-       CURRENCY EXCHANGE
-       ===================================================== -->
-
+  <!-- CURRENCY EXCHANGE -->
   <div class="cashbook-card">
     <div class="section-header">
       <div>
@@ -614,16 +654,16 @@
     <div class="table-wrapper">
       <table class="transaction-table">
         <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Source</th>
-            <th>Reference</th>
-            <th>Description</th>
-            <th>Direction</th>
-            <th class="amount-column">Amount</th>
-            <th class="action-column">Action</th>
-          </tr>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Source</th>
+          <th>Reference</th>
+          <th>Description</th>
+          <th>Direction</th>
+          <th class="amount-column">Amount</th>
+          <th class="action-column">Action</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -671,10 +711,7 @@
     </div>
   </div>
 
-  <!-- =====================================================
-       EXPENSES
-       ===================================================== -->
-
+  <!-- EXPENSES -->
   <div class="cashbook-card">
     <div class="section-header">
       <div>
@@ -690,15 +727,15 @@
     <div class="table-wrapper">
       <table class="transaction-table">
         <thead>
-          <tr>
-            <th>Date</th>
-            <th>Payment Source</th>
-            <th>Bank / Account</th>
-            <th>Reference</th>
-            <th>Description</th>
-            <th class="amount-column">Amount</th>
-            <th class="action-column">Action</th>
-          </tr>
+        <tr>
+          <th>Date</th>
+          <th>Payment Source</th>
+          <th>Bank / Account</th>
+          <th>Reference</th>
+          <th>Description</th>
+          <th class="amount-column">Amount</th>
+          <th class="action-column">Action</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -736,83 +773,7 @@
     </div>
   </div>
 
-  <!-- =====================================================
-       ADJUSTMENTS
-       ===================================================== -->
-
-<!--  <div class="cashbook-card">-->
-<!--    <div class="section-header">-->
-<!--      <div>-->
-<!--        <h3>Float Adjustments</h3>-->
-<!--        <span>Individual balance adjustments</span>-->
-<!--      </div>-->
-
-<!--      <button type="button" class="add-button" (click)="openTransactionForm('FLOAT_ADJUSTMENT')">-->
-<!--        + Adjustment-->
-<!--      </button>-->
-<!--    </div>-->
-
-<!--    <div class="table-wrapper">-->
-<!--      <table class="transaction-table">-->
-<!--        <thead>-->
-<!--          <tr>-->
-<!--            <th>Date</th>-->
-<!--            <th>Direction</th>-->
-<!--            <th>Reference</th>-->
-<!--            <th>Description</th>-->
-<!--            <th class="amount-column">Amount</th>-->
-<!--            <th class="action-column">Action</th>-->
-<!--          </tr>-->
-<!--        </thead>-->
-
-<!--        <tbody>-->
-<!--          @for (transaction of adjustmentTransactions; track transaction.id) {-->
-<!--            <tr>-->
-<!--              <td>{{ transaction.date | date: 'dd/MM/yyyy' }}</td>-->
-
-<!--              <td>-->
-<!--                <span-->
-<!--                  class="direction-badge"-->
-<!--                  [class.direction-in]="transaction.direction === 'IN'"-->
-<!--                  [class.direction-out]="transaction.direction === 'OUT'"-->
-<!--                >-->
-<!--                  {{ transaction.direction }}-->
-<!--                </span>-->
-<!--              </td>-->
-
-<!--              <td>{{ transaction.reference || '-' }}</td>-->
-<!--              <td>{{ transaction.description || '-' }}</td>-->
-
-<!--              <td class="amount-column">-->
-<!--                {{ formatAmount(transaction.amount) }}-->
-<!--              </td>-->
-
-<!--              <td class="action-cell">-->
-<!--                <button-->
-<!--                  type="button"-->
-<!--                  class="small-add-button"-->
-<!--                  (click)="openTransactionForm('FLOAT_ADJUSTMENT')"-->
-<!--                >-->
-<!--                  +-->
-<!--                </button>-->
-<!--              </td>-->
-<!--            </tr>-->
-<!--          }-->
-
-<!--          @if (adjustmentTransactions.length === 0) {-->
-<!--            <tr>-->
-<!--              <td colspan="6" class="empty-row">No adjustments recorded.</td>-->
-<!--            </tr>-->
-<!--          }-->
-<!--        </tbody>-->
-<!--      </table>-->
-<!--    </div>-->
-<!--  </div>-->
-
-  <!-- =====================================================
-          REVENUE
-          ===================================================== -->
-
+  <!-- REVENUE -->
   <div class="cashbook-card">
     <div class="section-header">
       <div>
@@ -848,9 +809,7 @@
               <td>{{ transaction.description || '-' }}</td>
 
               <td>
-                    <span class="direction-badge direction-in">
-                      IN
-                    </span>
+                <span class="direction-badge direction-in">IN</span>
               </td>
 
               <td class="amount-column amount-in">
@@ -858,11 +817,7 @@
               </td>
 
               <td class="action-cell">
-                <button
-                  type="button"
-                  class="small-add-button"
-                  (click)="openTransactionForm('REVENUE')"
-                >
+                <button type="button" class="small-add-button" (click)="openTransactionForm('REVENUE')">
                   +
                 </button>
               </td>
@@ -879,10 +834,7 @@
     </div>
   </div>
 
-  <!-- =====================================================
-       WEEKLY SUMMARY
-       ===================================================== -->
-
+  <!-- WEEKLY SUMMARY -->
   <div class="cashbook-card summary-card">
     <div class="section-header">
       <div>
@@ -894,21 +846,21 @@
     <div class="table-wrapper">
       <table class="summary-table">
         <thead>
-          <tr>
-            <th class="summary-description">Description</th>
+        <tr>
+          <th class="summary-description">Description</th>
 
-            @for (day of days; track day.date) {
-              <th>
-                {{ day.key }}
+          @for (day of days; track day.date) {
+            <th>
+              {{ day.key }}
 
-                <small>
-                  {{ day.date | date: 'dd/MM' }}
-                </small>
-              </th>
-            }
+              <small>
+                {{ day.date | date: 'dd/MM' }}
+              </small>
+            </th>
+          }
 
-            <th>Total</th>
-          </tr>
+          <th>Total</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -942,30 +894,18 @@
     </div>
   </div>
 
-  <!-- =====================================================
-       TRANSACTION MODAL
-       ===================================================== -->
-
+  <!-- TRANSACTION MODAL -->
   @if (showTransactionForm) {
     <div class="modal-backdrop" (click)="closeTransactionForm()">
       <div class="transaction-modal" (click)="$event.stopPropagation()">
-        <!-- MODAL HEADER -->
-
         <div class="modal-header">
           <div>
-            <h3>
-              {{ formTitle }}
-            </h3>
-
-            <span>
-              {{ selectedCurrency }}
-            </span>
+            <h3>{{ formTitle }}</h3>
+            <span>{{ selectedCurrency }}</span>
           </div>
 
           <button type="button" class="close-button" (click)="closeTransactionForm()">×</button>
         </div>
-
-        <!-- MODAL BODY -->
 
         <div class="modal-body">
           @if (errorMessage) {
@@ -975,7 +915,6 @@
           }
 
           <!-- BANK WITHDRAWAL / DEPOSIT -->
-
           @if (isBankTransactionForm()) {
             <div class="form-grid">
               <div class="form-group">
@@ -986,11 +925,7 @@
 
                   @for (account of getFormBankAccounts(); track account.id) {
                     <option [ngValue]="account.id">
-                      {{ account.bankName }}
-                      -
-                      {{ account.accountName }}
-                      -
-                      {{ account.accountNumber }}
+                      {{ account.bankName }} - {{ account.accountName }} - {{ account.accountNumber }}
                     </option>
                   }
                 </select>
@@ -998,37 +933,31 @@
 
               <div class="form-group">
                 <label>Amount</label>
-
                 <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.amount" />
               </div>
 
               <div class="form-group">
                 <label>Transaction Date</label>
-
                 <input type="date" [(ngModel)]="transactionForm.date" />
               </div>
 
               <div class="form-group">
                 <label>Reference</label>
-
                 <input type="text" [(ngModel)]="transactionForm.reference" />
               </div>
             </div>
 
             <div class="form-group">
               <label>Description</label>
-
               <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>
             </div>
           }
 
           <!-- FLOAT TRANSFER -->
-
           @if (isFloatTransferForm()) {
             <div class="form-grid">
               <div class="form-group">
                 <label>From Branch</label>
-
                 <input type="text" [value]="selectedBranch?.name || ''" disabled />
               </div>
 
@@ -1040,8 +969,7 @@
 
                   @for (branch of getDestinationBranches(); track branch.id) {
                     <option [ngValue]="branch.id">
-                      {{ branch.name }}
-                      ({{ branch.code }})
+                      {{ branch.name }} ({{ branch.code }})
                     </option>
                   }
                 </select>
@@ -1049,41 +977,158 @@
 
               <div class="form-group">
                 <label>Amount</label>
-
                 <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.amount" />
               </div>
 
               <div class="form-group">
                 <label>Transaction Date</label>
-
                 <input type="date" [(ngModel)]="transactionForm.date" />
               </div>
 
               <div class="form-group">
                 <label>Reference</label>
-
                 <input type="text" [(ngModel)]="transactionForm.reference" />
               </div>
             </div>
 
             <div class="form-group">
               <label>Description</label>
+              <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>
+            </div>
+          }
 
+          <!-- MONEY MOVEMENT -->
+          @if (isMoneyMovementForm()) {
+            <div class="form-grid">
+              <div class="form-group">
+                <label>From</label>
+
+                <select
+                  [(ngModel)]="transactionForm.fromType"
+                  (ngModelChange)="onMoneyMovementFromTypeChange()"
+                >
+                  <option value="BRANCH_FLOAT">Branch Float</option>
+                  <option value="BANK_ACCOUNT">Bank Account</option>
+                </select>
+              </div>
+
+              @if (transactionForm.fromType === 'BRANCH_FLOAT') {
+                <div class="form-group">
+                  <label>Source Branch</label>
+
+                  <select [(ngModel)]="transactionForm.fromBranchId">
+                    <option [ngValue]="branchId">
+                      {{ selectedBranch?.name || 'Current Branch' }}
+                      @if (selectedBranch?.code) {
+                        ({{ selectedBranch?.code }})
+                      }
+                    </option>
+
+                    @for (branch of getDestinationBranches(); track branch.id) {
+                      <option [ngValue]="branch.id">
+                        {{ branch.name }} ({{ branch.code }})
+                      </option>
+                    }
+                  </select>
+                </div>
+              }
+
+              @if (transactionForm.fromType === 'BANK_ACCOUNT') {
+                <div class="form-group">
+                  <label>Source Bank Account</label>
+
+                  <select [(ngModel)]="transactionForm.fromBankAccountId">
+                    <option [ngValue]="null">Select source bank account</option>
+
+                    @for (account of filteredBankAccounts; track account.id) {
+                      <option [ngValue]="account.id">
+                        {{ account.bankName }} - {{ account.accountName }} - {{ account.accountNumber }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              }
+
+              <div class="form-group">
+                <label>To</label>
+
+                <select
+                  [(ngModel)]="transactionForm.toType"
+                  (ngModelChange)="onMoneyMovementToTypeChange()"
+                >
+                  <option value="BRANCH_FLOAT">Branch Float</option>
+                  <option value="BANK_ACCOUNT">Bank Account</option>
+                </select>
+              </div>
+
+              @if (transactionForm.toType === 'BRANCH_FLOAT') {
+                <div class="form-group">
+                  <label>Destination Branch</label>
+
+                  <select [(ngModel)]="transactionForm.toBranchId">
+                    <option [ngValue]="null">Select destination branch</option>
+
+                    <option [ngValue]="branchId">
+                      {{ selectedBranch?.name || 'Current Branch' }}
+                      @if (selectedBranch?.code) {
+                        ({{ selectedBranch?.code }})
+                      }
+                    </option>
+
+                    @for (branch of getDestinationBranches(); track branch.id) {
+                      <option [ngValue]="branch.id">
+                        {{ branch.name }} ({{ branch.code }})
+                      </option>
+                    }
+                  </select>
+                </div>
+              }
+
+              @if (transactionForm.toType === 'BANK_ACCOUNT') {
+                <div class="form-group">
+                  <label>Destination Bank Account</label>
+
+                  <select [(ngModel)]="transactionForm.toBankAccountId">
+                    <option [ngValue]="null">Select destination bank account</option>
+
+                    @for (account of filteredBankAccounts; track account.id) {
+                      <option [ngValue]="account.id">
+                        {{ account.bankName }} - {{ account.accountName }} - {{ account.accountNumber }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              }
+
+              <div class="form-group">
+                <label>Amount</label>
+                <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.amount" />
+              </div>
+
+              <div class="form-group">
+                <label>Transaction Date</label>
+                <input type="date" [(ngModel)]="transactionForm.date" />
+              </div>
+
+              <div class="form-group">
+                <label>Reference</label>
+                <input type="text" [(ngModel)]="transactionForm.reference" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Description</label>
               <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>
             </div>
           }
 
           <!-- CURRENCY EXCHANGE -->
-
           @if (isCurrencyExchangeForm()) {
             <div class="form-grid">
               <div class="form-group">
                 <label>Received Currency</label>
 
-                <select
-                  [(ngModel)]="transactionForm.receivedCurrency"
-                  (ngModelChange)="calculatePaidAmount()"
-                >
+                <select [(ngModel)]="transactionForm.receivedCurrency" (ngModelChange)="calculatePaidAmount()">
                   @for (currency of currencies; track currency) {
                     <option [value]="currency">
                       {{ currency }}
@@ -1107,10 +1152,7 @@
               <div class="form-group">
                 <label>Paid Currency</label>
 
-                <select
-                  [(ngModel)]="transactionForm.paidCurrency"
-                  (ngModelChange)="calculatePaidAmount()"
-                >
+                <select [(ngModel)]="transactionForm.paidCurrency" (ngModelChange)="calculatePaidAmount()">
                   @for (currency of currencies; track currency) {
                     <option [value]="currency">
                       {{ currency }}
@@ -1130,21 +1172,12 @@
                   (ngModelChange)="calculatePaidAmount()"
                 />
 
-                <small>
-                  Paid amount = Received amount × Exchange rate
-                </small>
+                <small>Paid amount = Received amount × Exchange rate</small>
               </div>
 
               <div class="form-group">
                 <label>Paid Amount</label>
-
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  [(ngModel)]="transactionForm.paidAmount"
-                  readonly
-                />
+                <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.paidAmount" readonly />
               </div>
 
               <div class="form-group">
@@ -1181,11 +1214,7 @@
 
                   @for (account of filteredBankAccounts; track account.id) {
                     <option [ngValue]="account.id">
-                      {{ account.bankName }}
-                      -
-                      {{ account.accountName }}
-                      -
-                      {{ account.accountNumber }}
+                      {{ account.bankName }} - {{ account.accountName }} - {{ account.accountNumber }}
                     </option>
                   }
                 </select>
@@ -1195,25 +1224,22 @@
             <div class="form-grid">
               <div class="form-group">
                 <label>Transaction Date</label>
-
                 <input type="date" [(ngModel)]="transactionForm.date" />
               </div>
 
               <div class="form-group">
                 <label>Reference</label>
-
                 <input type="text" [(ngModel)]="transactionForm.reference" />
               </div>
             </div>
 
             <div class="form-group">
               <label>Description</label>
-
               <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>
             </div>
           }
-          <!-- EXPENSE -->
 
+          <!-- EXPENSE -->
           @if (isExpenseForm()) {
             <div class="form-grid">
               <div class="form-group">
@@ -1234,11 +1260,7 @@
 
                     @for (account of filteredBankAccounts; track account.id) {
                       <option [ngValue]="account.id">
-                        {{ account.bankName }}
-                        -
-                        {{ account.accountName }}
-                        -
-                        {{ account.accountNumber }}
+                        {{ account.bankName }} - {{ account.accountName }} - {{ account.accountNumber }}
                       </option>
                     }
                   </select>
@@ -1259,71 +1281,27 @@
 
               <div class="form-group">
                 <label>Amount</label>
-
                 <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.amount" />
               </div>
 
               <div class="form-group">
                 <label>Transaction Date</label>
-
                 <input type="date" [(ngModel)]="transactionForm.date" />
               </div>
 
               <div class="form-group">
                 <label>Reference</label>
-
                 <input type="text" [(ngModel)]="transactionForm.reference" />
               </div>
             </div>
 
             <div class="form-group">
               <label>Description</label>
-
               <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>
             </div>
           }
 
-          <!-- FLOAT ADJUSTMENT -->
-
-<!--          @if (isAdjustmentForm()) {-->
-<!--            <div class="form-grid">-->
-<!--              <div class="form-group">-->
-<!--                <label>Direction</label>-->
-
-<!--                <select [(ngModel)]="transactionForm.direction">-->
-<!--                  <option value="IN">IN</option>-->
-<!--                  <option value="OUT">OUT</option>-->
-<!--                </select>-->
-<!--              </div>-->
-
-<!--              <div class="form-group">-->
-<!--                <label>Amount</label>-->
-
-<!--                <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.amount" />-->
-<!--              </div>-->
-
-<!--              <div class="form-group">-->
-<!--                <label>Transaction Date</label>-->
-
-<!--                <input type="date" [(ngModel)]="transactionForm.date" />-->
-<!--              </div>-->
-
-<!--              <div class="form-group">-->
-<!--                <label>Reference</label>-->
-
-<!--                <input type="text" [(ngModel)]="transactionForm.reference" />-->
-<!--              </div>-->
-<!--            </div>-->
-
-<!--            <div class="form-group">-->
-<!--              <label>Description</label>-->
-
-<!--              <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>-->
-<!--            </div>-->
-<!--          }-->
-
           <!-- REVENUE -->
-
           @if (isRevenueForm()) {
             <div class="form-grid">
               <div class="form-group">
@@ -1344,11 +1322,7 @@
 
                     @for (account of filteredBankAccounts; track account.id) {
                       <option [ngValue]="account.id">
-                        {{ account.bankName }}
-                        -
-                        {{ account.accountName }}
-                        -
-                        {{ account.accountNumber }}
+                        {{ account.bankName }} - {{ account.accountName }} - {{ account.accountNumber }}
                       </option>
                     }
                   </select>
@@ -1369,70 +1343,54 @@
 
               <div class="form-group">
                 <label>Amount</label>
-
                 <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.amount" />
               </div>
 
               <div class="form-group">
                 <label>Revenue Date</label>
-
                 <input type="date" [(ngModel)]="transactionForm.date" />
               </div>
 
               <div class="form-group">
                 <label>Reference</label>
-
                 <input type="text" [(ngModel)]="transactionForm.reference" />
               </div>
             </div>
 
             <div class="form-group">
               <label>Description</label>
-
               <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>
             </div>
           }
 
           <!-- OPENING BALANCE -->
-
           @if (isOpeningBalanceForm()) {
             <div class="form-grid">
               <div class="form-group">
                 <label>Opening Amount</label>
-
                 <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.amount" />
               </div>
 
               <div class="form-group">
                 <label>Transaction Date</label>
-
                 <input type="date" [(ngModel)]="transactionForm.date" />
               </div>
 
               <div class="form-group">
                 <label>Reference</label>
-
                 <input type="text" [(ngModel)]="transactionForm.reference" />
               </div>
             </div>
 
             <div class="form-group">
               <label>Description</label>
-
               <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>
             </div>
           }
         </div>
 
-        <!-- MODAL FOOTER -->
-
         <div class="modal-footer">
-          <button
-            type="button"
-            class="cancel-button"
-            (click)="closeTransactionForm()"
-            [disabled]="saving"
-          >
+          <button type="button" class="cancel-button" (click)="closeTransactionForm()" [disabled]="saving">
             Cancel
           </button>
 

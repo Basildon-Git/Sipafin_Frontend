@@ -1,5 +1,5 @@
 .page-container {
-  max-width: 1250px;
+  /* max-width: 1250px; */
   margin: 0 auto;
   padding: 28px 24px 40px;
 }
@@ -518,7 +518,188 @@ tbody tr:hover {
   font-size: 12px;
 }
 
-/* RESPONSIVE */
+/* BRANCH AND CURRENCY FILTERS */
+
+.filter-card {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px;
+  margin-bottom: 22px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 11px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 220px;
+}
+
+.filter-field label {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.filter-field select {
+  min-width: 220px;
+  height: 39px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  outline: none;
+}
+
+.filter-field select:focus {
+  border-color: #0756b8;
+  box-shadow: 0 0 0 3px rgba(7, 86, 184, 0.08);
+}
+
+.refresh-btn {
+  height: 39px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.refresh-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* LOADING AND ERRORS */
+
+.loading-state {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #dbeafe;
+  border-top-color: #0756b8;
+  border-radius: 50%;
+  animation: bank-spin 0.7s linear infinite;
+}
+
+@keyframes bank-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.alert-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  margin-bottom: 20px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.alert-error button {
+  margin-left: auto;
+  padding: 5px 10px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fff;
+  color: #b91c1c;
+  cursor: pointer;
+}
+
+/* BALANCE */
+
+.balance-cell {
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* TRANSACTION STATUS */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-posted {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.status-pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status-failed {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.status-default {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* RESPONSIVE FILTERS */
+
+@media (max-width: 768px) {
+  .filter-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filter-field,
+  .filter-field select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .refresh-btn {
+    width: 100%;
+  }
+
+  .alert-error {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
 
 @media (max-width: 1000px) {
   .summary-grid {

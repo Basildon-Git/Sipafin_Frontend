@@ -1,179 +1,77 @@
-import { Component, computed, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { Master } from '../../../core/services/master';
 
-export interface BankTransaction {
+interface ApiResponse<T> {
+  status: number;
+  message: string;
+  data: T;
+  timestamp?: string;
+}
+
+interface Branch {
   id: number;
+  name: string;
+  code: string;
+  location?: string;
+  active: boolean;
+}
 
-  bankAccount: {
-    id: number;
-    accountName: string;
-    accountNumber: string;
-    currency: string;
-  };
-
-  branch: {
-    id: number;
-    name: string;
-    code: string;
-  } | null;
-
+interface BankTransaction {
+  id: number;
+  bankAccountId: number;
+  accountName: string;
+  accountNumber: string;
+  bankId: number;
+  bankName: string;
+  bankCode: string;
+  branchId: number;
+  branchName: string;
+  branchCode: string;
+  currency: string;
   transactionType: string;
   direction: 'IN' | 'OUT';
   amount: number;
+  balanceAfter: number;
   transactionDate: string;
+  transactionGroupId: string;
+  status: string;
   reference: string | null;
   description: string | null;
+  actionedBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 @Component({
   selector: 'app-bank-transactions',
   standalone: true,
-  imports: [DecimalPipe, DatePipe],
+  imports: [DecimalPipe, DatePipe, CommonModule],
   templateUrl: './bank-transactions.html',
   styleUrl: './bank-transactions.css',
 })
-export class BankTransactions {
+export class BankTransactions implements OnInit {
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private masterService = inject(Master);
+
+  private readonly branchesUrl = this.masterService.getBackendService() + 'api/v1/branches/active';
+  private readonly transactionsUrl = this.masterService.getBackendService() + 'api/v1/money-movements/bank';
+
+  currencies = ['USD', 'ZIG', 'ZAR', 'EUR'];
+
+  branches = signal<Branch[]>([]);
+  transactions = signal<BankTransaction[]>([]);
+
+  selectedBranchId = signal<number | null>(null);
+  selectedCurrency = signal('USD');
   searchTerm = signal('');
 
-  transactions = signal<BankTransaction[]>([
-    {
-      id: 1,
-      bankAccount: {
-        id: 1,
-        accountName: 'GreenFuel Main Account',
-        accountNumber: '012345678901',
-        currency: 'USD',
-      },
-      branch: {
-        id: 1,
-        name: 'Head Office',
-        code: 'HO',
-      },
-      transactionType: 'COMMISSION_RECEIVED',
-      direction: 'IN',
-      amount: 12500.5,
-      transactionDate: '2026-09-01',
-      reference: 'COM-2026-0010',
-      description: 'Commission received',
-    },
-    {
-      id: 2,
-      bankAccount: {
-        id: 1,
-        accountName: 'GreenFuel Main Account',
-        accountNumber: '012345678901',
-        currency: 'USD',
-      },
-      branch: {
-        id: 1,
-        name: 'Head Office',
-        code: 'HO',
-      },
-      transactionType: 'BANK_DEPOSIT',
-      direction: 'IN',
-      amount: 5000.0,
-      transactionDate: '2026-09-02',
-      reference: 'DEP-2026-0045',
-      description: 'Petty cash deposit',
-    },
-    {
-      id: 3,
-      bankAccount: {
-        id: 2,
-        accountName: 'Operations Account',
-        accountNumber: '456789123456',
-        currency: 'USD',
-      },
-      branch: {
-        id: 2,
-        name: 'Harare Branch',
-        code: 'HAR',
-      },
-      transactionType: 'EXPENSE',
-      direction: 'OUT',
-      amount: 1850.75,
-      transactionDate: '2026-09-02',
-      reference: 'EXP-2026-0032',
-      description: 'Operational expenses',
-    },
-    {
-      id: 4,
-      bankAccount: {
-        id: 3,
-        accountName: 'Capital Account',
-        accountNumber: '789456123012',
-        currency: 'USD',
-      },
-      branch: {
-        id: 3,
-        name: 'Bulawayo Branch',
-        code: 'BYO',
-      },
-      transactionType: 'BANK_WITHDRAWAL',
-      direction: 'OUT',
-      amount: 2500.0,
-      transactionDate: '2026-09-03',
-      reference: 'WD-2026-0015',
-      description: 'Cash withdrawal for petty cash',
-    },
-    {
-      id: 5,
-      bankAccount: {
-        id: 2,
-        accountName: 'Operations Account',
-        accountNumber: '456789123456',
-        currency: 'USD',
-      },
-      branch: {
-        id: 2,
-        name: 'Harare Branch',
-        code: 'HAR',
-      },
-      transactionType: 'BRANCH_TRANSFER_IN',
-      direction: 'IN',
-      amount: 3000.0,
-      transactionDate: '2026-09-03',
-      reference: 'TRF-2026-0021',
-      description: 'Transfer received from Head Office',
-    },
-    {
-      id: 6,
-      bankAccount: {
-        id: 1,
-        accountName: 'GreenFuel Main Account',
-        accountNumber: '012345678901',
-        currency: 'USD',
-      },
-      branch: null,
-      transactionType: 'LOAN_REPAYMENT',
-      direction: 'IN',
-      amount: 7500.0,
-      transactionDate: '2026-09-04',
-      reference: 'LN-REP-0087',
-      description: 'Loan repayment received',
-    },
-    {
-      id: 7,
-      bankAccount: {
-        id: 4,
-        accountName: 'Capital Projects Account',
-        accountNumber: '001234567890',
-        currency: 'USD',
-      },
-      branch: {
-        id: 4,
-        name: 'Mutare Branch',
-        code: 'MUT',
-      },
-      transactionType: 'BANK_DEPOSIT',
-      direction: 'OUT',
-      amount: 1200.0,
-      transactionDate: '2026-09-04',
-      reference: 'DEP-2026-0052',
-      description: 'Transfer to operating account',
-    },
-  ]);
+  loadingBranches = signal(false);
+  loadingTransactions = signal(false);
+  errorMessage = signal('');
 
   filteredTransactions = computed(() => {
     const search = this.searchTerm().trim().toLowerCase();
@@ -182,17 +80,27 @@ export class BankTransactions {
       return this.transactions();
     }
 
-    return this.transactions().filter(
-      (transaction) =>
-        transaction.bankAccount.accountName.toLowerCase().includes(search) ||
-        transaction.bankAccount.accountNumber.toLowerCase().includes(search) ||
-        transaction.bankAccount.currency.toLowerCase().includes(search) ||
-        transaction.branch?.name.toLowerCase().includes(search) ||
-        transaction.branch?.code.toLowerCase().includes(search) ||
-        transaction.transactionType.toLowerCase().includes(search) ||
-        transaction.direction.toLowerCase().includes(search) ||
-        transaction.reference?.toLowerCase().includes(search) ||
-        transaction.description?.toLowerCase().includes(search),
+    return this.transactions().filter((transaction) =>
+      [
+        transaction.accountName,
+        transaction.accountNumber,
+        transaction.bankName,
+        transaction.bankCode,
+        transaction.branchName,
+        transaction.branchCode,
+        transaction.currency,
+        transaction.transactionType,
+        transaction.direction,
+        transaction.status,
+        transaction.reference,
+        transaction.description,
+        transaction.actionedBy,
+        transaction.transactionGroupId,
+      ].some((value) =>
+        String(value ?? '')
+          .toLowerCase()
+          .includes(search),
+      ),
     );
   });
 
@@ -200,19 +108,94 @@ export class BankTransactions {
 
   totalIn = computed(() =>
     this.transactions()
-      .filter((t) => t.direction === 'IN')
-      .reduce((total, t) => total + t.amount, 0),
+      .filter((transaction) => transaction.direction === 'IN')
+      .reduce((total, transaction) => total + Number(transaction.amount || 0), 0),
   );
 
   totalOut = computed(() =>
     this.transactions()
-      .filter((t) => t.direction === 'OUT')
-      .reduce((total, t) => total + t.amount, 0),
+      .filter((transaction) => transaction.direction === 'OUT')
+      .reduce((total, transaction) => total + Number(transaction.amount || 0), 0),
   );
 
   netMovement = computed(() => this.totalIn() - this.totalOut());
 
-  constructor(private router: Router) {}
+  ngOnInit(): void {
+    this.loadBranches();
+  }
+
+  loadBranches(): void {
+    this.loadingBranches.set(true);
+    this.errorMessage.set('');
+
+    this.http.get<ApiResponse<Branch[]>>(this.branchesUrl).subscribe({
+      next: (response) => {
+        const activeBranches = (response.data ?? []).filter((branch) => branch.active);
+
+        this.branches.set(activeBranches);
+        this.loadingBranches.set(false);
+
+        if (activeBranches.length > 0) {
+          const currentId = this.selectedBranchId();
+
+          const branchExists =
+            currentId !== null && activeBranches.some((branch) => branch.id === currentId);
+
+          const branchId = branchExists ? currentId : activeBranches[0].id;
+
+          this.selectedBranchId.set(branchId);
+          this.loadTransactions();
+        } else {
+          this.transactions.set([]);
+          this.errorMessage.set('No active branches were found.');
+        }
+      },
+      error: (error) => {
+        this.loadingBranches.set(false);
+        this.transactions.set([]);
+        this.errorMessage = error?.error?.message ?? 'Failed to load active branches.';
+      },
+    });
+  }
+
+  loadTransactions(): void {
+    const branchId = this.selectedBranchId();
+    const currency = this.selectedCurrency();
+
+    if (branchId === null || !currency) {
+      this.transactions.set([]);
+      return;
+    }
+
+    this.loadingTransactions.set(true);
+    this.errorMessage.set('');
+    this.transactions.set([]);
+
+    const url = `${this.transactionsUrl}/branch/${branchId}/currency/${encodeURIComponent(currency)}`;
+
+    this.http.get<ApiResponse<BankTransaction[]>>(url).subscribe({
+      next: (response) => {
+        this.transactions.set(response.data ?? []);
+        this.loadingTransactions.set(false);
+      },
+      error: (error) => {
+        this.transactions.set([]);
+        this.loadingTransactions.set(false);
+        this.errorMessage = error?.error?.message ?? 'Failed to load bank transactions.';
+      },
+    });
+  }
+
+  onBranchChange(value: string): void {
+    const branchId = value ? Number(value) : null;
+    this.selectedBranchId.set(branchId !== null && Number.isFinite(branchId) ? branchId : null);
+    this.loadTransactions();
+  }
+
+  onCurrencyChange(value: string): void {
+    this.selectedCurrency.set(value);
+    this.loadTransactions();
+  }
 
   addTransaction(): void {
     this.router.navigate(['/bank-transactions/new']);
@@ -233,11 +216,13 @@ export class BankTransactions {
       return;
     }
 
-    this.transactions.update((items) => items.filter((item) => item.id !== id));
+    // Connect this to the backend DELETE endpoint before using it
+    // to delete persistent records.
+    alert('Backend delete endpoint has not been configured yet.');
   }
 
   formatTransactionType(type: string): string {
-    return type
+    return (type ?? '')
       .replace(/_/g, ' ')
       .toLowerCase()
       .replace(/\b\w/g, (char) => char.toUpperCase());
@@ -248,9 +233,7 @@ export class BankTransactions {
       return '—';
     }
 
-    const lastFour = accountNumber.slice(-4);
-
-    return `•••• ${lastFour}`;
+    return `•••• ${accountNumber.slice(-4)}`;
   }
 
   getDirectionClass(direction: string): string {
@@ -259,16 +242,16 @@ export class BankTransactions {
 
   getTransactionClass(type: string): string {
     switch (type) {
-      case 'COMMISSION_RECEIVED':
+      case 'CASH_DEPOSIT':
+      case 'BANK_DEPOSIT':
       case 'LOAN_RECEIVED':
       case 'LOAN_REPAYMENT':
-      case 'BANK_DEPOSIT':
-      case 'BRANCH_TRANSFER_IN':
+      case 'COMMISSION_RECEIVED':
         return 'transaction-in';
 
-      case 'EXPENSE':
+      case 'CASH_WITHDRAWAL':
       case 'BANK_WITHDRAWAL':
-      case 'BRANCH_TRANSFER_OUT':
+      case 'EXPENSE':
         return 'transaction-out';
 
       case 'ADJUSTMENT':
@@ -279,6 +262,21 @@ export class BankTransactions {
 
       default:
         return '';
+    }
+  }
+
+  getStatusClass(status: string): string {
+    switch ((status ?? '').toUpperCase()) {
+      case 'POSTED':
+        return 'status-posted';
+      case 'PENDING':
+        return 'status-pending';
+      case 'REVERSED':
+      case 'CANCELLED':
+      case 'FAILED':
+        return 'status-failed';
+      default:
+        return 'status-default';
     }
   }
 }

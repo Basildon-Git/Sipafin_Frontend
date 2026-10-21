@@ -11,6 +11,7 @@ type TransactionType =
   | 'BANK_WITHDRAWAL'
   | 'BANK_DEPOSIT'
   | 'FLOAT_TRANSFER'
+  | 'MONEY_MOVEMENT'
   | 'CURRENCY_EXCHANGE'
   | 'EXPENSE'
   | 'REVENUE'
@@ -115,6 +116,14 @@ interface BankTransaction {
   description?: string;
   actionedBy?: string;
   createdAt?: string;
+  updatedAt?: string;
+}
+
+interface BranchCurrencyTransactionsResponse {
+  branchId: number;
+  currency: Currency;
+  floatTransactions: FloatTransaction[];
+  bankTransactions: BankTransaction[];
 }
 
 interface DisplayTransaction {
@@ -130,6 +139,7 @@ interface DisplayTransaction {
   bankAccountId?: number;
   transaction?: FloatTransaction;
   bankTransaction?: BankTransaction;
+  transactionGroupId?: string;
 }
 
 interface ClientLoan {
@@ -226,6 +236,7 @@ export class NewFinancialTransaction implements OnInit {
   branchId: number | null = null;
   selectedBranch: Branch | null = null;
   branchFloat: BranchFloat | null = null;
+  account: BranchFloat | null = null;
 
   selectedCurrency: Currency = 'USD';
   selectedWeekStart = this.getMonday(new Date());
@@ -260,8 +271,6 @@ export class NewFinancialTransaction implements OnInit {
   formTitle = '';
 
   transactionForm = this.createEmptyForm();
-
-  account: BranchFloat | null = null;
 
   ngOnInit(): void {
     this.branchId = this.getBranchId();
@@ -354,81 +363,42 @@ export class NewFinancialTransaction implements OnInit {
 
     const baseUrl = this.masterService.getBackendService();
 
-    const requests = this.days.map((day) =>
-      this.http.get<any>(
-        `${baseUrl}api/v1/money-movements/float/branch/${this.branchId}/currency/${this.selectedCurrency}/date/${day.date}`,
-      ),
-    );
-
-    forkJoin(requests).subscribe({
-      next: (responses) => {
-        const transactionMap = new Map<number, FloatTransaction>();
-
-        responses.forEach((response, index) => {
-          const requestedDate = this.days[index].date;
-          const data: FloatTransaction[] = response?.data ?? [];
-
-          data.forEach((transaction) => {
-            if (transaction.status && transaction.status !== 'POSTED') {
-              return;
-            }
-
-            if (transaction.transactionDate !== requestedDate) {
-              return;
-            }
-
-            transactionMap.set(Number(transaction.id), transaction);
-          });
-        });
-
-        this.floatTransactions = this.sortTransactions(Array.from(transactionMap.values()));
-        this.loadLoanTransactions();
-      },
-      error: (error) => {
-        console.error('Failed to load float transactions', error);
-
-        this.floatTransactions = [];
-        this.loadLoanTransactions();
-      },
-    });
-  }
-
-  private loadBankTransactions(): void {
-    if (!this.branchId) {
-      return;
-    }
-
-    const baseUrl = this.masterService.getBackendService();
-
     this.http
       .get<any>(
-        `${baseUrl}api/v1/money-movements/bank/branch/${this.branchId}/currency/${this.selectedCurrency}`,
+        `${baseUrl}api/v1/money-movements/transfers/branch/${this.branchId}/currency/${this.selectedCurrency}`,
+      )
+      .pipe(
+        catchError((error) => {
+          console.error('Failed to load money movement transactions', error);
+          return of({ data: { floatTransactions: [], bankTransactions: [] } });
+        }),
       )
       .subscribe({
         next: (response) => {
-          const data: BankTransaction[] = response?.data ?? [];
+          const data: BranchCurrencyTransactionsResponse = response?.data ?? {
+            branchId: this.branchId,
+            currency: this.selectedCurrency,
+            floatTransactions: [],
+            bankTransactions: [],
+          };
 
-          this.bankTransactions = data.filter(
-            (transaction) =>
-              this.isDateInsideCurrentWeek(transaction.transactionDate) &&
-              (!transaction.status || transaction.status === 'POSTED'),
+          this.floatTransactions = this.sortFloatTransactions(
+            (data.floatTransactions ?? []).filter(
+              (transaction) =>
+                this.isDateInsideCurrentWeek(transaction.transactionDate) &&
+                (!transaction.status || transaction.status === 'POSTED'),
+            ),
           );
 
-          this.filterBankAccounts();
-          this.buildDisplayTransactions();
-          this.buildSummary();
+          this.bankTransactions = this.sortBankTransactions(
+            (data.bankTransactions ?? []).filter(
+              (transaction) =>
+                this.isDateInsideCurrentWeek(transaction.transactionDate) &&
+                (!transaction.status || transaction.status === 'POSTED'),
+            ),
+          );
 
-          this.loading = false;
-        },
-        error: (error) => {
-          console.error('Failed to load bank transactions', error);
-
-          this.bankTransactions = [];
-
-          this.buildDisplayTransactions();
-          this.buildSummary();
-
-          this.loading = false;
+          this.loadLoanTransactions();
         },
       });
   }
@@ -524,7 +494,7 @@ export class NewFinancialTransaction implements OnInit {
       }
     }
 
-    return this.sortTransactions(Array.from(map.values()));
+    return this.sortFloatTransactions(Array.from(map.values()));
   }
 
   private loadClientLoans(): void {
@@ -548,14 +518,22 @@ export class NewFinancialTransaction implements OnInit {
               Number(loan.branchId) === Number(this.branchId),
           );
 
-          this.loadBankTransactions();
+          this.filterBankAccounts();
+          this.buildDisplayTransactions();
+          this.buildSummary();
+
+          this.loading = false;
         },
         error: (error) => {
           console.error('Failed to load client loans', error);
 
           this.clientLoans = [];
 
-          this.loadBankTransactions();
+          this.filterBankAccounts();
+          this.buildDisplayTransactions();
+          this.buildSummary();
+
+          this.loading = false;
         },
       });
   }
@@ -596,6 +574,21 @@ export class NewFinancialTransaction implements OnInit {
         transaction.transactionType === 'BRANCH_TRANSFER_OUT'
       ) {
         context = transaction.branchName || transaction.branchCode || 'Branch transfer';
+      } else if (
+        transaction.transactionType === 'TRANSFER_IN' ||
+        transaction.transactionType === 'TRANSFER_OUT'
+      ) {
+        const linkedBank = this.findBankTransaction(transaction);
+
+        if (linkedBank) {
+          context =
+            `${linkedBank.bankName} — ` +
+            `${linkedBank.accountName} — ` +
+            `${linkedBank.accountNumber}`;
+          bankAccountId = linkedBank.bankAccountId;
+        } else {
+          context = transaction.branchName || transaction.branchCode || 'Money movement';
+        }
       } else if (transaction.transactionType === 'EXPENSE') {
         context = 'Branch Float';
       } else if (transaction.transactionType === 'REVENUE_RECEIPT') {
@@ -621,19 +614,39 @@ export class NewFinancialTransaction implements OnInit {
         direction: transaction.direction,
         bankAccountId,
         transaction,
+        transactionGroupId: transaction.transactionGroupId,
       });
     }
 
     for (const transaction of this.bankTransactions) {
-      if (transaction.transactionType !== 'REVENUE_RECEIPT') {
+      if (
+        transaction.transactionType !== 'REVENUE_RECEIPT' &&
+        transaction.transactionType !== 'TRANSFER_IN' &&
+        transaction.transactionType !== 'TRANSFER_OUT'
+      ) {
+        continue;
+      }
+
+      const hasFloatSide =
+        transaction.transactionGroupId &&
+        this.floatTransactions.some(
+          (floatTransaction) =>
+            floatTransaction.transactionGroupId === transaction.transactionGroupId,
+        );
+
+      if (
+        hasFloatSide &&
+        (transaction.transactionType === 'TRANSFER_IN' ||
+          transaction.transactionType === 'TRANSFER_OUT')
+      ) {
         continue;
       }
 
       result.push({
-        id: `BANK-REVENUE-${transaction.id}`,
+        id: `BANK-${transaction.transactionType}-${transaction.id}`,
         date: transaction.transactionDate,
-        type: 'REVENUE_RECEIPT',
-        typeLabel: this.transactionTypeLabel('REVENUE_RECEIPT'),
+        type: transaction.transactionType,
+        typeLabel: this.transactionTypeLabel(transaction.transactionType),
         context:
           `${transaction.bankName} — ` +
           `${transaction.accountName} — ` +
@@ -644,6 +657,7 @@ export class NewFinancialTransaction implements OnInit {
         direction: transaction.direction,
         bankAccountId: transaction.bankAccountId,
         bankTransaction: transaction,
+        transactionGroupId: transaction.transactionGroupId,
       });
     }
 
@@ -659,6 +673,7 @@ export class NewFinancialTransaction implements OnInit {
         amount: Number(transaction.amount || 0),
         direction: 'IN',
         transaction,
+        transactionGroupId: transaction.transactionGroupId,
       });
     }
 
@@ -674,6 +689,7 @@ export class NewFinancialTransaction implements OnInit {
         amount: Number(transaction.amount || 0),
         direction: 'OUT',
         transaction,
+        transactionGroupId: transaction.transactionGroupId,
       });
     }
 
@@ -689,6 +705,7 @@ export class NewFinancialTransaction implements OnInit {
         amount: Number(transaction.amount || 0),
         direction: 'IN',
         transaction,
+        transactionGroupId: transaction.transactionGroupId,
       });
     }
 
@@ -715,20 +732,26 @@ export class NewFinancialTransaction implements OnInit {
     }
 
     const expectedType =
-      floatTransaction.transactionType === 'BANK_WITHDRAWAL' ? 'CASH_WITHDRAWAL' : 'CASH_DEPOSIT';
+      floatTransaction.transactionType === 'BANK_WITHDRAWAL'
+        ? 'CASH_WITHDRAWAL'
+        : floatTransaction.transactionType === 'BANK_DEPOSIT'
+          ? 'CASH_DEPOSIT'
+          : floatTransaction.transactionType === 'TRANSFER_IN'
+            ? 'TRANSFER_OUT'
+            : floatTransaction.transactionType === 'TRANSFER_OUT'
+              ? 'TRANSFER_IN'
+              : '';
 
     let matches = this.bankTransactions.filter(
       (bank) =>
-        bank.transactionType === expectedType &&
+        (!expectedType || bank.transactionType === expectedType) &&
         bank.currency === this.selectedCurrency &&
         bank.transactionDate === floatTransaction.transactionDate &&
         Number(bank.amount) === Number(floatTransaction.amount),
     );
 
     if (floatTransaction.reference) {
-      const referenceMatches = matches.filter(
-        (bank) => bank.reference === floatTransaction.reference,
-      );
+      const referenceMatches = matches.filter((bank) => bank.reference === floatTransaction.reference);
 
       if (referenceMatches.length > 0) {
         matches = referenceMatches;
@@ -753,10 +776,17 @@ export class NewFinancialTransaction implements OnInit {
     );
   }
 
+  get moneyMovementTransactions(): DisplayTransaction[] {
+    return this.displayTransactions.filter(
+      (transaction) => transaction.type === 'TRANSFER_IN' || transaction.type === 'TRANSFER_OUT',
+    );
+  }
+
   get currencyExchangeTransactions(): DisplayTransaction[] {
     return this.displayTransactions.filter(
       (transaction) =>
-        transaction.type === 'CURRENCY_EXCHANGE_IN' || transaction.type === 'CURRENCY_EXCHANGE_OUT',
+        transaction.type === 'CURRENCY_EXCHANGE_IN' ||
+        transaction.type === 'CURRENCY_EXCHANGE_OUT',
     );
   }
 
@@ -886,6 +916,7 @@ export class NewFinancialTransaction implements OnInit {
 
     const customerDepositValues: number[] = [];
     const transferInValues: number[] = [];
+    const moneyMovementInValues: number[] = [];
     const exchangeInValues: number[] = [];
     const revenueValues: number[] = [];
     const loanReceivedValues: number[] = [];
@@ -893,6 +924,7 @@ export class NewFinancialTransaction implements OnInit {
 
     const customerWithdrawalValues: number[] = [];
     const transferOutValues: number[] = [];
+    const moneyMovementOutValues: number[] = [];
     const exchangeOutValues: number[] = [];
     const expenseValues: number[] = [];
     const loanRepaymentValues: number[] = [];
@@ -917,12 +949,14 @@ export class NewFinancialTransaction implements OnInit {
 
       const customerDeposits = this.sumTransactions(dayTransactions, 'BANK_WITHDRAWAL', 'IN');
       const transfersIn = this.sumTransactions(dayTransactions, 'BRANCH_TRANSFER_IN', 'IN');
+      const moneyMovementIn = this.sumTransactions(dayTransactions, 'TRANSFER_IN', 'IN');
       const loansReceived = this.sumLoanTransactions(this.loanReceivedTransactions, day.date);
       const exchangeIn = this.sumTransactions(dayTransactions, 'CURRENCY_EXCHANGE_IN', 'IN');
       const revenue = this.sumTransactions(dayTransactions, 'REVENUE_RECEIPT', 'IN');
 
       const customerWithdrawals = this.sumTransactions(dayTransactions, 'BANK_DEPOSIT', 'OUT');
       const transfersOut = this.sumTransactions(dayTransactions, 'BRANCH_TRANSFER_OUT', 'OUT');
+      const moneyMovementOut = this.sumTransactions(dayTransactions, 'TRANSFER_OUT', 'OUT');
       const loanRepayments = this.sumLoanTransactions(this.loanRepaymentTransactions, day.date);
       const exchangeOut = this.sumTransactions(dayTransactions, 'CURRENCY_EXCHANGE_OUT', 'OUT');
       const expenses = this.sumTransactions(dayTransactions, 'EXPENSE', 'OUT');
@@ -930,6 +964,7 @@ export class NewFinancialTransaction implements OnInit {
       const totalInflow =
         customerDeposits +
         transfersIn +
+        moneyMovementIn +
         loansReceived +
         clientLoanRepayments +
         exchangeIn +
@@ -938,6 +973,7 @@ export class NewFinancialTransaction implements OnInit {
       const totalOutflow =
         customerWithdrawals +
         transfersOut +
+        moneyMovementOut +
         loanRepayments +
         clientLoansIssued +
         exchangeOut +
@@ -949,6 +985,7 @@ export class NewFinancialTransaction implements OnInit {
 
       customerDepositValues.push(customerDeposits);
       transferInValues.push(transfersIn);
+      moneyMovementInValues.push(moneyMovementIn);
       exchangeInValues.push(exchangeIn);
       revenueValues.push(revenue);
       loanReceivedValues.push(loansReceived);
@@ -956,6 +993,7 @@ export class NewFinancialTransaction implements OnInit {
 
       customerWithdrawalValues.push(customerWithdrawals);
       transferOutValues.push(transfersOut);
+      moneyMovementOutValues.push(moneyMovementOut);
       exchangeOutValues.push(exchangeOut);
       expenseValues.push(expenses);
       loanRepaymentValues.push(loanRepayments);
@@ -984,6 +1022,13 @@ export class NewFinancialTransaction implements OnInit {
       label: 'FLOAT TRANSFERS IN',
       values: transferInValues,
       total: this.total(transferInValues),
+    });
+
+    rows.push({
+      key: 'moneyMovementIn',
+      label: 'MONEY MOVEMENT IN',
+      values: moneyMovementInValues,
+      total: this.total(moneyMovementInValues),
     });
 
     rows.push({
@@ -1017,6 +1062,7 @@ export class NewFinancialTransaction implements OnInit {
     const totalInflowValues = this.sumArrays([
       customerDepositValues,
       transferInValues,
+      moneyMovementInValues,
       loanReceivedValues,
       clientLoanRepaymentValues,
       exchangeInValues,
@@ -1043,6 +1089,13 @@ export class NewFinancialTransaction implements OnInit {
       label: 'FLOAT TRANSFERS OUT',
       values: transferOutValues,
       total: this.total(transferOutValues),
+    });
+
+    rows.push({
+      key: 'moneyMovementOut',
+      label: 'MONEY MOVEMENT OUT',
+      values: moneyMovementOutValues,
+      total: this.total(moneyMovementOutValues),
     });
 
     rows.push({
@@ -1076,6 +1129,7 @@ export class NewFinancialTransaction implements OnInit {
     const totalOutflowValues = this.sumArrays([
       customerWithdrawalValues,
       transferOutValues,
+      moneyMovementOutValues,
       loanRepaymentValues,
       clientLoanIssuedValues,
       exchangeOutValues,
@@ -1133,7 +1187,7 @@ export class NewFinancialTransaction implements OnInit {
     }
 
     if (transactions.length > 0) {
-      const sorted = this.sortTransactions(transactions);
+      const sorted = this.sortFloatTransactions(transactions);
       const last = sorted[sorted.length - 1];
 
       const totalIn = sorted
@@ -1191,6 +1245,8 @@ export class NewFinancialTransaction implements OnInit {
 
     if (bankAccountId) {
       this.transactionForm.bankAccountId = bankAccountId;
+      this.transactionForm.toBankAccountId = bankAccountId;
+      this.transactionForm.fromBankAccountId = bankAccountId;
     }
 
     switch (type) {
@@ -1204,6 +1260,10 @@ export class NewFinancialTransaction implements OnInit {
 
       case 'FLOAT_TRANSFER':
         this.formTitle = 'Float Transfer';
+        break;
+
+      case 'MONEY_MOVEMENT':
+        this.formTitle = 'Money Movement';
         break;
 
       case 'CURRENCY_EXCHANGE':
@@ -1249,6 +1309,60 @@ export class NewFinancialTransaction implements OnInit {
     if (!this.transactionForm.amount && this.selectedTransactionType !== 'CURRENCY_EXCHANGE') {
       this.errorMessage = 'Amount is required.';
       return;
+    }
+
+    if (this.selectedTransactionType === 'MONEY_MOVEMENT') {
+      if (!this.transactionForm.fromType || !this.transactionForm.toType) {
+        this.errorMessage = 'Source and destination are required.';
+        return;
+      }
+
+      if (
+        this.transactionForm.fromType === 'BRANCH_FLOAT' &&
+        !this.transactionForm.fromBranchId
+      ) {
+        this.errorMessage = 'Source branch is required.';
+        return;
+      }
+
+      if (
+        this.transactionForm.fromType === 'BANK_ACCOUNT' &&
+        !this.transactionForm.fromBankAccountId
+      ) {
+        this.errorMessage = 'Source bank account is required.';
+        return;
+      }
+
+      if (this.transactionForm.toType === 'BRANCH_FLOAT' && !this.transactionForm.toBranchId) {
+        this.errorMessage = 'Destination branch is required.';
+        return;
+      }
+
+      if (
+        this.transactionForm.toType === 'BANK_ACCOUNT' &&
+        !this.transactionForm.toBankAccountId
+      ) {
+        this.errorMessage = 'Destination bank account is required.';
+        return;
+      }
+
+      if (
+        this.transactionForm.fromType === 'BRANCH_FLOAT' &&
+        this.transactionForm.toType === 'BRANCH_FLOAT' &&
+        Number(this.transactionForm.fromBranchId) === Number(this.transactionForm.toBranchId)
+      ) {
+        this.errorMessage = 'Cannot transfer between the same branch float account.';
+        return;
+      }
+
+      if (
+        this.transactionForm.fromType === 'BANK_ACCOUNT' &&
+        this.transactionForm.toType === 'BANK_ACCOUNT' &&
+        Number(this.transactionForm.fromBankAccountId) === Number(this.transactionForm.toBankAccountId)
+      ) {
+        this.errorMessage = 'Cannot transfer between the same bank account.';
+        return;
+      }
     }
 
     if (this.selectedTransactionType === 'CURRENCY_EXCHANGE') {
@@ -1362,6 +1476,23 @@ export class NewFinancialTransaction implements OnInit {
           actionedBy,
         };
 
+      case 'MONEY_MOVEMENT':
+        return {
+          fromType: form.fromType,
+          fromBranchId: form.fromType === 'BRANCH_FLOAT' ? form.fromBranchId : form.fromBranchId,
+          fromBankAccountId:
+            form.fromType === 'BANK_ACCOUNT' ? form.fromBankAccountId : null,
+          toType: form.toType,
+          toBranchId: form.toType === 'BRANCH_FLOAT' ? form.toBranchId : form.toBranchId,
+          toBankAccountId: form.toType === 'BANK_ACCOUNT' ? form.toBankAccountId : null,
+          currency: this.selectedCurrency,
+          amount: Number(form.amount),
+          transactionDate: form.date,
+          reference: form.reference,
+          description: form.description,
+          actionedBy,
+        };
+
       case 'CURRENCY_EXCHANGE':
         this.calculatePaidAmount();
 
@@ -1434,6 +1565,9 @@ export class NewFinancialTransaction implements OnInit {
 
       case 'FLOAT_TRANSFER':
         return 'api/v1/money-movements/float-transfer';
+
+      case 'MONEY_MOVEMENT':
+        return 'api/v1/money-movements/transfers';
 
       case 'CURRENCY_EXCHANGE':
         return 'api/v1/money-movements/currency-exchange';
@@ -1511,6 +1645,25 @@ export class NewFinancialTransaction implements OnInit {
     this.loadWeekData();
   }
 
+  onMoneyMovementFromTypeChange(): void {
+    this.transactionForm.fromBranchId =
+      this.transactionForm.fromType === 'BRANCH_FLOAT' ? this.branchId : this.transactionForm.fromBranchId;
+
+    if (this.transactionForm.fromType === 'BRANCH_FLOAT') {
+      this.transactionForm.fromBankAccountId = null;
+    } else {
+      this.transactionForm.fromBranchId = this.branchId;
+    }
+  }
+
+  onMoneyMovementToTypeChange(): void {
+    if (this.transactionForm.toType === 'BANK_ACCOUNT') {
+      this.transactionForm.toBranchId = this.branchId;
+    } else {
+      this.transactionForm.toBankAccountId = null;
+    }
+  }
+
   private getBranchId(): number | null {
     const value = localStorage.getItem('branchId');
 
@@ -1529,6 +1682,12 @@ export class NewFinancialTransaction implements OnInit {
       bankAccountId: null,
       toBranchId: null,
       amount: null,
+
+      fromType: 'BRANCH_FLOAT' as MoneySource,
+      fromBranchId: this.branchId,
+      fromBankAccountId: null,
+      toType: 'BANK_ACCOUNT' as MoneySource,
+      toBankAccountId: null,
 
       receivedCurrency: this.selectedCurrency,
       receivedAmount: null,
@@ -1574,16 +1733,31 @@ export class NewFinancialTransaction implements OnInit {
 
   private formatDisplayDate(date: Date): string {
     return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(
-2,
-  '0',
-)}`;
+      2,
+      '0',
+    )}`;
   }
 
   private isDateInsideCurrentWeek(date: string): boolean {
     return this.days.some((day) => day.date === date);
   }
 
-  private sortTransactions(transactions: FloatTransaction[]): FloatTransaction[] {
+  private sortFloatTransactions(transactions: FloatTransaction[]): FloatTransaction[] {
+    return [...transactions].sort((a, b) => {
+      const dateCompare = a.transactionDate.localeCompare(b.transactionDate);
+
+      if (dateCompare !== 0) {
+        return dateCompare;
+      }
+
+      const aCreated = a.createdAt || '';
+      const bCreated = b.createdAt || '';
+
+      return aCreated.localeCompare(bCreated);
+    });
+  }
+
+  private sortBankTransactions(transactions: BankTransaction[]): BankTransaction[] {
     return [...transactions].sort((a, b) => {
       const dateCompare = a.transactionDate.localeCompare(b.transactionDate);
 
@@ -1622,6 +1796,18 @@ export class NewFinancialTransaction implements OnInit {
       case 'BRANCH_TRANSFER_OUT':
         return 'Float Transfer Out';
 
+      case 'TRANSFER_IN':
+        return 'Money Movement In';
+
+      case 'TRANSFER_OUT':
+        return 'Money Movement Out';
+
+      case 'CASH_DEPOSIT':
+        return 'Cash Deposit';
+
+      case 'CASH_WITHDRAWAL':
+        return 'Cash Withdrawal';
+
       case 'CURRENCY_EXCHANGE_IN':
         return 'Currency Exchange In';
 
@@ -1629,6 +1815,7 @@ export class NewFinancialTransaction implements OnInit {
         return 'Currency Exchange Out';
 
       case 'EXPENSE':
+      case 'EXPENSE_PAYMENT':
         return 'Expense';
 
       case 'REVENUE_RECEIPT':
@@ -1643,10 +1830,14 @@ export class NewFinancialTransaction implements OnInit {
       case 'LOAN_REPAYMENT':
         return 'Loan Repayment';
 
+      case 'CLIENT_LOAN_ISSUED':
+        return 'Client Loan Issued';
+
       case 'CLIENT_LOAN_REPAYMENT':
         return 'Client Loan Repayment';
 
       case 'COMMISSION_RECEIVED':
+      case 'COMMISSION_CREDIT':
         return 'Commission Received';
 
       case 'CASH_SALE_IN':
@@ -1708,6 +1899,10 @@ export class NewFinancialTransaction implements OnInit {
     return this.selectedTransactionType === 'FLOAT_TRANSFER';
   }
 
+  isMoneyMovementForm(): boolean {
+    return this.selectedTransactionType === 'MONEY_MOVEMENT';
+  }
+
   isAdjustmentForm(): boolean {
     return false;
   }
@@ -1720,4 +1915,3 @@ export class NewFinancialTransaction implements OnInit {
     return transaction.id;
   }
 }
-

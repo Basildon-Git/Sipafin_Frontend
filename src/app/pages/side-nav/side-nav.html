@@ -93,12 +93,12 @@
           </a>
 
           <a
-            routerLink="/bank-transactions"
+            routerLink="/branch-float-transactions"
             routerLinkActive="active"
             class="sub-nav-item"
             (click)="closeMobile()"
           >
-            <span>Bank Transactions</span>
+            <span>Branch Float Transactions</span>
           </a>
         </div>
       }
@@ -193,6 +193,23 @@
           >
             Reconciliations
           </a>
+
+          <a
+            routerLink="/bank-transactions"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            <span>Bank Transactions</span>
+          </a>
+          <a
+            routerLink="/branch-float-transactions"
+            routerLinkActive="active"
+            class="sub-nav-item"
+            (click)="closeMobile()"
+          >
+            <span>Branch Float Transactions</span>
+          </a>
         </div>
       }
     </div>
@@ -272,8 +289,7 @@
       }
     </div>
 
-
-     <!-- Analytics -->
+    <!-- Analytics -->
     <div class="nav-section">
       @if (!collapsed) {
         <div class="section-title">ANALYTICS</div>

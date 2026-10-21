@@ -40,6 +40,9 @@ import { NewClientLoanTransactions } from './pages/banking/new-client-loan-trans
 import { ClientLoanTransactions } from './pages/banking/client-loan-transactions/client-loan-transactions';
 import { NewStatement } from './pages/banking/new-statement/new-statement';
 import { NewReconciliation } from './pages/banking/new-reconciliation/new-reconciliation';
+import { BranchFloatTransactions } from './pages/cash_management/branch-float-transactions/branch-float-transactions';
+import { EditBranchFloatTransaction } from './pages/cash_management/edit-branch-float-transaction/edit-branch-float-transaction';
+import { EditBankAccountTransaction } from './pages/cash_management/edit-bank-account-transaction/edit-bank-account-transaction';
 
 export const routes: Routes = [
   {
@@ -189,6 +192,18 @@ export const routes: Routes = [
       {
         path: 'bank-transactions',
         component: BankTransactions,
+      },
+      {
+        path: 'bank-transactions/edit/:id',
+        component: EditBankAccountTransaction,
+      },
+      {
+        path: 'branch-float-transactions',
+        component: BranchFloatTransactions,
+      },
+      {
+        path: 'branch-float-transactions/edit/:id',
+        component: EditBranchFloatTransaction,
       },
       {
         path: 'reconciliations',

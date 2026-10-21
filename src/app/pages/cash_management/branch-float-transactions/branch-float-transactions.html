@@ -1,0 +1,353 @@
+<div class="float-transactions-page">
+  <div class="page-header">
+    <div class="page-heading">
+      <div class="page-icon">
+        <i class="bi bi-wallet2"></i>
+      </div>
+
+      <div>
+        <h2>Branch Float Transactions</h2>
+        <p>Monitor branch cash movements, balances and transaction history.</p>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="btn-refresh"
+      (click)="refresh()"
+      [disabled]="loadingTransactions() || selectedBranchId() === null"
+    >
+      <i class="bi bi-arrow-clockwise" [class.spinning]="loadingTransactions()"></i>
+      Refresh
+    </button>
+  </div>
+
+  <div class="filter-card">
+    <div class="filter-heading">
+      <i class="bi bi-funnel"></i>
+      <span>Transaction Filters</span>
+    </div>
+
+    <div class="filter-grid">
+      <div class="filter-field">
+        <label for="branchSelect">Branch</label>
+        <select
+          id="branchSelect"
+          class="form-select"
+          [value]="selectedBranchId() ?? ''"
+          (change)="onBranchChange($any($event.target).value)"
+          [disabled]="loadingBranches()"
+        >
+          @if (loadingBranches()) {
+            <option value="">Loading branches...</option>
+          } @else {
+            @for (branch of branches(); track branch.id) {
+              <option [value]="branch.id">{{ branch.name }} ({{ branch.code }})</option>
+            }
+          }
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="currencySelect">Currency</label>
+        <select
+          id="currencySelect"
+          class="form-select"
+          [value]="selectedCurrency()"
+          (change)="onCurrencyChange($any($event.target).value)"
+        >
+          @for (currency of currencies; track currency) {
+            <option [value]="currency">{{ currency }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-field search-field">
+        <label for="transactionSearch">Search transactions</label>
+        <div class="search-input-wrapper">
+          <i class="bi bi-search"></i>
+          <input
+            id="transactionSearch"
+            type="text"
+            class="form-control"
+            placeholder="Search type, reference, description..."
+            [value]="searchTerm()"
+            (input)="onSearchChange($any($event.target).value)"
+          />
+          @if (searchTerm()) {
+            <button
+              type="button"
+              class="clear-search"
+              aria-label="Clear search"
+              (click)="onSearchChange('')"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-alert" role="alert">
+      <div class="error-content">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+
+      <button type="button" class="error-retry" (click)="loadBranches()">Retry</button>
+    </div>
+  }
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon summary-icon-blue">
+        <i class="bi bi-arrow-left-right"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Total Transactions</span>
+        <h3>{{ totalTransactions() }}</h3>
+        <span class="summary-note">Selected branch and currency</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon summary-icon-green">
+        <i class="bi bi-arrow-down-left"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Total In</span>
+        <h3 class="amount-positive">
+          {{ totalIn() | number: '1.2-2' }}
+        </h3>
+        <span class="summary-note">{{ selectedCurrency() }} received</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon summary-icon-red">
+        <i class="bi bi-arrow-up-right"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Total Out</span>
+        <h3 class="amount-negative">
+          {{ totalOut() | number: '1.2-2' }}
+        </h3>
+        <span class="summary-note">{{ selectedCurrency() }} paid or transferred</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon summary-icon-teal">
+        <i class="bi bi-wallet"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Net Movement</span>
+        <h3
+          [class.amount-positive]="netMovement() >= 0"
+          [class.amount-negative]="netMovement() < 0"
+        >
+          {{ netMovement() | number: '1.2-2' }}
+        </h3>
+        <span class="summary-note">In minus out · {{ selectedCurrency() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="transactions-card">
+    <div class="table-card-header">
+      <div>
+        <h3>Float Transaction History</h3>
+        <p>
+          @if (selectedBranchId() !== null) {
+            @for (branch of branches(); track branch.id) {
+              @if (branch.id === selectedBranchId()) {
+                {{ branch.name }} ·
+              }
+            }
+          }
+          {{ selectedCurrency() }}
+        </p>
+      </div>
+
+      <span class="record-count"> {{ filteredTransactions().length }} record(s) </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table transactions-table">
+        <thead>
+          <tr>
+            <th>Transaction</th>
+            <th>Branch</th>
+            <th>Type</th>
+            <th>Direction</th>
+            <th class="text-end">Amount</th>
+            <th class="text-end">Balance After</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Reference</th>
+            <th>Description</th>
+            <th>Actioned By</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (loadingTransactions() || loadingBranches()) {
+            <tr>
+              <td colspan="11" class="state-cell">
+                <div class="loading-state">
+                  <span class="loading-spinner"></span>
+                  <span>Loading float transactions...</span>
+                </div>
+              </td>
+            </tr>
+          } @else if (filteredTransactions().length > 0) {
+            @for (transaction of filteredTransactions(); track transaction.id) {
+              <tr>
+                <td>
+                  <div class="transaction-identity">
+                    <span class="transaction-id"> #{{ transaction.id }} </span>
+                    <span class="transaction-group">
+                      {{ transaction.transactionGroupId || '—' }}
+                    </span>
+                  </div>
+                </td>
+
+                <td>
+                  <div class="branch-cell">
+                    <span class="branch-name">
+                      {{ transaction.branchName }}
+                    </span>
+                    <span class="branch-code"> Code: {{ transaction.branchCode }} </span>
+                  </div>
+                </td>
+
+                <td>
+                  <span
+                    class="transaction-type-badge"
+                    [ngClass]="getTransactionClass(transaction.transactionType)"
+                  >
+                    {{ formatTransactionType(transaction.transactionType) }}
+                  </span>
+                </td>
+
+                <td>
+                  <span
+                    class="direction-badge"
+                    [ngClass]="getDirectionClass(transaction.direction)"
+                  >
+                    <i
+                      class="bi"
+                      [ngClass]="
+                        transaction.direction === 'IN' ? 'bi-arrow-down-left' : 'bi-arrow-up-right'
+                      "
+                    ></i>
+                    {{ transaction.direction === 'IN' ? 'In' : 'Out' }}
+                  </span>
+                </td>
+
+                <td
+                  class="text-end amount-cell"
+                  [class.amount-positive]="transaction.direction === 'IN'"
+                  [class.amount-negative]="transaction.direction === 'OUT'"
+                >
+                  {{ transaction.direction === 'IN' ? '+' : '-'
+                  }}{{ transaction.amount | number: '1.2-2' }}
+                  <small>{{ transaction.currency }}</small>
+                </td>
+
+                <td class="text-end balance-cell">
+                  {{ transaction.balanceAfter | number: '1.2-2' }}
+                  <small>{{ transaction.currency }}</small>
+                </td>
+
+                <td class="date-cell">
+                  {{ transaction.transactionDate | date: 'dd MMM yyyy' }}
+                </td>
+
+                <td>
+                  <span class="status-badge" [ngClass]="getStatusClass(transaction.status)">
+                    <span class="status-dot"></span>
+                    {{ transaction.status }}
+                  </span>
+                </td>
+
+                <td class="reference-cell">
+                  {{ transaction.reference || '—' }}
+                </td>
+
+                <td class="description-cell" [title]="transaction.description || ''">
+                  {{ transaction.description || '—' }}
+                </td>
+
+                <td>
+                  <span class="actioned-by">
+                    <i class="bi bi-person-circle"></i>
+                    {{ transaction.actionedBy || '—' }}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="actions">
+                    <!-- <button
+                      type="button"
+                      class="action-btn view"
+                      title="View"
+                      (click)="viewTransaction(transaction.id)"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button> -->
+
+                    <button
+                      type="button"
+                      class="action-btn edit"
+                      title="Edit"
+                      (click)="editTransaction(transaction.id)"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          } @else {
+            <tr>
+              <td colspan="11" class="state-cell">
+                <div class="empty-state">
+                  <div class="empty-state-icon">
+                    <i class="bi bi-wallet2"></i>
+                  </div>
+                  <h4>No float transactions found</h4>
+                  <p>
+                    There are no transactions for the selected branch and currency, or your search
+                    returned no matches.
+                  </p>
+                  @if (searchTerm()) {
+                    <button type="button" class="btn-clear-filters" (click)="onSearchChange('')">
+                      Clear Search
+                    </button>
+                  } @else {
+                    <button type="button" class="btn-clear-filters" (click)="refresh()">
+                      Refresh Transactions
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <span>
+        Showing {{ filteredTransactions().length }} of {{ totalTransactions() }} transactions
+      </span>
+      <span>
+        Currency: <strong>{{ selectedCurrency() }}</strong>
+      </span>
+    </div>
+  </div>
+</div>
