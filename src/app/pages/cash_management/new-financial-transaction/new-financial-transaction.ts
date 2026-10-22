@@ -1366,20 +1366,23 @@ export class NewFinancialTransaction implements OnInit {
     }
 
     if (this.selectedTransactionType === 'CURRENCY_EXCHANGE') {
-      if (!this.transactionForm.receivedAmount || !this.transactionForm.exchangeRate) {
-        this.errorMessage = 'Received amount and exchange rate are required.';
+      if (!this.transactionForm.receivedAmount) {
+        this.errorMessage = 'Received amount is required.';
+        return;
+      }
+
+      if (!this.transactionForm.paidAmount) {
+        this.errorMessage = 'Paid amount is required.';
+        return;
+      }
+
+      if (!this.transactionForm.exchangeRate) {
+        this.errorMessage = 'Exchange rate is required.';
         return;
       }
 
       if (this.transactionForm.receivedCurrency === this.transactionForm.paidCurrency) {
         this.errorMessage = 'Received currency and paid currency cannot be the same.';
-        return;
-      }
-
-      this.calculatePaidAmount();
-
-      if (!this.transactionForm.paidAmount) {
-        this.errorMessage = 'Paid amount could not be calculated.';
         return;
       }
 
@@ -1435,16 +1438,16 @@ export class NewFinancialTransaction implements OnInit {
     });
   }
 
-  calculatePaidAmount(): void {
-    const receivedAmount = Number(this.transactionForm.receivedAmount || 0);
-    const exchangeRate = Number(this.transactionForm.exchangeRate || 0);
-
-    if (receivedAmount > 0 && exchangeRate > 0) {
-      this.transactionForm.paidAmount = Number((receivedAmount * exchangeRate).toFixed(2));
-    } else {
-      this.transactionForm.paidAmount = null;
-    }
-  }
+  // calculatePaidAmount(): void {
+  //   const receivedAmount = Number(this.transactionForm.receivedAmount || 0);
+  //   const exchangeRate = Number(this.transactionForm.exchangeRate || 0);
+  //
+  //   if (receivedAmount > 0 && exchangeRate > 0) {
+  //     this.transactionForm.paidAmount = Number((receivedAmount * exchangeRate).toFixed(2));
+  //   } else {
+  //     this.transactionForm.paidAmount = null;
+  //   }
+  // }
 
   private buildPayload(): any {
     const actionedBy = localStorage.getItem('username') || '';
@@ -1494,8 +1497,6 @@ export class NewFinancialTransaction implements OnInit {
         };
 
       case 'CURRENCY_EXCHANGE':
-        this.calculatePaidAmount();
-
         return {
           branchId: this.branchId,
           receivedCurrency: form.receivedCurrency,

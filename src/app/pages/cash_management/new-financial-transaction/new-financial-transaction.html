@@ -1128,7 +1128,7 @@
               <div class="form-group">
                 <label>Received Currency</label>
 
-                <select [(ngModel)]="transactionForm.receivedCurrency" (ngModelChange)="calculatePaidAmount()">
+                <select [(ngModel)]="transactionForm.receivedCurrency">
                   @for (currency of currencies; track currency) {
                     <option [value]="currency">
                       {{ currency }}
@@ -1145,14 +1145,13 @@
                   min="0"
                   step="0.01"
                   [(ngModel)]="transactionForm.receivedAmount"
-                  (ngModelChange)="calculatePaidAmount()"
                 />
               </div>
 
               <div class="form-group">
                 <label>Paid Currency</label>
 
-                <select [(ngModel)]="transactionForm.paidCurrency" (ngModelChange)="calculatePaidAmount()">
+                <select [(ngModel)]="transactionForm.paidCurrency">
                   @for (currency of currencies; track currency) {
                     <option [value]="currency">
                       {{ currency }}
@@ -1169,15 +1168,22 @@
                   min="0"
                   step="0.000001"
                   [(ngModel)]="transactionForm.exchangeRate"
-                  (ngModelChange)="calculatePaidAmount()"
                 />
 
-                <small>Paid amount = Received amount × Exchange rate</small>
+                <small>
+                  Enter the agreed exchange rate for reference.
+                </small>
               </div>
 
               <div class="form-group">
                 <label>Paid Amount</label>
-                <input type="number" min="0" step="0.01" [(ngModel)]="transactionForm.paidAmount" readonly />
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [(ngModel)]="transactionForm.paidAmount"
+                />
               </div>
 
               <div class="form-group">
@@ -1214,7 +1220,11 @@
 
                   @for (account of filteredBankAccounts; track account.id) {
                     <option [ngValue]="account.id">
-                      {{ account.bankName }} - {{ account.accountName }} - {{ account.accountNumber }}
+                      {{ account.bankName }}
+                      -
+                      {{ account.accountName }}
+                      -
+                      {{ account.accountNumber }}
                     </option>
                   }
                 </select>
@@ -1224,17 +1234,20 @@
             <div class="form-grid">
               <div class="form-group">
                 <label>Transaction Date</label>
+
                 <input type="date" [(ngModel)]="transactionForm.date" />
               </div>
 
               <div class="form-group">
                 <label>Reference</label>
+
                 <input type="text" [(ngModel)]="transactionForm.reference" />
               </div>
             </div>
 
             <div class="form-group">
               <label>Description</label>
+
               <textarea rows="3" [(ngModel)]="transactionForm.description"></textarea>
             </div>
           }
