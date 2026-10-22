@@ -1,9 +1,9 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { catchError, forkJoin, of } from 'rxjs';
-import { Master } from '../../../core/services/master';
+import {CommonModule} from '@angular/common';
+import {Component, inject, OnInit} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import {HttpClient} from '@angular/common/http';
+import {catchError, forkJoin, of} from 'rxjs';
+import {Master} from '../../../core/services/master';
 
 type Currency = 'USD' | 'ZIG' | 'ZAR' | 'EUR';
 
@@ -149,25 +149,19 @@ interface ClientLoan {
   clientName: string;
   clientPhone: string;
   currency: Currency;
-
   principalAmount: number;
   interestRate: number;
   interestAmount: number;
   totalReceivable: number;
   outstandingBalance: number;
-
   fundingSource: MoneySource;
   fundingBankAccountId?: number | null;
   fundingBankAccountName?: string | null;
-
   status: string;
-
   dateIssued: string;
   dueDate?: string | null;
-
   description?: string;
   actionedBy?: string;
-
   createdAt?: string;
   updatedAt?: string;
 }
@@ -245,7 +239,6 @@ export class NewFinancialTransaction implements OnInit {
 
   bankAccounts: BankAccount[] = [];
   filteredBankAccounts: BankAccount[] = [];
-
   branches: Branch[] = [];
 
   floatTransactions: FloatTransaction[] = [];
@@ -274,7 +267,6 @@ export class NewFinancialTransaction implements OnInit {
 
   ngOnInit(): void {
     this.branchId = this.getBranchId();
-
     this.buildWeek();
 
     if (!this.branchId) {
@@ -314,13 +306,6 @@ export class NewFinancialTransaction implements OnInit {
         this.account = null;
         this.loading = false;
       },
-    });
-  }
-
-  formatBalance(balance: number): string {
-    return Number(balance || 0).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
     });
   }
 
@@ -370,7 +355,7 @@ export class NewFinancialTransaction implements OnInit {
       .pipe(
         catchError((error) => {
           console.error('Failed to load money movement transactions', error);
-          return of({ data: { floatTransactions: [], bankTransactions: [] } });
+          return of({data: {floatTransactions: [], bankTransactions: []}});
         }),
       )
       .subscribe({
@@ -403,12 +388,6 @@ export class NewFinancialTransaction implements OnInit {
       });
   }
 
-  filterBankAccounts(): void {
-    this.filteredBankAccounts = this.bankAccounts.filter(
-      (account) => account.active && account.currency === this.selectedCurrency,
-    );
-  }
-
   private loadLoanTransactions(): void {
     if (!this.branchId) {
       return;
@@ -424,10 +403,9 @@ export class NewFinancialTransaction implements OnInit {
         .pipe(
           catchError((error) => {
             console.error('Failed to load loan received transactions', error);
-            return of({ data: [] });
+            return of({data: []});
           }),
         ),
-
       repayments: this.http
         .get<any>(
           `${baseUrl}api/v1/money-movements/float/loan-repayments/branch/${this.branchId}/currency/${this.selectedCurrency}`,
@@ -435,10 +413,9 @@ export class NewFinancialTransaction implements OnInit {
         .pipe(
           catchError((error) => {
             console.error('Failed to load loan repayment transactions', error);
-            return of({ data: [] });
+            return of({data: []});
           }),
         ),
-
       clientLoanRepayments: this.http
         .get<any>(
           `${baseUrl}api/v1/money-movements/float/client-loan-repayments/branch/${this.branchId}/currency/${this.selectedCurrency}`,
@@ -446,17 +423,13 @@ export class NewFinancialTransaction implements OnInit {
         .pipe(
           catchError((error) => {
             console.error('Failed to load client loan repayment transactions', error);
-            return of({ data: [] });
+            return of({data: []});
           }),
         ),
     }).subscribe({
       next: (response) => {
         this.loanReceivedTransactions = this.prepareLoanTransactions(response.received?.data ?? []);
-
-        this.loanRepaymentTransactions = this.prepareLoanTransactions(
-          response.repayments?.data ?? [],
-        );
-
+        this.loanRepaymentTransactions = this.prepareLoanTransactions(response.repayments?.data ?? []);
         this.clientLoanRepaymentTransactions = this.prepareLoanTransactions(
           response.clientLoanRepayments?.data ?? [],
         );
@@ -555,7 +528,9 @@ export class NewFinancialTransaction implements OnInit {
 
       if (
         transaction.transactionType === 'BANK_WITHDRAWAL' ||
-        transaction.transactionType === 'BANK_DEPOSIT'
+        transaction.transactionType === 'BANK_DEPOSIT' ||
+        transaction.transactionType === 'TRANSFER_IN' ||
+        transaction.transactionType === 'TRANSFER_OUT'
       ) {
         const bankTransaction = this.findBankTransaction(transaction);
 
@@ -567,28 +542,13 @@ export class NewFinancialTransaction implements OnInit {
 
           bankAccountId = bankTransaction.bankAccountId;
         } else {
-          context = 'Bank account not found';
+          context = transaction.branchName || transaction.branchCode || 'Money movement';
         }
       } else if (
         transaction.transactionType === 'BRANCH_TRANSFER_IN' ||
         transaction.transactionType === 'BRANCH_TRANSFER_OUT'
       ) {
         context = transaction.branchName || transaction.branchCode || 'Branch transfer';
-      } else if (
-        transaction.transactionType === 'TRANSFER_IN' ||
-        transaction.transactionType === 'TRANSFER_OUT'
-      ) {
-        const linkedBank = this.findBankTransaction(transaction);
-
-        if (linkedBank) {
-          context =
-            `${linkedBank.bankName} — ` +
-            `${linkedBank.accountName} — ` +
-            `${linkedBank.accountNumber}`;
-          bankAccountId = linkedBank.bankAccountId;
-        } else {
-          context = transaction.branchName || transaction.branchCode || 'Money movement';
-        }
       } else if (transaction.transactionType === 'EXPENSE') {
         context = 'Branch Float';
       } else if (transaction.transactionType === 'REVENUE_RECEIPT') {
@@ -622,7 +582,9 @@ export class NewFinancialTransaction implements OnInit {
       if (
         transaction.transactionType !== 'REVENUE_RECEIPT' &&
         transaction.transactionType !== 'TRANSFER_IN' &&
-        transaction.transactionType !== 'TRANSFER_OUT'
+        transaction.transactionType !== 'TRANSFER_OUT' &&
+        transaction.transactionType !== 'CURRENCY_EXCHANGE_IN' &&
+        transaction.transactionType !== 'CURRENCY_EXCHANGE_OUT'
       ) {
         continue;
       }
@@ -637,7 +599,9 @@ export class NewFinancialTransaction implements OnInit {
       if (
         hasFloatSide &&
         (transaction.transactionType === 'TRANSFER_IN' ||
-          transaction.transactionType === 'TRANSFER_OUT')
+          transaction.transactionType === 'TRANSFER_OUT' ||
+          transaction.transactionType === 'CURRENCY_EXCHANGE_IN' ||
+          transaction.transactionType === 'CURRENCY_EXCHANGE_OUT')
       ) {
         continue;
       }
@@ -740,7 +704,11 @@ export class NewFinancialTransaction implements OnInit {
             ? 'TRANSFER_OUT'
             : floatTransaction.transactionType === 'TRANSFER_OUT'
               ? 'TRANSFER_IN'
-              : '';
+              : floatTransaction.transactionType === 'CURRENCY_EXCHANGE_IN'
+                ? 'CURRENCY_EXCHANGE_OUT'
+                : floatTransaction.transactionType === 'CURRENCY_EXCHANGE_OUT'
+                  ? 'CURRENCY_EXCHANGE_IN'
+                  : '';
 
     let matches = this.bankTransactions.filter(
       (bank) =>
@@ -950,33 +918,33 @@ export class NewFinancialTransaction implements OnInit {
       const customerDeposits = this.sumTransactions(dayTransactions, 'BANK_WITHDRAWAL', 'IN');
       const transfersIn = this.sumTransactions(dayTransactions, 'BRANCH_TRANSFER_IN', 'IN');
       const moneyMovementIn = this.sumTransactions(dayTransactions, 'TRANSFER_IN', 'IN');
-      const loansReceived = this.sumLoanTransactions(this.loanReceivedTransactions, day.date);
       const exchangeIn = this.sumTransactions(dayTransactions, 'CURRENCY_EXCHANGE_IN', 'IN');
+      const loansReceived = this.sumLoanTransactions(this.loanReceivedTransactions, day.date);
       const revenue = this.sumTransactions(dayTransactions, 'REVENUE_RECEIPT', 'IN');
 
       const customerWithdrawals = this.sumTransactions(dayTransactions, 'BANK_DEPOSIT', 'OUT');
       const transfersOut = this.sumTransactions(dayTransactions, 'BRANCH_TRANSFER_OUT', 'OUT');
       const moneyMovementOut = this.sumTransactions(dayTransactions, 'TRANSFER_OUT', 'OUT');
-      const loanRepayments = this.sumLoanTransactions(this.loanRepaymentTransactions, day.date);
       const exchangeOut = this.sumTransactions(dayTransactions, 'CURRENCY_EXCHANGE_OUT', 'OUT');
+      const loanRepayments = this.sumLoanTransactions(this.loanRepaymentTransactions, day.date);
       const expenses = this.sumTransactions(dayTransactions, 'EXPENSE', 'OUT');
 
       const totalInflow =
         customerDeposits +
         transfersIn +
         moneyMovementIn +
+        exchangeIn +
         loansReceived +
         clientLoanRepayments +
-        exchangeIn +
         revenue;
 
       const totalOutflow =
         customerWithdrawals +
         transfersOut +
         moneyMovementOut +
+        exchangeOut +
         loanRepayments +
         clientLoansIssued +
-        exchangeOut +
         expenses;
 
       const closing = opening + totalInflow - totalOutflow;
@@ -1032,6 +1000,13 @@ export class NewFinancialTransaction implements OnInit {
     });
 
     rows.push({
+      key: 'exchangeIn',
+      label: 'CURRENCY EXCHANGE IN',
+      values: exchangeInValues,
+      total: this.total(exchangeInValues),
+    });
+
+    rows.push({
       key: 'loanReceived',
       label: 'LOANS RECEIVED',
       values: loanReceivedValues,
@@ -1046,13 +1021,6 @@ export class NewFinancialTransaction implements OnInit {
     });
 
     rows.push({
-      key: 'exchangeIn',
-      label: 'CURRENCY EXCHANGE IN',
-      values: exchangeInValues,
-      total: this.total(exchangeInValues),
-    });
-
-    rows.push({
       key: 'revenue',
       label: 'REVENUE',
       values: revenueValues,
@@ -1063,9 +1031,9 @@ export class NewFinancialTransaction implements OnInit {
       customerDepositValues,
       transferInValues,
       moneyMovementInValues,
+      exchangeInValues,
       loanReceivedValues,
       clientLoanRepaymentValues,
-      exchangeInValues,
       revenueValues,
     ]);
 
@@ -1099,6 +1067,13 @@ export class NewFinancialTransaction implements OnInit {
     });
 
     rows.push({
+      key: 'exchangeOut',
+      label: 'CURRENCY EXCHANGE OUT',
+      values: exchangeOutValues,
+      total: this.total(exchangeOutValues),
+    });
+
+    rows.push({
       key: 'clientLoanIssued',
       label: 'CLIENT LOANS ISSUED',
       values: clientLoanIssuedValues,
@@ -1113,13 +1088,6 @@ export class NewFinancialTransaction implements OnInit {
     });
 
     rows.push({
-      key: 'exchangeOut',
-      label: 'CURRENCY EXCHANGE OUT',
-      values: exchangeOutValues,
-      total: this.total(exchangeOutValues),
-    });
-
-    rows.push({
       key: 'expenses',
       label: 'EXPENSES',
       values: expenseValues,
@@ -1130,9 +1098,9 @@ export class NewFinancialTransaction implements OnInit {
       customerWithdrawalValues,
       transferOutValues,
       moneyMovementOutValues,
+      exchangeOutValues,
       loanRepaymentValues,
       clientLoanIssuedValues,
-      exchangeOutValues,
       expenseValues,
     ]);
 
@@ -1239,7 +1207,6 @@ export class NewFinancialTransaction implements OnInit {
 
   openTransactionForm(type: TransactionType, bankAccountId?: number): void {
     this.selectedTransactionType = type;
-
     this.transactionForm = this.createEmptyForm();
     this.transactionForm.date = this.formatDateForInput(new Date());
 
@@ -1358,7 +1325,8 @@ export class NewFinancialTransaction implements OnInit {
       if (
         this.transactionForm.fromType === 'BANK_ACCOUNT' &&
         this.transactionForm.toType === 'BANK_ACCOUNT' &&
-        Number(this.transactionForm.fromBankAccountId) === Number(this.transactionForm.toBankAccountId)
+        Number(this.transactionForm.fromBankAccountId) ===
+        Number(this.transactionForm.toBankAccountId)
       ) {
         this.errorMessage = 'Cannot transfer between the same bank account.';
         return;
@@ -1383,6 +1351,14 @@ export class NewFinancialTransaction implements OnInit {
 
       if (this.transactionForm.receivedCurrency === this.transactionForm.paidCurrency) {
         this.errorMessage = 'Received currency and paid currency cannot be the same.';
+        return;
+      }
+
+      if (
+        this.transactionForm.receivedTo === 'BANK_ACCOUNT' &&
+        !this.transactionForm.receivedBankAccountId
+      ) {
+        this.errorMessage = 'Received bank account is required.';
         return;
       }
 
@@ -1438,16 +1414,10 @@ export class NewFinancialTransaction implements OnInit {
     });
   }
 
-  // calculatePaidAmount(): void {
-  //   const receivedAmount = Number(this.transactionForm.receivedAmount || 0);
-  //   const exchangeRate = Number(this.transactionForm.exchangeRate || 0);
-  //
-  //   if (receivedAmount > 0 && exchangeRate > 0) {
-  //     this.transactionForm.paidAmount = Number((receivedAmount * exchangeRate).toFixed(2));
-  //   } else {
-  //     this.transactionForm.paidAmount = null;
-  //   }
-  // }
+  calculatePaidAmount(): void {
+    // Paid amount is entered manually because exchange direction/rate basis can vary.
+    // Keep this method for template compatibility.
+  }
 
   private buildPayload(): any {
     const actionedBy = localStorage.getItem('username') || '';
@@ -1501,11 +1471,15 @@ export class NewFinancialTransaction implements OnInit {
           branchId: this.branchId,
           receivedCurrency: form.receivedCurrency,
           receivedAmount: Number(form.receivedAmount),
+          receivedTo: form.receivedTo,
+          receivedBankAccountId:
+            form.receivedTo === 'BANK_ACCOUNT' ? form.receivedBankAccountId : null,
           paidCurrency: form.paidCurrency,
           paidAmount: Number(form.paidAmount),
           exchangeRate: Number(form.exchangeRate),
           paidFrom: form.paidFrom,
-          paidBankAccountId: form.paidFrom === 'BANK_ACCOUNT' ? form.paidBankAccountId : null,
+          paidBankAccountId:
+            form.paidFrom === 'BANK_ACCOUNT' ? form.paidBankAccountId : null,
           transactionDate: form.date,
           reference: form.reference,
           description: form.description,
@@ -1648,7 +1622,9 @@ export class NewFinancialTransaction implements OnInit {
 
   onMoneyMovementFromTypeChange(): void {
     this.transactionForm.fromBranchId =
-      this.transactionForm.fromType === 'BRANCH_FLOAT' ? this.branchId : this.transactionForm.fromBranchId;
+      this.transactionForm.fromType === 'BRANCH_FLOAT'
+        ? this.branchId
+        : this.transactionForm.fromBranchId;
 
     if (this.transactionForm.fromType === 'BRANCH_FLOAT') {
       this.transactionForm.fromBankAccountId = null;
@@ -1692,6 +1668,8 @@ export class NewFinancialTransaction implements OnInit {
 
       receivedCurrency: this.selectedCurrency,
       receivedAmount: null,
+      receivedTo: 'BRANCH_FLOAT' as MoneySource,
+      receivedBankAccountId: null,
 
       paidCurrency: this.selectedCurrency === 'USD' ? 'ZIG' : 'USD',
       paidAmount: null,
@@ -1859,6 +1837,13 @@ export class NewFinancialTransaction implements OnInit {
     });
   }
 
+  formatBalance(balance: number): string {
+    return Number(balance || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
   getSummaryValue(row: SummaryRow, index: number): number {
     return row.values[index] ?? 0;
   }
@@ -1871,9 +1856,21 @@ export class NewFinancialTransaction implements OnInit {
     return this.filteredBankAccounts;
   }
 
+  getBankAccountsByCurrency(currency: Currency): BankAccount[] {
+    return this.bankAccounts.filter(
+      (account) => account.active && account.currency === currency,
+    );
+  }
+
   getDestinationBranches(): Branch[] {
     return this.branches.filter(
       (branch) => branch.active && Number(branch.id) !== Number(this.branchId),
+    );
+  }
+
+  filterBankAccounts(): void {
+    this.filteredBankAccounts = this.bankAccounts.filter(
+      (account) => account.active && account.currency === this.selectedCurrency,
     );
   }
 

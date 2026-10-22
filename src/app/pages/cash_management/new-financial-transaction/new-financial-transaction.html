@@ -1149,6 +1149,35 @@
               </div>
 
               <div class="form-group">
+                <label>Receive To</label>
+
+                <select [(ngModel)]="transactionForm.receivedTo">
+                  <option value="BRANCH_FLOAT">Branch Float</option>
+                  <option value="BANK_ACCOUNT">Bank Account</option>
+                </select>
+              </div>
+
+              @if (transactionForm.receivedTo === 'BANK_ACCOUNT') {
+                <div class="form-group">
+                  <label>Received Bank Account</label>
+
+                  <select [(ngModel)]="transactionForm.receivedBankAccountId">
+                    <option [ngValue]="null">Select received bank account</option>
+
+                    @for (account of getBankAccountsByCurrency(transactionForm.receivedCurrency); track account.id) {
+                      <option [ngValue]="account.id">
+                        {{ account.bankName }}
+                        -
+                        {{ account.accountName }}
+                        -
+                        {{ account.accountNumber }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              }
+
+              <div class="form-group">
                 <label>Paid Currency</label>
 
                 <select [(ngModel)]="transactionForm.paidCurrency">
@@ -1158,21 +1187,6 @@
                     </option>
                   }
                 </select>
-              </div>
-
-              <div class="form-group">
-                <label>Exchange Rate</label>
-
-                <input
-                  type="number"
-                  min="0"
-                  step="0.000001"
-                  [(ngModel)]="transactionForm.exchangeRate"
-                />
-
-                <small>
-                  Enter the agreed exchange rate for reference.
-                </small>
               </div>
 
               <div class="form-group">
@@ -1194,6 +1208,41 @@
                   <option value="BANK_ACCOUNT">Bank Account</option>
                 </select>
               </div>
+
+              @if (transactionForm.paidFrom === 'BANK_ACCOUNT') {
+                <div class="form-group">
+                  <label>Paid Bank Account</label>
+
+                  <select [(ngModel)]="transactionForm.paidBankAccountId">
+                    <option [ngValue]="null">Select paid bank account</option>
+
+                    @for (account of getBankAccountsByCurrency(transactionForm.paidCurrency); track account.id) {
+                      <option [ngValue]="account.id">
+                        {{ account.bankName }}
+                        -
+                        {{ account.accountName }}
+                        -
+                        {{ account.accountNumber }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              }
+
+              <div class="form-group">
+                <label>Exchange Rate</label>
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.000001"
+                  [(ngModel)]="transactionForm.exchangeRate"
+                />
+
+                <small>
+                  Enter the agreed exchange rate for reference.
+                </small>
+              </div>
             </div>
 
             @if (transactionForm.receivedAmount && transactionForm.paidAmount) {
@@ -1203,31 +1252,19 @@
                   {{ formatAmount(transactionForm.receivedAmount) }}
                   {{ transactionForm.receivedCurrency }}
                 </strong>
+                received into
+                <strong>
+                  {{ transactionForm.receivedTo === 'BRANCH_FLOAT' ? 'Branch Float' : 'Bank Account' }}
+                </strong>
                 and business pays
                 <strong>
                   {{ formatAmount(transactionForm.paidAmount) }}
                   {{ transactionForm.paidCurrency }}
+                </strong>
+                from
+                <strong>
+                  {{ transactionForm.paidFrom === 'BRANCH_FLOAT' ? 'Branch Float' : 'Bank Account' }}
                 </strong>.
-              </div>
-            }
-
-            @if (transactionForm.paidFrom === 'BANK_ACCOUNT') {
-              <div class="form-group">
-                <label>Paid Bank Account</label>
-
-                <select [(ngModel)]="transactionForm.paidBankAccountId">
-                  <option [ngValue]="null">Select bank account</option>
-
-                  @for (account of filteredBankAccounts; track account.id) {
-                    <option [ngValue]="account.id">
-                      {{ account.bankName }}
-                      -
-                      {{ account.accountName }}
-                      -
-                      {{ account.accountNumber }}
-                    </option>
-                  }
-                </select>
               </div>
             }
 
