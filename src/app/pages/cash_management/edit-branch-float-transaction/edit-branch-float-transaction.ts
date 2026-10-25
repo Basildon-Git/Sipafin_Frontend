@@ -143,7 +143,7 @@ export class EditBranchFloatTransaction implements OnInit {
     this.errorMessage.set('');
     this.successMessage.set('');
 
-    if (!Number.isFinite(Number(this.form.amount)) || Number(this.form.amount) <= 0) {
+    if (!Number.isFinite(Number(this.form.amount)) ) {
       this.errorMessage.set('Amount must be greater than zero.');
       return;
     }

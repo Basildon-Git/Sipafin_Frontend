@@ -152,7 +152,7 @@ export class EditBankAccountTransaction implements OnInit {
 
     const amount = Number(this.form.amount);
 
-    if (!Number.isFinite(amount) || amount <= 0) {
+    if (!Number.isFinite(amount)) {
       this.errorMessage.set('Amount must be greater than zero.');
       return;
     }
