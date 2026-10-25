@@ -12,9 +12,14 @@ interface ApiResponse<T> {
   timestamp?: string;
 }
 
-interface FloatTransaction {
+interface BankTransaction {
   id: number;
-  branchFloatAccountId: number;
+  bankAccountId: number;
+  accountName: string;
+  accountNumber: string;
+  bankId: number;
+  bankName: string;
+  bankCode: string;
   branchId: number;
   branchName: string;
   branchCode: string;
@@ -33,7 +38,7 @@ interface FloatTransaction {
   updatedAt: string;
 }
 
-interface UpdateFloatTransactionRequest {
+interface UpdateBankTransactionRequest {
   direction: 'IN' | 'OUT';
   amount: number;
   transactionDate: string;
@@ -44,22 +49,22 @@ interface UpdateFloatTransactionRequest {
 }
 
 @Component({
-  selector: 'app-edit-branch-float-transaction',
+  selector: 'app-edit-bank-account-transaction',
   standalone: true,
   imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
-  templateUrl: './edit-branch-float-transaction.html',
-  styleUrl: './edit-branch-float-transaction.css',
+  templateUrl: './edit-bank-account-transaction.html',
+  styleUrl: './edit-bank-account-transaction.css',
 })
-export class EditBranchFloatTransaction implements OnInit {
+export class EditBankAccountTransaction implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly masterService = inject(Master);
 
   private readonly apiUrl =
-    this.masterService.getBackendService() + 'api/v1/money-movements/float-transactions';
+    this.masterService.getBackendService() + 'api/v1/money-movements/bank-transactions';
 
-  transaction = signal<FloatTransaction | null>(null);
+  transaction = signal<BankTransaction | null>(null);
   transactionId = signal<number | null>(null);
 
   loading = signal(true);
@@ -106,13 +111,13 @@ export class EditBranchFloatTransaction implements OnInit {
     this.successMessage.set('');
     this.transaction.set(null);
 
-    this.http.get<ApiResponse<FloatTransaction>>(`${this.apiUrl}/${id}`).subscribe({
+    this.http.get<ApiResponse<BankTransaction>>(`${this.apiUrl}/${id}`).subscribe({
       next: (response) => {
         const record = response.data;
 
         if (!record) {
           this.loading.set(false);
-          this.errorMessage.set('The requested transaction was not found.');
+          this.errorMessage.set('The requested bank transaction was not found.');
           return;
         }
 
@@ -130,7 +135,7 @@ export class EditBranchFloatTransaction implements OnInit {
       error: (error) => {
         this.loading.set(false);
         this.errorMessage.set(
-          error?.error?.message || 'Unable to load the transaction. Please try again.',
+          error?.error?.message || 'Unable to load the bank transaction. Please try again.',
         );
       },
     });
@@ -166,7 +171,7 @@ export class EditBranchFloatTransaction implements OnInit {
       return;
     }
 
-    const payload: UpdateFloatTransactionRequest = {
+    const payload: UpdateBankTransactionRequest = {
       direction: record.direction,
       amount,
       transactionDate: record.transactionDate,
@@ -178,10 +183,10 @@ export class EditBranchFloatTransaction implements OnInit {
 
     this.saving.set(true);
 
-    this.http.put<ApiResponse<FloatTransaction>>(`${this.apiUrl}/${id}`, payload).subscribe({
+    this.http.put<ApiResponse<BankTransaction>>(`${this.apiUrl}/${id}`, payload).subscribe({
       next: (response) => {
         this.saving.set(false);
-        this.successMessage.set(response.message || 'Transaction updated successfully.');
+        this.successMessage.set(response.message || 'Bank transaction updated successfully.');
 
         if (response.data) {
           this.transaction.set(response.data);
@@ -195,20 +200,20 @@ export class EditBranchFloatTransaction implements OnInit {
         }
 
         setTimeout(() => {
-          this.router.navigate(['/branch-float-transactions']);
+          this.router.navigate(['/bank-transactions']);
         }, 700);
       },
       error: (error) => {
         this.saving.set(false);
         this.errorMessage.set(
-          error?.error?.message || 'Unable to update the transaction. Please try again.',
+          error?.error?.message || 'Unable to update the bank transaction. Please try again.',
         );
       },
     });
   }
 
   cancel(): void {
-    this.router.navigate(['/branch-float-transactions']);
+    this.router.navigate(['/bank-transactions']);
   }
 
   reload(): void {
