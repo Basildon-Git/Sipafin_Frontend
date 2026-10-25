@@ -12,14 +12,9 @@ interface ApiResponse<T> {
   timestamp?: string;
 }
 
-interface BankTransaction {
+interface FloatTransaction {
   id: number;
-  bankAccountId: number;
-  accountName: string;
-  accountNumber: string;
-  bankId: number;
-  bankName: string;
-  bankCode: string;
+  branchFloatAccountId: number;
   branchId: number;
   branchName: string;
   branchCode: string;
@@ -30,7 +25,7 @@ interface BankTransaction {
   balanceAfter: number;
   transactionDate: string;
   transactionGroupId: string;
-  status: string;
+  status: 'POSTED' | 'REVERSED' | 'CANCELLED';
   reference: string | null;
   description: string | null;
   actionedBy: string;
@@ -38,33 +33,33 @@ interface BankTransaction {
   updatedAt: string;
 }
 
-interface UpdateBankTransactionRequest {
+interface UpdateFloatTransactionRequest {
   direction: 'IN' | 'OUT';
   amount: number;
   transactionDate: string;
-  status: string;
+  status: 'POSTED' | 'REVERSED' | 'CANCELLED';
   reference: string;
   description: string;
   actionedBy: string;
 }
 
 @Component({
-  selector: 'app-edit-bank-account-transaction',
+  selector: 'app-edit-branch-float-transaction',
   standalone: true,
   imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
-  templateUrl: './edit-bank-account-transaction.html',
-  styleUrl: './edit-bank-account-transaction.css',
+  templateUrl: './edit-branch-float-transaction.html',
+  styleUrl: './edit-branch-float-transaction.css',
 })
-export class EditBankAccountTransaction implements OnInit {
+export class EditBranchFloatTransaction implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly masterService = inject(Master);
 
   private readonly apiUrl =
-    this.masterService.getBackendService() + 'api/v1/money-movements/bank-transactions';
+    this.masterService.getBackendService() + 'api/v1/money-movements/float-transactions';
 
-  transaction = signal<BankTransaction | null>(null);
+  transaction = signal<FloatTransaction | null>(null);
   transactionId = signal<number | null>(null);
 
   loading = signal(true);
@@ -80,6 +75,8 @@ export class EditBankAccountTransaction implements OnInit {
   };
 
   ngOnInit(): void {
+    this.form.actionedBy = this.getActionedBy();
+
     this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
 
@@ -109,13 +106,13 @@ export class EditBankAccountTransaction implements OnInit {
     this.successMessage.set('');
     this.transaction.set(null);
 
-    this.http.get<ApiResponse<BankTransaction>>(`${this.apiUrl}/${id}`).subscribe({
+    this.http.get<ApiResponse<FloatTransaction>>(`${this.apiUrl}/${id}`).subscribe({
       next: (response) => {
         const record = response.data;
 
         if (!record) {
           this.loading.set(false);
-          this.errorMessage.set('The requested bank transaction was not found.');
+          this.errorMessage.set('The requested transaction was not found.');
           return;
         }
 
@@ -133,7 +130,7 @@ export class EditBankAccountTransaction implements OnInit {
       error: (error) => {
         this.loading.set(false);
         this.errorMessage.set(
-          error?.error?.message || 'Unable to load the bank transaction. Please try again.',
+          error?.error?.message || 'Unable to load the transaction. Please try again.',
         );
       },
     });
@@ -153,7 +150,12 @@ export class EditBankAccountTransaction implements OnInit {
     const amount = Number(this.form.amount);
 
     if (!Number.isFinite(amount)) {
-      this.errorMessage.set('Amount must be greater than zero.');
+      this.errorMessage.set('Amount must be a valid number.');
+      return;
+    }
+
+    if (amount < 0) {
+      this.errorMessage.set('Amount cannot be negative.');
       return;
     }
 
@@ -164,8 +166,7 @@ export class EditBankAccountTransaction implements OnInit {
       return;
     }
 
-    // Preserve all non-editable transaction values as returned by the API.
-    const payload: UpdateBankTransactionRequest = {
+    const payload: UpdateFloatTransactionRequest = {
       direction: record.direction,
       amount,
       transactionDate: record.transactionDate,
@@ -177,30 +178,37 @@ export class EditBankAccountTransaction implements OnInit {
 
     this.saving.set(true);
 
-    this.http.put<ApiResponse<BankTransaction>>(`${this.apiUrl}/${id}`, payload).subscribe({
+    this.http.put<ApiResponse<FloatTransaction>>(`${this.apiUrl}/${id}`, payload).subscribe({
       next: (response) => {
         this.saving.set(false);
-        this.successMessage.set(response.message || 'Bank transaction updated successfully.');
+        this.successMessage.set(response.message || 'Transaction updated successfully.');
 
         if (response.data) {
           this.transaction.set(response.data);
+
+          this.form = {
+            amount: Number(response.data.amount),
+            reference: response.data.reference ?? '',
+            description: response.data.description ?? '',
+            actionedBy: this.getActionedBy(),
+          };
         }
 
         setTimeout(() => {
-          this.router.navigate(['/bank-transactions']);
+          this.router.navigate(['/branch-float-transactions']);
         }, 700);
       },
       error: (error) => {
         this.saving.set(false);
         this.errorMessage.set(
-          error?.error?.message || 'Unable to update the bank transaction. Please try again.',
+          error?.error?.message || 'Unable to update the transaction. Please try again.',
         );
       },
     });
   }
 
   cancel(): void {
-    this.router.navigate(['/bank-transactions']);
+    this.router.navigate(['/branch-float-transactions']);
   }
 
   reload(): void {

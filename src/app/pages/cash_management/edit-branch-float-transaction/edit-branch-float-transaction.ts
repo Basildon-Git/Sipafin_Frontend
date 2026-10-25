@@ -12,6 +12,9 @@ interface ApiResponse<T> {
   timestamp?: string;
 }
 
+type MoneyDirection = 'IN' | 'OUT';
+type TransactionStatus = 'POSTED' | 'REVERSED' | 'CANCELLED';
+
 interface FloatTransaction {
   id: number;
   branchFloatAccountId: number;
@@ -20,12 +23,12 @@ interface FloatTransaction {
   branchCode: string;
   currency: string;
   transactionType: string;
-  direction: 'IN' | 'OUT';
+  direction: MoneyDirection;
   amount: number;
   balanceAfter: number;
   transactionDate: string;
   transactionGroupId: string;
-  status: string;
+  status: TransactionStatus;
   reference: string | null;
   description: string | null;
   actionedBy: string;
@@ -34,7 +37,10 @@ interface FloatTransaction {
 }
 
 interface UpdateFloatTransactionRequest {
+  direction: MoneyDirection;
   amount: number;
+  transactionDate: string;
+  status: TransactionStatus;
   reference: string;
   description: string;
   actionedBy: string;
@@ -64,8 +70,9 @@ export class EditBranchFloatTransaction implements OnInit {
   errorMessage = signal('');
   successMessage = signal('');
 
-  form: UpdateFloatTransactionRequest = {
+  form = {
     amount: 0,
+    status: 'POSTED' as TransactionStatus,
     reference: '',
     description: '',
     actionedBy: '',
@@ -117,6 +124,7 @@ export class EditBranchFloatTransaction implements OnInit {
 
         this.form = {
           amount: Number(record.amount),
+          status: record.status,
           reference: record.reference ?? '',
           description: record.description ?? '',
           actionedBy: this.getActionedBy(),
@@ -135,16 +143,24 @@ export class EditBranchFloatTransaction implements OnInit {
 
   saveChanges(): void {
     const id = this.transactionId();
+    const record = this.transaction();
 
-    if (id === null || this.saving()) {
+    if (id === null || !record || this.saving()) {
       return;
     }
 
     this.errorMessage.set('');
     this.successMessage.set('');
 
-    if (!Number.isFinite(Number(this.form.amount)) ) {
-      this.errorMessage.set('Amount must be greater than zero.');
+    const amount = Number(this.form.amount);
+
+    if (!Number.isFinite(amount)) {
+      this.errorMessage.set('Amount must be a valid number.');
+      return;
+    }
+
+    if (amount < 0) {
+      this.errorMessage.set('Amount cannot be negative.');
       return;
     }
 
@@ -156,7 +172,10 @@ export class EditBranchFloatTransaction implements OnInit {
     }
 
     const payload: UpdateFloatTransactionRequest = {
-      amount: Number(this.form.amount),
+      direction: record.direction,
+      amount,
+      transactionDate: record.transactionDate,
+      status: this.form.status,
       reference: this.form.reference.trim(),
       description: this.form.description.trim(),
       actionedBy,
@@ -171,6 +190,14 @@ export class EditBranchFloatTransaction implements OnInit {
 
         if (response.data) {
           this.transaction.set(response.data);
+
+          this.form = {
+            amount: Number(response.data.amount),
+            status: response.data.status,
+            reference: response.data.reference ?? '',
+            description: response.data.description ?? '',
+            actionedBy: this.getActionedBy(),
+          };
         }
 
         setTimeout(() => {
@@ -179,8 +206,14 @@ export class EditBranchFloatTransaction implements OnInit {
       },
       error: (error) => {
         this.saving.set(false);
+
+        const validationFields = error?.error?.fields;
+        const firstValidationMessage = validationFields
+          ? Object.values(validationFields)[0]
+          : null;
+
         this.errorMessage.set(
-          error?.error?.message || 'Unable to update the transaction. Please try again.',
+          String(firstValidationMessage || error?.error?.message || 'Unable to update the transaction. Please try again.'),
         );
       },
     });
