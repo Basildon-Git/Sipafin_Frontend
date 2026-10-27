@@ -292,15 +292,15 @@ export class NewLoanTransaction {
       return;
     }
 
-    if (this.amount > this.selectedLoan.outstandingBalance) {
-      this.toastr.warning(
-        `Repayment cannot exceed the outstanding balance of ${this.getCurrencySymbol(
-          this.selectedLoan.currency,
-        )}${this.selectedLoan.outstandingBalance.toFixed(2)}.`,
-        'Validation',
-      );
-      return;
-    }
+    // if (this.amount > this.selectedLoan.outstandingBalance) {
+    //   this.toastr.warning(
+    //     `Repayment cannot exceed the outstanding balance of ${this.getCurrencySymbol(
+    //       this.selectedLoan.currency,
+    //     )}${this.selectedLoan.outstandingBalance.toFixed(2)}.`,
+    //     'Validation',
+    //   );
+    //   return;
+    // }
 
     if (!this.transactionDate) {
       this.toastr.warning('Please select a transaction date.', 'Validation');
