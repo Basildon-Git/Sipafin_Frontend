@@ -133,6 +133,9 @@ export class NewLoanTransaction {
 
     if (!storedBranchId) {
       this.toastr.warning('No branch has been assigned to your session.', 'Branch');
+
+      // Loans can now be loaded without branch ID.
+      this.loadLoans();
       return;
     }
 
@@ -140,22 +143,25 @@ export class NewLoanTransaction {
 
     if (!Number.isFinite(parsedBranchId) || parsedBranchId <= 0) {
       this.toastr.error('The branch ID stored in your session is invalid.', 'Branch');
+
+      // Loans can now be loaded without branch ID.
+      this.loadLoans();
       return;
     }
 
     this.branchId = parsedBranchId;
 
-    this.loadLoans(parsedBranchId);
+    this.loadLoans();
   }
 
   // --------------------------------------------------------------------------
-  // Load loans for logged-in user's branch
+  // Load all loans
   // --------------------------------------------------------------------------
 
-  loadLoans(branchId: number): void {
+  loadLoans(): void {
     this.loadingLoans = true;
 
-    const endpoint = this.masterService.getBackendService() + `api/v1/loans`;
+    const endpoint = this.masterService.getBackendService() + 'api/v1/loans';
 
     this.http.get<LoansResponse>(endpoint).subscribe({
       next: (response) => {
@@ -219,7 +225,6 @@ export class NewLoanTransaction {
     this.loanAccountSelected = true;
     this.loanAccountSearchFocused = false;
 
-    // Clear amount if it is greater than the selected loan balance
     if (this.amount !== null && this.amount > loan.outstandingBalance) {
       this.amount = null;
     }
@@ -282,35 +287,20 @@ export class NewLoanTransaction {
       return;
     }
 
-    if (!this.branchId) {
-      this.toastr.warning('No branch has been assigned to your session.', 'Branch');
-      return;
-    }
-
     if (!this.amount || this.amount <= 0) {
       this.toastr.warning('Please enter a valid repayment amount.', 'Validation');
       return;
     }
-
-    // if (this.amount > this.selectedLoan.outstandingBalance) {
-    //   this.toastr.warning(
-    //     `Repayment cannot exceed the outstanding balance of ${this.getCurrencySymbol(
-    //       this.selectedLoan.currency,
-    //     )}${this.selectedLoan.outstandingBalance.toFixed(2)}.`,
-    //     'Validation',
-    //   );
-    //   return;
-    // }
 
     if (!this.transactionDate) {
       this.toastr.warning('Please select a transaction date.', 'Validation');
       return;
     }
 
-    const actionedBy = localStorage.getItem('fullName')?.trim() || '';
+    const actionedBy = this.getActionedBy();
 
     if (!actionedBy) {
-      this.toastr.warning('Your full name could not be found in the session.', 'User');
+      this.toastr.warning('Your name could not be found in the session.', 'User');
       return;
     }
 
@@ -319,7 +309,7 @@ export class NewLoanTransaction {
       transactionDate: this.transactionDate,
       reference: this.reference.trim(),
       description: this.description.trim(),
-      actionedBy: actionedBy,
+      actionedBy,
     };
 
     const endpoint =
@@ -336,7 +326,11 @@ export class NewLoanTransaction {
           'Success',
         );
 
-        this.router.navigate(['/loan-transactions']);
+        this.router.navigate(['/loan-transactions'], {
+          queryParams: {
+            loanAccountId: this.loanAccountId,
+          },
+        });
       },
 
       error: (error) => {
@@ -350,6 +344,20 @@ export class NewLoanTransaction {
         this.toastr.error(error?.error?.message || 'Failed to record loan repayment.', 'Error');
       },
     });
+  }
+
+  // --------------------------------------------------------------------------
+  // User
+  // --------------------------------------------------------------------------
+
+  private getActionedBy(): string {
+    return (
+      localStorage.getItem('fullName')?.trim() ||
+      localStorage.getItem('username')?.trim() ||
+      localStorage.getItem('userName')?.trim() ||
+      localStorage.getItem('user')?.trim() ||
+      ''
+    );
   }
 
   // --------------------------------------------------------------------------
