@@ -155,7 +155,7 @@ export class NewLoanTransaction {
   loadLoans(branchId: number): void {
     this.loadingLoans = true;
 
-    const endpoint = this.masterService.getBackendService() + `api/v1/loans/branch/${branchId}`;
+    const endpoint = this.masterService.getBackendService() + `api/v1/loans`;
 
     this.http.get<LoansResponse>(endpoint).subscribe({
       next: (response) => {
