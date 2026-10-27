@@ -875,42 +875,40 @@ export class NewFinancialTransaction implements OnInit {
       .reduce((sum, loan) => sum + Number(loan.principalAmount || 0), 0);
   }
 
-  private getClientLoanRepaymentsForDate(date: string): number {
-    return this.clientLoanRepaymentTransactions
-      .filter((transaction) => transaction.transactionDate === date)
-      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
-  }
-
   private buildSummary(): void {
-    const rows: SummaryRow[] = [];
-
     const openingValues: number[] = [];
+    const closingValues: number[] = [];
 
-    const customerDepositValues: number[] = [];
+    const bankWithdrawalValues: number[] = [];
+    const bankDepositValues: number[] = [];
+    const branchTransferInValues: number[] = [];
+    const branchTransferOutValues: number[] = [];
     const transferInValues: number[] = [];
-    const moneyMovementInValues: number[] = [];
-    const exchangeInValues: number[] = [];
-    const revenueValues: number[] = [];
-    const loanReceivedValues: number[] = [];
-    const clientLoanRepaymentValues: number[] = [];
-
-    const customerWithdrawalValues: number[] = [];
     const transferOutValues: number[] = [];
-    const moneyMovementOutValues: number[] = [];
-    const exchangeOutValues: number[] = [];
-    const expenseValues: number[] = [];
+    const currencyExchangeInValues: number[] = [];
+    const currencyExchangeOutValues: number[] = [];
+    const loanReceivedValues: number[] = [];
     const loanRepaymentValues: number[] = [];
     const clientLoanIssuedValues: number[] = [];
+    const clientLoanRepaymentValues: number[] = [];
+    const expenseValues: number[] = [];
+    const revenueReceiptValues: number[] = [];
+    const adjustmentInValues: number[] = [];
+    const adjustmentOutValues: number[] = [];
+    const commissionReceivedValues: number[] = [];
+    const cashSaleInValues: number[] = [];
+    const cashSaleOutValues: number[] = [];
+    const reversalInValues: number[] = [];
+    const reversalOutValues: number[] = [];
 
     let previousClosing: number | null = null;
 
     this.days.forEach((day, index) => {
       const dayTransactions = this.floatTransactions.filter(
-        (transaction) => transaction.transactionDate === day.date,
+        (transaction) =>
+          transaction.transactionDate === day.date &&
+          (!transaction.status || transaction.status === 'POSTED'),
       );
-
-      const clientLoansIssued = this.getClientLoansIssuedForDate(day.date);
-      const clientLoanRepayments = this.getClientLoanRepaymentsForDate(day.date);
 
       const opening = this.calculateOpeningBalance(
         day.date,
@@ -919,229 +917,137 @@ export class NewFinancialTransaction implements OnInit {
         index,
       );
 
-      const customerDeposits = this.sumTransactions(dayTransactions, 'BANK_WITHDRAWAL', 'IN');
-      const transfersIn = this.sumTransactions(dayTransactions, 'BRANCH_TRANSFER_IN', 'IN');
-      const moneyMovementIn = this.sumTransactions(dayTransactions, 'TRANSFER_IN', 'IN');
-      const exchangeIn = this.sumTransactions(dayTransactions, 'CURRENCY_EXCHANGE_IN', 'IN');
-      const loansReceived = this.sumLoanTransactions(this.loanReceivedTransactions, day.date);
-      const revenue = this.sumTransactions(dayTransactions, 'REVENUE_RECEIPT', 'IN');
-
-      const customerWithdrawals = this.sumTransactions(dayTransactions, 'BANK_DEPOSIT', 'OUT');
-      const transfersOut = this.sumTransactions(dayTransactions, 'BRANCH_TRANSFER_OUT', 'OUT');
-      const moneyMovementOut = this.sumTransactions(dayTransactions, 'TRANSFER_OUT', 'OUT');
-      const exchangeOut = this.sumTransactions(dayTransactions, 'CURRENCY_EXCHANGE_OUT', 'OUT');
-      const loanRepayments = this.sumLoanTransactions(this.loanRepaymentTransactions, day.date);
-      const expenses = this.sumTransactions(dayTransactions, 'EXPENSE', 'OUT');
+      const bankWithdrawal = this.sumFloatTransactionsByType(dayTransactions, 'BANK_WITHDRAWAL', 'IN');
+      const bankDeposit = this.sumFloatTransactionsByType(dayTransactions, 'BANK_DEPOSIT', 'OUT');
+      const branchTransferIn = this.sumFloatTransactionsByType(dayTransactions, 'BRANCH_TRANSFER_IN', 'IN');
+      const branchTransferOut = this.sumFloatTransactionsByType(dayTransactions, 'BRANCH_TRANSFER_OUT', 'OUT');
+      const transferIn = this.sumFloatTransactionsByType(dayTransactions, 'TRANSFER_IN', 'IN');
+      const transferOut = this.sumFloatTransactionsByType(dayTransactions, 'TRANSFER_OUT', 'OUT');
+      const currencyExchangeIn = this.sumFloatTransactionsByType(dayTransactions, 'CURRENCY_EXCHANGE_IN', 'IN');
+      const currencyExchangeOut = this.sumFloatTransactionsByType(dayTransactions, 'CURRENCY_EXCHANGE_OUT', 'OUT');
+      const loanReceived = this.sumFloatTransactionsByType(dayTransactions, 'LOAN_RECEIVED', 'IN');
+      const loanRepayment = this.sumFloatTransactionsByType(dayTransactions, 'LOAN_REPAYMENT', 'OUT');
+      const clientLoanIssued = this.sumFloatTransactionsByType(dayTransactions, 'CLIENT_LOAN_ISSUED', 'OUT');
+      const clientLoanRepayment = this.sumFloatTransactionsByType(dayTransactions, 'CLIENT_LOAN_REPAYMENT', 'IN');
+      const expense = this.sumFloatTransactionsByType(dayTransactions, 'EXPENSE', 'OUT');
+      const revenueReceipt = this.sumFloatTransactionsByType(dayTransactions, 'REVENUE_RECEIPT', 'IN');
+      const adjustmentIn = this.sumFloatTransactionsByType(dayTransactions, 'ADJUSTMENT', 'IN');
+      const adjustmentOut = this.sumFloatTransactionsByType(dayTransactions, 'ADJUSTMENT', 'OUT');
+      const commissionReceived = this.sumFloatTransactionsByType(dayTransactions, 'COMMISSION_RECEIVED', 'IN');
+      const cashSaleIn = this.sumFloatTransactionsByType(dayTransactions, 'CASH_SALE_IN', 'IN');
+      const cashSaleOut = this.sumFloatTransactionsByType(dayTransactions, 'CASH_SALE_OUT', 'OUT');
+      const reversalIn = this.sumFloatTransactionsByType(dayTransactions, 'REVERSAL', 'IN');
+      const reversalOut = this.sumFloatTransactionsByType(dayTransactions, 'REVERSAL', 'OUT');
 
       const totalInflow =
-        customerDeposits +
-        transfersIn +
-        moneyMovementIn +
-        exchangeIn +
-        loansReceived +
-        clientLoanRepayments +
-        revenue;
+        bankWithdrawal +
+        branchTransferIn +
+        transferIn +
+        currencyExchangeIn +
+        loanReceived +
+        clientLoanRepayment +
+        revenueReceipt +
+        adjustmentIn +
+        commissionReceived +
+        cashSaleIn +
+        reversalIn;
 
       const totalOutflow =
-        customerWithdrawals +
-        transfersOut +
-        moneyMovementOut +
-        exchangeOut +
-        loanRepayments +
-        clientLoansIssued +
-        expenses;
+        bankDeposit +
+        branchTransferOut +
+        transferOut +
+        currencyExchangeOut +
+        loanRepayment +
+        clientLoanIssued +
+        expense +
+        adjustmentOut +
+        cashSaleOut +
+        reversalOut;
 
       const closing = opening + totalInflow - totalOutflow;
 
       openingValues.push(opening);
-
-      customerDepositValues.push(customerDeposits);
-      transferInValues.push(transfersIn);
-      moneyMovementInValues.push(moneyMovementIn);
-      exchangeInValues.push(exchangeIn);
-      revenueValues.push(revenue);
-      loanReceivedValues.push(loansReceived);
-      clientLoanRepaymentValues.push(clientLoanRepayments);
-
-      customerWithdrawalValues.push(customerWithdrawals);
-      transferOutValues.push(transfersOut);
-      moneyMovementOutValues.push(moneyMovementOut);
-      exchangeOutValues.push(exchangeOut);
-      expenseValues.push(expenses);
-      loanRepaymentValues.push(loanRepayments);
-      clientLoanIssuedValues.push(clientLoansIssued);
+      bankWithdrawalValues.push(bankWithdrawal);
+      bankDepositValues.push(bankDeposit);
+      branchTransferInValues.push(branchTransferIn);
+      branchTransferOutValues.push(branchTransferOut);
+      transferInValues.push(transferIn);
+      transferOutValues.push(transferOut);
+      currencyExchangeInValues.push(currencyExchangeIn);
+      currencyExchangeOutValues.push(currencyExchangeOut);
+      loanReceivedValues.push(loanReceived);
+      loanRepaymentValues.push(loanRepayment);
+      clientLoanIssuedValues.push(clientLoanIssued);
+      clientLoanRepaymentValues.push(clientLoanRepayment);
+      expenseValues.push(expense);
+      revenueReceiptValues.push(revenueReceipt);
+      adjustmentInValues.push(adjustmentIn);
+      adjustmentOutValues.push(adjustmentOut);
+      commissionReceivedValues.push(commissionReceived);
+      cashSaleInValues.push(cashSaleIn);
+      cashSaleOutValues.push(cashSaleOut);
+      reversalInValues.push(reversalIn);
+      reversalOutValues.push(reversalOut);
+      closingValues.push(closing);
 
       previousClosing = closing;
     });
 
-    rows.push({
-      key: 'opening',
-      label: 'OPENING BALANCE',
-      values: openingValues,
-      total: openingValues[0] ?? 0,
-      bold: true,
-    });
-
-    rows.push({
-      key: 'customerDeposits',
-      label: 'CUSTOMER DEPOSITS',
-      values: customerDepositValues,
-      total: this.total(customerDepositValues),
-    });
-
-    rows.push({
-      key: 'transferIn',
-      label: 'FLOAT TRANSFERS IN',
-      values: transferInValues,
-      total: this.total(transferInValues),
-    });
-
-    rows.push({
-      key: 'moneyMovementIn',
-      label: 'MONEY MOVEMENT IN',
-      values: moneyMovementInValues,
-      total: this.total(moneyMovementInValues),
-    });
-
-    rows.push({
-      key: 'exchangeIn',
-      label: 'CURRENCY EXCHANGE IN',
-      values: exchangeInValues,
-      total: this.total(exchangeInValues),
-    });
-
-    rows.push({
-      key: 'loanReceived',
-      label: 'LOANS RECEIVED',
-      values: loanReceivedValues,
-      total: this.total(loanReceivedValues),
-    });
-
-    rows.push({
-      key: 'clientLoanRepayment',
-      label: 'CLIENT LOAN REPAYMENTS',
-      values: clientLoanRepaymentValues,
-      total: this.total(clientLoanRepaymentValues),
-    });
-
-    rows.push({
-      key: 'revenue',
-      label: 'REVENUE',
-      values: revenueValues,
-      total: this.total(revenueValues),
-    });
-
     const totalInflowValues = this.sumArrays([
-      customerDepositValues,
+      bankWithdrawalValues,
+      branchTransferInValues,
       transferInValues,
-      moneyMovementInValues,
-      exchangeInValues,
+      currencyExchangeInValues,
       loanReceivedValues,
       clientLoanRepaymentValues,
-      revenueValues,
+      revenueReceiptValues,
+      adjustmentInValues,
+      commissionReceivedValues,
+      cashSaleInValues,
+      reversalInValues,
     ]);
 
-    rows.push({
-      key: 'totalInflow',
-      label: 'TOTAL INFLOW',
-      values: totalInflowValues,
-      total: this.total(totalInflowValues),
-      bold: true,
-    });
-
-    rows.push({
-      key: 'customerWithdrawals',
-      label: 'CUSTOMER WITHDRAWALS',
-      values: customerWithdrawalValues,
-      total: this.total(customerWithdrawalValues),
-    });
-
-    rows.push({
-      key: 'transferOut',
-      label: 'FLOAT TRANSFERS OUT',
-      values: transferOutValues,
-      total: this.total(transferOutValues),
-    });
-
-    rows.push({
-      key: 'moneyMovementOut',
-      label: 'MONEY MOVEMENT OUT',
-      values: moneyMovementOutValues,
-      total: this.total(moneyMovementOutValues),
-    });
-
-    rows.push({
-      key: 'exchangeOut',
-      label: 'CURRENCY EXCHANGE OUT',
-      values: exchangeOutValues,
-      total: this.total(exchangeOutValues),
-    });
-
-    rows.push({
-      key: 'clientLoanIssued',
-      label: 'CLIENT LOANS ISSUED',
-      values: clientLoanIssuedValues,
-      total: this.total(clientLoanIssuedValues),
-    });
-
-    rows.push({
-      key: 'loanRepayment',
-      label: 'LOAN REPAYMENTS',
-      values: loanRepaymentValues,
-      total: this.total(loanRepaymentValues),
-    });
-
-    rows.push({
-      key: 'expenses',
-      label: 'EXPENSES',
-      values: expenseValues,
-      total: this.total(expenseValues),
-    });
-
     const totalOutflowValues = this.sumArrays([
-      customerWithdrawalValues,
+      bankDepositValues,
+      branchTransferOutValues,
       transferOutValues,
-      moneyMovementOutValues,
-      exchangeOutValues,
+      currencyExchangeOutValues,
       loanRepaymentValues,
       clientLoanIssuedValues,
       expenseValues,
+      adjustmentOutValues,
+      cashSaleOutValues,
+      reversalOutValues,
     ]);
 
-    rows.push({
-      key: 'totalOutflow',
-      label: 'TOTAL OUTFLOW',
-      values: totalOutflowValues,
-      total: this.total(totalOutflowValues),
-      bold: true,
-    });
-
-    const closingValues: number[] = [];
-
-    for (let i = 0; i < this.days.length; i++) {
-      const opening = openingValues[i] ?? 0;
-      const closing = opening + (totalInflowValues[i] ?? 0) - (totalOutflowValues[i] ?? 0);
-
-      closingValues.push(closing);
-    }
-
-    rows.push({
-      key: 'closing',
-      label: 'CLOSING BALANCE',
-      values: closingValues,
-      total: closingValues[closingValues.length - 1] ?? 0,
-      bold: true,
-    });
-
-    rows.push({
-      key: 'cashCount',
-      label: 'CASH COUNT BALANCE',
-      values: closingValues,
-      total: closingValues[closingValues.length - 1] ?? 0,
-      bold: true,
-    });
-
-    this.summaryRows = rows;
+    this.summaryRows = [
+      { key: 'opening', label: 'OPENING BALANCE', values: openingValues, total: openingValues[0] ?? 0, bold: true },
+      { key: 'bankWithdrawal', label: 'BANK WITHDRAWAL', values: bankWithdrawalValues, total: this.total(bankWithdrawalValues) },
+      { key: 'bankDeposit', label: 'BANK DEPOSIT', values: bankDepositValues, total: this.total(bankDepositValues) },
+      { key: 'branchTransferIn', label: 'BRANCH TRANSFER IN', values: branchTransferInValues, total: this.total(branchTransferInValues) },
+      { key: 'branchTransferOut', label: 'BRANCH TRANSFER OUT', values: branchTransferOutValues, total: this.total(branchTransferOutValues) },
+      { key: 'transferIn', label: 'TRANSFER IN', values: transferInValues, total: this.total(transferInValues) },
+      { key: 'transferOut', label: 'TRANSFER OUT', values: transferOutValues, total: this.total(transferOutValues) },
+      { key: 'currencyExchangeIn', label: 'CURRENCY EXCHANGE IN', values: currencyExchangeInValues, total: this.total(currencyExchangeInValues) },
+      { key: 'currencyExchangeOut', label: 'CURRENCY EXCHANGE OUT', values: currencyExchangeOutValues, total: this.total(currencyExchangeOutValues) },
+      { key: 'loanReceived', label: 'LOAN RECEIVED', values: loanReceivedValues, total: this.total(loanReceivedValues) },
+      { key: 'loanRepayment', label: 'LOAN REPAYMENT', values: loanRepaymentValues, total: this.total(loanRepaymentValues) },
+      { key: 'clientLoanIssued', label: 'CLIENT LOAN ISSUED', values: clientLoanIssuedValues, total: this.total(clientLoanIssuedValues) },
+      { key: 'clientLoanRepayment', label: 'CLIENT LOAN REPAYMENT', values: clientLoanRepaymentValues, total: this.total(clientLoanRepaymentValues) },
+      { key: 'expense', label: 'EXPENSE', values: expenseValues, total: this.total(expenseValues) },
+      { key: 'revenueReceipt', label: 'REVENUE RECEIPT', values: revenueReceiptValues, total: this.total(revenueReceiptValues) },
+      { key: 'adjustmentIn', label: 'ADJUSTMENT IN', values: adjustmentInValues, total: this.total(adjustmentInValues) },
+      { key: 'adjustmentOut', label: 'ADJUSTMENT OUT', values: adjustmentOutValues, total: this.total(adjustmentOutValues) },
+      { key: 'commissionReceived', label: 'COMMISSION RECEIVED', values: commissionReceivedValues, total: this.total(commissionReceivedValues) },
+      { key: 'cashSaleIn', label: 'CASH SALE IN', values: cashSaleInValues, total: this.total(cashSaleInValues) },
+      { key: 'cashSaleOut', label: 'CASH SALE OUT', values: cashSaleOutValues, total: this.total(cashSaleOutValues) },
+      { key: 'reversalIn', label: 'REVERSAL IN', values: reversalInValues, total: this.total(reversalInValues) },
+      { key: 'reversalOut', label: 'REVERSAL OUT', values: reversalOutValues, total: this.total(reversalOutValues) },
+      { key: 'totalInflow', label: 'TOTAL INFLOW', values: totalInflowValues, total: this.total(totalInflowValues), bold: true },
+      { key: 'totalOutflow', label: 'TOTAL OUTFLOW', values: totalOutflowValues, total: this.total(totalOutflowValues), bold: true },
+      { key: 'closing', label: 'CLOSING BALANCE', values: closingValues, total: closingValues[closingValues.length - 1] ?? 0, bold: true },
+      { key: 'cashCount', label: 'CASH COUNT BALANCE', values: closingValues, total: closingValues[closingValues.length - 1] ?? 0, bold: true },
+    ];
   }
 
   private calculateOpeningBalance(
@@ -1151,7 +1057,11 @@ export class NewFinancialTransaction implements OnInit {
     index: number,
   ): number {
     const explicitOpenings = this.sortFloatTransactions(
-      transactions.filter((transaction) => transaction.transactionType === 'OPENING_BALANCE'),
+      transactions.filter(
+        (transaction) =>
+          transaction.transactionType === 'OPENING_BALANCE' &&
+          (!transaction.status || transaction.status === 'POSTED'),
+      ),
     );
 
     const explicitOpening = explicitOpenings[explicitOpenings.length - 1];
@@ -1169,11 +1079,21 @@ export class NewFinancialTransaction implements OnInit {
       const last = sorted[sorted.length - 1];
 
       const totalIn = sorted
-        .filter((transaction) => transaction.direction === 'IN')
+        .filter(
+          (transaction) =>
+            transaction.direction === 'IN' &&
+            transaction.transactionType !== 'OPENING_BALANCE' &&
+            (!transaction.status || transaction.status === 'POSTED'),
+        )
         .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
 
       const totalOut = sorted
-        .filter((transaction) => transaction.direction === 'OUT')
+        .filter(
+          (transaction) =>
+            transaction.direction === 'OUT' &&
+            transaction.transactionType !== 'OPENING_BALANCE' &&
+            (!transaction.status || transaction.status === 'POSTED'),
+        )
         .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
 
       if (last.balanceAfter !== undefined) {
@@ -1182,6 +1102,21 @@ export class NewFinancialTransaction implements OnInit {
     }
 
     return 0;
+  }
+
+  private sumFloatTransactionsByType(
+    transactions: FloatTransaction[],
+    transactionType: string,
+    direction: Direction,
+  ): number {
+    return transactions
+      .filter(
+        (transaction) =>
+          transaction.transactionType === transactionType &&
+          transaction.direction === direction &&
+          (!transaction.status || transaction.status === 'POSTED'),
+      )
+      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
   }
 
   private findOpeningBalanceTransaction(date: string): FloatTransaction | null {
@@ -1210,29 +1145,6 @@ export class NewFinancialTransaction implements OnInit {
 
   openOpeningBalanceForm(date: string): void {
     this.openTransactionForm('OPENING_BALANCE', undefined, date);
-  }
-
-  private sumTransactions(
-    transactions: FloatTransaction[],
-    type: string,
-    direction: Direction,
-  ): number {
-    return transactions
-      .filter(
-        (transaction) =>
-          transaction.transactionType === type && transaction.direction === direction,
-      )
-      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
-  }
-
-  private sumLoanTransactions(transactions: FloatTransaction[], date: string): number {
-    return transactions
-      .filter(
-        (transaction) =>
-          transaction.transactionDate === date &&
-          (!transaction.status || transaction.status === 'POSTED'),
-      )
-      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
   }
 
   openTransactionForm(type: TransactionType, bankAccountId?: number, transactionDate?: string): void {
@@ -1264,31 +1176,24 @@ export class NewFinancialTransaction implements OnInit {
       case 'BANK_WITHDRAWAL':
         this.formTitle = 'Customer Withdrawal — Cash Out, Bank In';
         break;
-
       case 'BANK_DEPOSIT':
         this.formTitle = 'Customer Deposit — Cash In, Bank Out';
         break;
-
       case 'FLOAT_TRANSFER':
         this.formTitle = 'Float Transfer';
         break;
-
       case 'MONEY_MOVEMENT':
         this.formTitle = 'Money Movement';
         break;
-
       case 'CURRENCY_EXCHANGE':
         this.formTitle = 'Currency Exchange';
         break;
-
       case 'EXPENSE':
         this.formTitle = 'Expense';
         break;
-
       case 'REVENUE':
         this.formTitle = 'Revenue';
         break;
-
       case 'OPENING_BALANCE':
         this.formTitle = 'Opening Balance';
         break;
@@ -1333,18 +1238,12 @@ export class NewFinancialTransaction implements OnInit {
         return;
       }
 
-      if (
-        this.transactionForm.fromType === 'BRANCH_FLOAT' &&
-        !this.transactionForm.fromBranchId
-      ) {
+      if (this.transactionForm.fromType === 'BRANCH_FLOAT' && !this.transactionForm.fromBranchId) {
         this.errorMessage = 'Source branch is required.';
         return;
       }
 
-      if (
-        this.transactionForm.fromType === 'BANK_ACCOUNT' &&
-        !this.transactionForm.fromBankAccountId
-      ) {
+      if (this.transactionForm.fromType === 'BANK_ACCOUNT' && !this.transactionForm.fromBankAccountId) {
         this.errorMessage = 'Source bank account is required.';
         return;
       }
@@ -1354,10 +1253,7 @@ export class NewFinancialTransaction implements OnInit {
         return;
       }
 
-      if (
-        this.transactionForm.toType === 'BANK_ACCOUNT' &&
-        !this.transactionForm.toBankAccountId
-      ) {
+      if (this.transactionForm.toType === 'BANK_ACCOUNT' && !this.transactionForm.toBankAccountId) {
         this.errorMessage = 'Destination bank account is required.';
         return;
       }
@@ -1374,8 +1270,7 @@ export class NewFinancialTransaction implements OnInit {
       if (
         this.transactionForm.fromType === 'BANK_ACCOUNT' &&
         this.transactionForm.toType === 'BANK_ACCOUNT' &&
-        Number(this.transactionForm.fromBankAccountId) ===
-        Number(this.transactionForm.toBankAccountId)
+        Number(this.transactionForm.fromBankAccountId) === Number(this.transactionForm.toBankAccountId)
       ) {
         this.errorMessage = 'Cannot transfer between the same bank account.';
         return;
@@ -1403,18 +1298,12 @@ export class NewFinancialTransaction implements OnInit {
         return;
       }
 
-      if (
-        this.transactionForm.receivedTo === 'BANK_ACCOUNT' &&
-        !this.transactionForm.receivedBankAccountId
-      ) {
+      if (this.transactionForm.receivedTo === 'BANK_ACCOUNT' && !this.transactionForm.receivedBankAccountId) {
         this.errorMessage = 'Received bank account is required.';
         return;
       }
 
-      if (
-        this.transactionForm.paidFrom === 'BANK_ACCOUNT' &&
-        !this.transactionForm.paidBankAccountId
-      ) {
+      if (this.transactionForm.paidFrom === 'BANK_ACCOUNT' && !this.transactionForm.paidBankAccountId) {
         this.errorMessage = 'Paid bank account is required.';
         return;
       }
@@ -1460,15 +1349,7 @@ export class NewFinancialTransaction implements OnInit {
           .put(`${baseUrl}api/v1/money-movements/float-transactions/${existingOpening.id}`, updatePayload)
           .subscribe({
             next: () => {
-              this.saving = false;
-              this.showTransactionForm = false;
-              this.selectedTransactionType = null;
-
-              if (this.branchId) {
-                this.loadBranchFloat(this.branchId);
-              }
-
-              this.loadWeekData();
+              this.afterSave();
             },
             error: (error) => {
               console.error('Failed to update opening balance', error);
@@ -1484,15 +1365,7 @@ export class NewFinancialTransaction implements OnInit {
 
     this.http.post(`${baseUrl}${endpoint}`, payload).subscribe({
       next: () => {
-        this.saving = false;
-        this.showTransactionForm = false;
-        this.selectedTransactionType = null;
-
-        if (this.branchId) {
-          this.loadBranchFloat(this.branchId);
-        }
-
-        this.loadWeekData();
+        this.afterSave();
       },
       error: (error) => {
         console.error('Failed to save transaction', error);
@@ -1501,6 +1374,18 @@ export class NewFinancialTransaction implements OnInit {
         this.errorMessage = error?.error?.message || 'Failed to save transaction.';
       },
     });
+  }
+
+  private afterSave(): void {
+    this.saving = false;
+    this.showTransactionForm = false;
+    this.selectedTransactionType = null;
+
+    if (this.branchId) {
+      this.loadBranchFloat(this.branchId);
+    }
+
+    this.loadWeekData();
   }
 
   calculatePaidAmount(): void {
@@ -1541,11 +1426,10 @@ export class NewFinancialTransaction implements OnInit {
       case 'MONEY_MOVEMENT':
         return {
           fromType: form.fromType,
-          fromBranchId: form.fromType === 'BRANCH_FLOAT' ? form.fromBranchId : form.fromBranchId,
-          fromBankAccountId:
-            form.fromType === 'BANK_ACCOUNT' ? form.fromBankAccountId : null,
+          fromBranchId: form.fromBranchId,
+          fromBankAccountId: form.fromType === 'BANK_ACCOUNT' ? form.fromBankAccountId : null,
           toType: form.toType,
-          toBranchId: form.toType === 'BRANCH_FLOAT' ? form.toBranchId : form.toBranchId,
+          toBranchId: form.toBranchId,
           toBankAccountId: form.toType === 'BANK_ACCOUNT' ? form.toBankAccountId : null,
           currency: this.selectedCurrency,
           amount: Number(form.amount),
@@ -1561,14 +1445,12 @@ export class NewFinancialTransaction implements OnInit {
           receivedCurrency: form.receivedCurrency,
           receivedAmount: Number(form.receivedAmount),
           receivedTo: form.receivedTo,
-          receivedBankAccountId:
-            form.receivedTo === 'BANK_ACCOUNT' ? form.receivedBankAccountId : null,
+          receivedBankAccountId: form.receivedTo === 'BANK_ACCOUNT' ? form.receivedBankAccountId : null,
           paidCurrency: form.paidCurrency,
           paidAmount: Number(form.paidAmount),
           exchangeRate: Number(form.exchangeRate),
           paidFrom: form.paidFrom,
-          paidBankAccountId:
-            form.paidFrom === 'BANK_ACCOUNT' ? form.paidBankAccountId : null,
+          paidBankAccountId: form.paidFrom === 'BANK_ACCOUNT' ? form.paidBankAccountId : null,
           transactionDate: form.date,
           reference: form.reference,
           description: form.description,
@@ -1913,6 +1795,12 @@ export class NewFinancialTransaction implements OnInit {
 
       case 'CASH_SALE_OUT':
         return 'Cash Sale Out';
+
+      case 'ADJUSTMENT':
+        return 'Adjustment';
+
+      case 'REVERSAL':
+        return 'Reversal';
 
       default:
         return type;
