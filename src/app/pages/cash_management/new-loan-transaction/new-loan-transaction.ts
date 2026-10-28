@@ -32,6 +32,7 @@ interface LoansResponse {
 }
 
 export interface RepayLoanRequest {
+  branchId: number;
   amount: number;
   transactionDate: string;
   reference: string;
@@ -52,10 +53,6 @@ export class NewLoanTransaction {
   private readonly toastr = inject(ToastrService);
   private readonly masterService = inject(Master);
 
-  // --------------------------------------------------------------------------
-  // Form fields
-  // --------------------------------------------------------------------------
-
   loanAccountId: number | null = null;
   branchId: number | null = null;
 
@@ -68,32 +65,16 @@ export class NewLoanTransaction {
   reference = '';
   description = '';
 
-  // --------------------------------------------------------------------------
-  // Selected loan
-  // --------------------------------------------------------------------------
-
   selectedLoan: Loan | null = null;
-
-  // --------------------------------------------------------------------------
-  // Search
-  // --------------------------------------------------------------------------
 
   loanAccountSearch = '';
   loanAccountSelected = false;
   loanAccountSearchFocused = false;
 
-  // --------------------------------------------------------------------------
-  // Loans
-  // --------------------------------------------------------------------------
-
   loans: Loan[] = [];
 
   loadingLoans = false;
   saving = false;
-
-  // --------------------------------------------------------------------------
-  // Filtered loans
-  // --------------------------------------------------------------------------
 
   filteredLoans = computed(() => {
     const search = this.loanAccountSearch.trim().toLowerCase();
@@ -116,25 +97,15 @@ export class NewLoanTransaction {
     );
   });
 
-  // --------------------------------------------------------------------------
-  // Constructor
-  // --------------------------------------------------------------------------
-
   constructor() {
     this.loadBranchId();
   }
-
-  // --------------------------------------------------------------------------
-  // Load branch ID from session
-  // --------------------------------------------------------------------------
 
   loadBranchId(): void {
     const storedBranchId = localStorage.getItem('branchId');
 
     if (!storedBranchId) {
       this.toastr.warning('No branch has been assigned to your session.', 'Branch');
-
-      // Loans can now be loaded without branch ID.
       this.loadLoans();
       return;
     }
@@ -143,8 +114,6 @@ export class NewLoanTransaction {
 
     if (!Number.isFinite(parsedBranchId) || parsedBranchId <= 0) {
       this.toastr.error('The branch ID stored in your session is invalid.', 'Branch');
-
-      // Loans can now be loaded without branch ID.
       this.loadLoans();
       return;
     }
@@ -153,10 +122,6 @@ export class NewLoanTransaction {
 
     this.loadLoans();
   }
-
-  // --------------------------------------------------------------------------
-  // Load all loans
-  // --------------------------------------------------------------------------
 
   loadLoans(): void {
     this.loadingLoans = true;
@@ -182,10 +147,6 @@ export class NewLoanTransaction {
     });
   }
 
-  // --------------------------------------------------------------------------
-  // Search focus
-  // --------------------------------------------------------------------------
-
   onLoanAccountFocus(): void {
     this.loanAccountSearchFocused = true;
   }
@@ -195,10 +156,6 @@ export class NewLoanTransaction {
       this.loanAccountSearchFocused = false;
     }, 150);
   }
-
-  // --------------------------------------------------------------------------
-  // Search changes
-  // --------------------------------------------------------------------------
 
   onLoanAccountSearchChange(): void {
     if (
@@ -210,10 +167,6 @@ export class NewLoanTransaction {
       this.selectedLoan = null;
     }
   }
-
-  // --------------------------------------------------------------------------
-  // Select loan
-  // --------------------------------------------------------------------------
 
   selectLoan(loan: Loan): void {
     this.loanAccountId = loan.id;
@@ -230,10 +183,6 @@ export class NewLoanTransaction {
     }
   }
 
-  // --------------------------------------------------------------------------
-  // Transaction information
-  // --------------------------------------------------------------------------
-
   getTransactionDescription(): string {
     return 'Records a repayment made against the selected loan account.';
   }
@@ -248,10 +197,6 @@ export class NewLoanTransaction {
       .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
       .join(' ');
   }
-
-  // --------------------------------------------------------------------------
-  // Currency
-  // --------------------------------------------------------------------------
 
   getCurrencySymbol(currency: string): string {
     switch (currency) {
@@ -272,10 +217,6 @@ export class NewLoanTransaction {
     }
   }
 
-  // --------------------------------------------------------------------------
-  // Save repayment
-  // --------------------------------------------------------------------------
-
   save(): void {
     if (!this.loanAccountId) {
       this.toastr.warning('Please select a loan account.', 'Validation');
@@ -284,6 +225,11 @@ export class NewLoanTransaction {
 
     if (!this.selectedLoan) {
       this.toastr.warning('Please select a valid loan account.', 'Validation');
+      return;
+    }
+
+    if (!this.branchId) {
+      this.toastr.warning('No branch has been assigned to your session.', 'Branch');
       return;
     }
 
@@ -305,6 +251,7 @@ export class NewLoanTransaction {
     }
 
     const request: RepayLoanRequest = {
+      branchId: this.branchId,
       amount: Number(this.amount),
       transactionDate: this.transactionDate,
       reference: this.reference.trim(),
@@ -346,10 +293,6 @@ export class NewLoanTransaction {
     });
   }
 
-  // --------------------------------------------------------------------------
-  // User
-  // --------------------------------------------------------------------------
-
   private getActionedBy(): string {
     return (
       localStorage.getItem('fullName')?.trim() ||
@@ -360,17 +303,9 @@ export class NewLoanTransaction {
     );
   }
 
-  // --------------------------------------------------------------------------
-  // Cancel
-  // --------------------------------------------------------------------------
-
   cancel(): void {
     this.router.navigate(['/loan-transactions']);
   }
-
-  // --------------------------------------------------------------------------
-  // Today
-  // --------------------------------------------------------------------------
 
   private getToday(): string {
     return new Date().toISOString().split('T')[0];

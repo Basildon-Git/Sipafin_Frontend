@@ -430,10 +430,34 @@ export class NewFinancialTransaction implements OnInit {
         ),
     }).subscribe({
       next: (response) => {
-        this.loanReceivedTransactions = this.prepareLoanTransactions(response.received?.data ?? []);
-        this.loanRepaymentTransactions = this.prepareLoanTransactions(response.repayments?.data ?? []);
+        const receivedFromEndpoint = response.received?.data ?? [];
+        const repaymentsFromEndpoint = response.repayments?.data ?? [];
+        const clientRepaymentsFromEndpoint = response.clientLoanRepayments?.data ?? [];
+
+        const receivedFallback = this.floatTransactions.filter(
+          (transaction) => transaction.transactionType === 'LOAN_RECEIVED',
+        );
+
+        const repaymentsFallback = this.floatTransactions.filter(
+          (transaction) => transaction.transactionType === 'LOAN_REPAYMENT',
+        );
+
+        const clientRepaymentsFallback = this.floatTransactions.filter(
+          (transaction) => transaction.transactionType === 'CLIENT_LOAN_REPAYMENT',
+        );
+
+        this.loanReceivedTransactions = this.prepareLoanTransactions(
+          receivedFromEndpoint.length > 0 ? receivedFromEndpoint : receivedFallback,
+        );
+
+        this.loanRepaymentTransactions = this.prepareLoanTransactions(
+          repaymentsFromEndpoint.length > 0 ? repaymentsFromEndpoint : repaymentsFallback,
+        );
+
         this.clientLoanRepaymentTransactions = this.prepareLoanTransactions(
-          response.clientLoanRepayments?.data ?? [],
+          clientRepaymentsFromEndpoint.length > 0
+            ? clientRepaymentsFromEndpoint
+            : clientRepaymentsFallback,
         );
 
         this.loadClientLoans();
@@ -441,9 +465,23 @@ export class NewFinancialTransaction implements OnInit {
       error: (error) => {
         console.error('Failed to load loan transactions', error);
 
-        this.loanReceivedTransactions = [];
-        this.loanRepaymentTransactions = [];
-        this.clientLoanRepaymentTransactions = [];
+        this.loanReceivedTransactions = this.prepareLoanTransactions(
+          this.floatTransactions.filter(
+            (transaction) => transaction.transactionType === 'LOAN_RECEIVED',
+          ),
+        );
+
+        this.loanRepaymentTransactions = this.prepareLoanTransactions(
+          this.floatTransactions.filter(
+            (transaction) => transaction.transactionType === 'LOAN_REPAYMENT',
+          ),
+        );
+
+        this.clientLoanRepaymentTransactions = this.prepareLoanTransactions(
+          this.floatTransactions.filter(
+            (transaction) => transaction.transactionType === 'CLIENT_LOAN_REPAYMENT',
+          ),
+        );
 
         this.loadClientLoans();
       },

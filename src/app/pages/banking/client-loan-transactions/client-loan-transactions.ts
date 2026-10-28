@@ -66,6 +66,7 @@ interface BankingAccount {
 }
 
 interface ClientLoanRepaymentRequest {
+  branchId: number;
   paymentDestination: string;
   bankAccountId: number | null;
   amount: number;
@@ -90,9 +91,7 @@ export class ClientLoanTransactions {
 
   Math = Math;
 
-  // ============================================================
-  // CLIENT LOANS
-  // ============================================================
+  branchId: number | null = null;
 
   clientLoans = signal<ClientLoan[]>([]);
 
@@ -132,19 +131,11 @@ export class ClientLoanTransactions {
 
   totalPages = computed(() => Math.ceil(this.filteredLoans().length / this.pageSize));
 
-  // ============================================================
-  // SELECTED CLIENT LOAN
-  // ============================================================
-
   selectedLoan: ClientLoan | null = null;
 
   transactions = signal<ClientLoanTransaction[]>([]);
 
   loadingTransactions = false;
-
-  // ============================================================
-  // REPAYMENT
-  // ============================================================
 
   showRepaymentForm = false;
   repaymentLoading = false;
@@ -153,10 +144,6 @@ export class ClientLoanTransactions {
   transactionDate = this.getToday();
   repaymentReference = '';
   repaymentDescription = '';
-
-  // ============================================================
-  // BANK ACCOUNT PICKER
-  // ============================================================
 
   fundingBankAccountId: number | null = null;
   bankAccountSearch = '';
@@ -183,17 +170,28 @@ export class ClientLoanTransactions {
     );
   });
 
-  // ============================================================
-  // CONSTRUCTOR
-  // ============================================================
-
   constructor() {
+    this.loadBranchId();
     this.loadClientLoans();
   }
 
-  // ============================================================
-  // LOAD CLIENT LOANS
-  // ============================================================
+  loadBranchId(): void {
+    const storedBranchId = localStorage.getItem('branchId');
+
+    if (!storedBranchId) {
+      this.toastr.warning('No branch has been assigned to your session.', 'Branch');
+      return;
+    }
+
+    const parsedBranchId = Number(storedBranchId);
+
+    if (!Number.isFinite(parsedBranchId) || parsedBranchId <= 0) {
+      this.toastr.error('The branch ID stored in your session is invalid.', 'Branch');
+      return;
+    }
+
+    this.branchId = parsedBranchId;
+  }
 
   loadClientLoans(): void {
     this.loadingLoans = true;
@@ -217,17 +215,9 @@ export class ClientLoanTransactions {
     });
   }
 
-  // ============================================================
-  // SEARCH
-  // ============================================================
-
   onSearch(): void {
     this.currentPage = 1;
   }
-
-  // ============================================================
-  // PAGINATION
-  // ============================================================
 
   getPageNumbers(): number[] {
     const total = this.totalPages();
@@ -273,10 +263,6 @@ export class ClientLoanTransactions {
     this.currentPage = 1;
   }
 
-  // ============================================================
-  // SELECT CLIENT LOAN
-  // ============================================================
-
   selectLoan(loan: ClientLoan): void {
     this.selectedLoan = loan;
     this.transactions.set([]);
@@ -284,10 +270,6 @@ export class ClientLoanTransactions {
     this.resetRepaymentForm();
     this.loadTransactions(loan.id);
   }
-
-  // ============================================================
-  // LOAD TRANSACTIONS
-  // ============================================================
 
   loadTransactions(clientLoanAccountId: number): void {
     this.loadingTransactions = true;
@@ -311,10 +293,6 @@ export class ClientLoanTransactions {
       },
     });
   }
-
-  // ============================================================
-  // REPAYMENT FORM
-  // ============================================================
 
   openRepaymentForm(): void {
     if (!this.selectedLoan) {
@@ -342,10 +320,6 @@ export class ClientLoanTransactions {
     this.clearBankAccount();
   }
 
-  // ============================================================
-  // PAYMENT DESTINATION
-  // ============================================================
-
   onPaymentDestinationChange(): void {
     if (this.paymentDestination === 'BRANCH_FLOAT') {
       this.clearBankAccount();
@@ -357,10 +331,6 @@ export class ClientLoanTransactions {
       this.loadBankAccountsByCurrency();
     }
   }
-
-  // ============================================================
-  // LOAD BANK ACCOUNTS BY CURRENCY
-  // ============================================================
 
   loadBankAccountsByCurrency(): void {
     if (!this.selectedLoan) {
@@ -395,10 +365,6 @@ export class ClientLoanTransactions {
     });
   }
 
-  // ============================================================
-  // BANK ACCOUNT SEARCH
-  // ============================================================
-
   onBankAccountSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.bankAccountSearch = input.value;
@@ -427,13 +393,14 @@ export class ClientLoanTransactions {
     this.bankAccountSearchStarted = false;
   }
 
-  // ============================================================
-  // REPAY CLIENT LOAN
-  // ============================================================
-
   repayClientLoan(): void {
     if (!this.selectedLoan) {
       this.toastr.warning('Please select a client loan');
+      return;
+    }
+
+    if (!this.branchId) {
+      this.toastr.warning('No branch has been assigned to your session.', 'Branch');
       return;
     }
 
@@ -453,9 +420,15 @@ export class ClientLoanTransactions {
       return;
     }
 
-    const username = localStorage.getItem('username') || '';
+    const username = this.getActionedBy();
+
+    if (!username) {
+      this.toastr.warning('Your username could not be found in the session.', 'User');
+      return;
+    }
 
     const request: ClientLoanRepaymentRequest = {
+      branchId: this.branchId,
       paymentDestination: this.paymentDestination,
       bankAccountId: this.paymentDestination === 'BANK_ACCOUNT' ? this.fundingBankAccountId : null,
       amount: this.repaymentAmount,
@@ -488,9 +461,15 @@ export class ClientLoanTransactions {
     });
   }
 
-  // ============================================================
-  // HELPERS
-  // ============================================================
+  private getActionedBy(): string {
+    return (
+      localStorage.getItem('fullName')?.trim() ||
+      localStorage.getItem('username')?.trim() ||
+      localStorage.getItem('userName')?.trim() ||
+      localStorage.getItem('user')?.trim() ||
+      ''
+    );
+  }
 
   maskAccountNumber(accountNumber: string): string {
     if (!accountNumber) {
