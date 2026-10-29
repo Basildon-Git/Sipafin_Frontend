@@ -1,9 +1,9 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { catchError, forkJoin, of } from 'rxjs';
-import { Master } from '../../../core/services/master';
+import {CommonModule} from '@angular/common';
+import {Component, inject, OnInit} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import {HttpClient} from '@angular/common/http';
+import {catchError, forkJoin, of} from 'rxjs';
+import {Master} from '../../../core/services/master';
 
 type Currency = 'USD' | 'ZIG' | 'ZAR' | 'EUR';
 
@@ -357,7 +357,7 @@ export class NewFinancialTransaction implements OnInit {
       .pipe(
         catchError((error) => {
           console.error('Failed to load money movement transactions', error);
-          return of({ data: { floatTransactions: [], bankTransactions: [] } });
+          return of({data: {floatTransactions: [], bankTransactions: []}});
         }),
       )
       .subscribe({
@@ -405,7 +405,7 @@ export class NewFinancialTransaction implements OnInit {
         .pipe(
           catchError((error) => {
             console.error('Failed to load loan received transactions', error);
-            return of({ data: [] });
+            return of({data: []});
           }),
         ),
       repayments: this.http
@@ -415,7 +415,7 @@ export class NewFinancialTransaction implements OnInit {
         .pipe(
           catchError((error) => {
             console.error('Failed to load loan repayment transactions', error);
-            return of({ data: [] });
+            return of({data: []});
           }),
         ),
       clientLoanRepayments: this.http
@@ -425,7 +425,7 @@ export class NewFinancialTransaction implements OnInit {
         .pipe(
           catchError((error) => {
             console.error('Failed to load client loan repayment transactions', error);
-            return of({ data: [] });
+            return of({data: []});
           }),
         ),
     }).subscribe({
@@ -1059,32 +1059,111 @@ export class NewFinancialTransaction implements OnInit {
     ]);
 
     this.summaryRows = [
-      { key: 'opening', label: 'OPENING BALANCE', values: openingValues, total: openingValues[0] ?? 0, bold: true },
-      { key: 'bankWithdrawal', label: 'BANK WITHDRAWAL', values: bankWithdrawalValues, total: this.total(bankWithdrawalValues) },
-      { key: 'bankDeposit', label: 'BANK DEPOSIT', values: bankDepositValues, total: this.total(bankDepositValues) },
-      { key: 'branchTransferIn', label: 'BRANCH TRANSFER IN', values: branchTransferInValues, total: this.total(branchTransferInValues) },
-      { key: 'branchTransferOut', label: 'BRANCH TRANSFER OUT', values: branchTransferOutValues, total: this.total(branchTransferOutValues) },
-      { key: 'transferIn', label: 'TRANSFER IN', values: transferInValues, total: this.total(transferInValues) },
-      { key: 'transferOut', label: 'TRANSFER OUT', values: transferOutValues, total: this.total(transferOutValues) },
-      { key: 'currencyExchangeIn', label: 'CURRENCY EXCHANGE IN', values: currencyExchangeInValues, total: this.total(currencyExchangeInValues) },
-      { key: 'currencyExchangeOut', label: 'CURRENCY EXCHANGE OUT', values: currencyExchangeOutValues, total: this.total(currencyExchangeOutValues) },
-      { key: 'loanReceived', label: 'LOAN RECEIVED', values: loanReceivedValues, total: this.total(loanReceivedValues) },
-      { key: 'loanRepayment', label: 'LOAN REPAYMENT', values: loanRepaymentValues, total: this.total(loanRepaymentValues) },
-      { key: 'clientLoanIssued', label: 'CLIENT LOAN ISSUED', values: clientLoanIssuedValues, total: this.total(clientLoanIssuedValues) },
-      { key: 'clientLoanRepayment', label: 'CLIENT LOAN REPAYMENT', values: clientLoanRepaymentValues, total: this.total(clientLoanRepaymentValues) },
-      { key: 'expense', label: 'EXPENSE', values: expenseValues, total: this.total(expenseValues) },
-      { key: 'revenueReceipt', label: 'REVENUE RECEIPT', values: revenueReceiptValues, total: this.total(revenueReceiptValues) },
-      { key: 'adjustmentIn', label: 'ADJUSTMENT IN', values: adjustmentInValues, total: this.total(adjustmentInValues) },
-      { key: 'adjustmentOut', label: 'ADJUSTMENT OUT', values: adjustmentOutValues, total: this.total(adjustmentOutValues) },
-      { key: 'commissionReceived', label: 'COMMISSION RECEIVED', values: commissionReceivedValues, total: this.total(commissionReceivedValues) },
-      { key: 'cashSaleIn', label: 'CASH SALE IN', values: cashSaleInValues, total: this.total(cashSaleInValues) },
-      { key: 'cashSaleOut', label: 'CASH SALE OUT', values: cashSaleOutValues, total: this.total(cashSaleOutValues) },
-      { key: 'reversalIn', label: 'REVERSAL IN', values: reversalInValues, total: this.total(reversalInValues) },
-      { key: 'reversalOut', label: 'REVERSAL OUT', values: reversalOutValues, total: this.total(reversalOutValues) },
-      { key: 'totalInflow', label: 'TOTAL INFLOW', values: totalInflowValues, total: this.total(totalInflowValues), bold: true },
-      { key: 'totalOutflow', label: 'TOTAL OUTFLOW', values: totalOutflowValues, total: this.total(totalOutflowValues), bold: true },
-      { key: 'closing', label: 'CLOSING BALANCE', values: closingValues, total: closingValues[closingValues.length - 1] ?? 0, bold: true },
-      { key: 'cashCount', label: 'CASH COUNT BALANCE', values: closingValues, total: closingValues[closingValues.length - 1] ?? 0, bold: true },
+      {key: 'opening', label: 'OPENING BALANCE', values: openingValues, total: openingValues[0] ?? 0, bold: true},
+      {
+        key: 'bankWithdrawal',
+        label: 'BANK WITHDRAWAL',
+        values: bankWithdrawalValues,
+        total: this.total(bankWithdrawalValues)
+      },
+      {key: 'bankDeposit', label: 'BANK DEPOSIT', values: bankDepositValues, total: this.total(bankDepositValues)},
+      {
+        key: 'branchTransferIn',
+        label: 'BRANCH TRANSFER IN',
+        values: branchTransferInValues,
+        total: this.total(branchTransferInValues)
+      },
+      {
+        key: 'branchTransferOut',
+        label: 'BRANCH TRANSFER OUT',
+        values: branchTransferOutValues,
+        total: this.total(branchTransferOutValues)
+      },
+      {key: 'transferIn', label: 'TRANSFER IN', values: transferInValues, total: this.total(transferInValues)},
+      {key: 'transferOut', label: 'TRANSFER OUT', values: transferOutValues, total: this.total(transferOutValues)},
+      {
+        key: 'currencyExchangeIn',
+        label: 'CURRENCY EXCHANGE IN',
+        values: currencyExchangeInValues,
+        total: this.total(currencyExchangeInValues)
+      },
+      {
+        key: 'currencyExchangeOut',
+        label: 'CURRENCY EXCHANGE OUT',
+        values: currencyExchangeOutValues,
+        total: this.total(currencyExchangeOutValues)
+      },
+      {key: 'loanReceived', label: 'LOAN RECEIVED', values: loanReceivedValues, total: this.total(loanReceivedValues)},
+      {
+        key: 'loanRepayment',
+        label: 'LOAN REPAYMENT',
+        values: loanRepaymentValues,
+        total: this.total(loanRepaymentValues)
+      },
+      {
+        key: 'clientLoanIssued',
+        label: 'CLIENT LOAN ISSUED',
+        values: clientLoanIssuedValues,
+        total: this.total(clientLoanIssuedValues)
+      },
+      {
+        key: 'clientLoanRepayment',
+        label: 'CLIENT LOAN REPAYMENT',
+        values: clientLoanRepaymentValues,
+        total: this.total(clientLoanRepaymentValues)
+      },
+      {key: 'expense', label: 'EXPENSE', values: expenseValues, total: this.total(expenseValues)},
+      {
+        key: 'revenueReceipt',
+        label: 'REVENUE RECEIPT',
+        values: revenueReceiptValues,
+        total: this.total(revenueReceiptValues)
+      },
+      {key: 'adjustmentIn', label: 'ADJUSTMENT IN', values: adjustmentInValues, total: this.total(adjustmentInValues)},
+      {
+        key: 'adjustmentOut',
+        label: 'ADJUSTMENT OUT',
+        values: adjustmentOutValues,
+        total: this.total(adjustmentOutValues)
+      },
+      {
+        key: 'commissionReceived',
+        label: 'COMMISSION RECEIVED',
+        values: commissionReceivedValues,
+        total: this.total(commissionReceivedValues)
+      },
+      {key: 'cashSaleIn', label: 'CASH SALE IN', values: cashSaleInValues, total: this.total(cashSaleInValues)},
+      {key: 'cashSaleOut', label: 'CASH SALE OUT', values: cashSaleOutValues, total: this.total(cashSaleOutValues)},
+      {key: 'reversalIn', label: 'REVERSAL IN', values: reversalInValues, total: this.total(reversalInValues)},
+      {key: 'reversalOut', label: 'REVERSAL OUT', values: reversalOutValues, total: this.total(reversalOutValues)},
+      {
+        key: 'totalInflow',
+        label: 'TOTAL INFLOW',
+        values: totalInflowValues,
+        total: this.total(totalInflowValues),
+        bold: true
+      },
+      {
+        key: 'totalOutflow',
+        label: 'TOTAL OUTFLOW',
+        values: totalOutflowValues,
+        total: this.total(totalOutflowValues),
+        bold: true
+      },
+      {
+        key: 'closing',
+        label: 'CLOSING BALANCE',
+        values: closingValues,
+        total: closingValues[closingValues.length - 1] ?? 0,
+        bold: true
+      },
+      {
+        key: 'cashCount',
+        label: 'CASH COUNT BALANCE',
+        values: closingValues,
+        total: closingValues[closingValues.length - 1] ?? 0,
+        bold: true
+      },
     ];
   }
 
@@ -1260,7 +1339,14 @@ export class NewFinancialTransaction implements OnInit {
       return;
     }
 
-    if (!this.transactionForm.amount && this.selectedTransactionType !== 'CURRENCY_EXCHANGE') {
+    if (
+      this.selectedTransactionType !== 'CURRENCY_EXCHANGE' &&
+      (
+        this.transactionForm.amount === null ||
+        this.transactionForm.amount === undefined ||
+        this.transactionForm.amount === ''
+      )
+    ) {
       this.errorMessage = 'Amount is required.';
       return;
     }
