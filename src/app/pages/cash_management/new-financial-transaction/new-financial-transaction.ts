@@ -1339,8 +1339,18 @@ export class NewFinancialTransaction implements OnInit {
       return;
     }
 
+    if (this.selectedTransactionType === 'OPENING_BALANCE') {
+      this.transactionForm.amount =
+        this.transactionForm.amount === null ||
+        this.transactionForm.amount === undefined ||
+        this.transactionForm.amount === ''
+          ? 0
+          : Number(this.transactionForm.amount);
+    }
+
     if (
       this.selectedTransactionType !== 'CURRENCY_EXCHANGE' &&
+      this.selectedTransactionType !== 'OPENING_BALANCE' &&
       (
         this.transactionForm.amount === null ||
         this.transactionForm.amount === undefined ||
@@ -1351,7 +1361,7 @@ export class NewFinancialTransaction implements OnInit {
       return;
     }
 
-    if (Number(this.transactionForm.amount || 0) < 0) {
+    if (Number(this.transactionForm.amount ?? 0) < 0) {
       this.errorMessage = 'Amount cannot be negative.';
       return;
     }
@@ -1613,7 +1623,7 @@ export class NewFinancialTransaction implements OnInit {
         return {
           branchId: this.branchId,
           currency: this.selectedCurrency,
-          amount: Number(form.amount),
+          amount: Number(form.amount ?? 0),
           transactionDate: form.date,
           reference: form.reference,
           description: form.description,
