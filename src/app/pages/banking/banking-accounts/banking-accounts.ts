@@ -1,9 +1,10 @@
-import { DecimalPipe } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { ToastrService } from 'ngx-toastr';
-import { Master } from '../../../core/services/master';
+import {DecimalPipe, DatePipe} from '@angular/common';
+import {HttpClient} from '@angular/common/http';
+import {Component, computed, inject, signal} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import {Router} from '@angular/router';
+import {ToastrService} from 'ngx-toastr';
+import {Master} from '../../../core/services/master';
 
 export interface BankingAccount {
   id: number;
@@ -34,6 +35,32 @@ export interface CommissionAccount {
   updatedAt?: string;
 }
 
+interface BankTransaction {
+  id: number;
+  bankAccountId: number;
+  accountName: string;
+  accountNumber: string;
+  bankId: number;
+  bankName: string;
+  bankCode: string;
+  branchId: number | null;
+  branchName: string | null;
+  branchCode: string | null;
+  currency: string;
+  transactionType: string;
+  direction: 'IN' | 'OUT';
+  amount: number;
+  balanceAfter: number;
+  transactionDate: string;
+  transactionGroupId: string;
+  status: string;
+  reference: string | null;
+  description: string | null;
+  actionedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface BankingAccountsResponse {
   status: number;
   message: string;
@@ -48,10 +75,17 @@ interface CommissionAccountResponse {
   timestamp: string;
 }
 
+interface BankTransactionsResponse {
+  status: number;
+  message: string;
+  data: BankTransaction[];
+  timestamp: string;
+}
+
 @Component({
   selector: 'app-banking-accounts',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, DatePipe, FormsModule],
   templateUrl: './banking-accounts.html',
   styleUrl: './banking-accounts.css',
 })
@@ -66,6 +100,12 @@ export class BankingAccounts {
   accounts = signal<BankingAccount[]>([]);
 
   loading = signal(false);
+
+  selectedAccount = signal<BankingAccount | null>(null);
+  accountTransactions = signal<BankTransaction[]>([]);
+  transactionsLoading = signal(false);
+  transactionsModalOpen = signal(false);
+  selectedTransactionDate = this.getToday();
 
   filteredAccounts = computed(() => {
     const search = this.searchTerm().trim().toLowerCase();
@@ -84,6 +124,34 @@ export class BankingAccounts {
         account.branchName.toLowerCase().includes(search),
     );
   });
+
+  selectedDayTransactions = computed(() => {
+    return this.accountTransactions()
+      .filter((transaction) => transaction.transactionDate === this.selectedTransactionDate)
+      .sort((a, b) => {
+        const createdCompare = (b.createdAt || '').localeCompare(a.createdAt || '');
+
+        if (createdCompare !== 0) {
+          return createdCompare;
+        }
+
+        return Number(b.id || 0) - Number(a.id || 0);
+      });
+  });
+
+  selectedDayInTotal = computed(() =>
+    this.selectedDayTransactions()
+      .filter((transaction) => transaction.direction === 'IN')
+      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0),
+  );
+
+  selectedDayOutTotal = computed(() =>
+    this.selectedDayTransactions()
+      .filter((transaction) => transaction.direction === 'OUT')
+      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0),
+  );
+
+  selectedDayNetTotal = computed(() => this.selectedDayInTotal() - this.selectedDayOutTotal());
 
   totalAccounts = computed(() => this.accounts().length);
 
@@ -112,7 +180,6 @@ export class BankingAccounts {
 
         this.accounts.set(accounts);
 
-        // Load commission accounts for the bank accounts
         this.loadCommissionAccounts(accounts);
 
         this.loading.set(false);
@@ -131,10 +198,6 @@ export class BankingAccounts {
     });
   }
 
-  // =========================
-  // Load Commission Accounts
-  // =========================
-
   loadCommissionAccounts(accounts: BankingAccount[]): void {
     accounts.forEach((account) => {
       const endpoint =
@@ -149,9 +212,9 @@ export class BankingAccounts {
             currentAccounts.map((item) =>
               item.id === account.id
                 ? {
-                    ...item,
-                    commissionRate: Number(commission?.commissionRate ?? 0),
-                  }
+                  ...item,
+                  commissionRate: Number(commission?.commissionRate ?? 0),
+                }
                 : item,
             ),
           );
@@ -160,19 +223,13 @@ export class BankingAccounts {
         error: (error) => {
           console.error(`Failed to load commission account for bank account ${account.id}:`, error);
 
-          console.error('Status:', error.status);
-          console.error('URL:', error.url);
-          console.error('Response:', error.error);
-
-          // Keep the banking account visible even if commission
-          // information is unavailable.
           this.accounts.update((currentAccounts) =>
             currentAccounts.map((item) =>
               item.id === account.id
                 ? {
-                    ...item,
-                    commissionRate: 0,
-                  }
+                  ...item,
+                  commissionRate: 0,
+                }
                 : item,
             ),
           );
@@ -199,6 +256,64 @@ export class BankingAccounts {
     this.router.navigate(['/bank-accounts/edit/', id]);
   }
 
+  openTransactionsModal(account: BankingAccount): void {
+    this.selectedAccount.set(account);
+    this.selectedTransactionDate = this.getToday();
+    this.accountTransactions.set([]);
+    this.transactionsModalOpen.set(true);
+    this.loadAccountTransactions(account);
+  }
+
+  closeTransactionsModal(): void {
+    this.transactionsModalOpen.set(false);
+    this.selectedAccount.set(null);
+    this.accountTransactions.set([]);
+    this.transactionsLoading.set(false);
+  }
+
+  onTransactionDateChange(): void {
+    // Transactions are already loaded for the account/currency.
+    // This method exists for template consistency and future extension.
+  }
+
+  refreshTransactions(): void {
+    const account = this.selectedAccount();
+
+    if (!account) {
+      return;
+    }
+
+    this.loadAccountTransactions(account);
+  }
+
+  private loadAccountTransactions(account: BankingAccount): void {
+    this.transactionsLoading.set(true);
+
+    const endpoint =
+      this.masterService.getBackendService() +
+      `api/v1/money-movements/bank/account/${account.id}/currency/${account.currency}`;
+
+    this.http.get<BankTransactionsResponse>(endpoint).subscribe({
+      next: (response) => {
+        this.accountTransactions.set(response.data ?? []);
+        this.transactionsLoading.set(false);
+      },
+      error: (error) => {
+        this.transactionsLoading.set(false);
+
+        console.error('Failed to load bank account transactions:', error);
+        console.error('Status:', error.status);
+        console.error('URL:', error.url);
+        console.error('Response:', error.error);
+
+        this.toastr.error(
+          error?.error?.message || 'Failed to load bank account transactions.',
+          'Error',
+        );
+      },
+    });
+  }
+
   toggleStatus(account: BankingAccount): void {
     const activating = !account.active;
 
@@ -218,9 +333,9 @@ export class BankingAccounts {
           accounts.map((item) =>
             item.id === account.id
               ? {
-                  ...item,
-                  active: activating,
-                }
+                ...item,
+                active: activating,
+              }
               : item,
           ),
         );
@@ -239,7 +354,7 @@ export class BankingAccounts {
 
         this.toastr.error(
           error?.error?.message ||
-            `Failed to ${activating ? 'activate' : 'deactivate'} banking account.`,
+          `Failed to ${activating ? 'activate' : 'deactivate'} banking account.`,
           'Error',
         );
       },
@@ -263,11 +378,38 @@ export class BankingAccounts {
     }).format(account.currentBalance || 0);
   }
 
+  formatAmount(amount: number | null | undefined): string {
+    return Number(amount || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
   maskAccountNumber(accountNumber: string): string {
     if (accountNumber.length <= 4) {
       return accountNumber;
     }
 
     return `•••• ${accountNumber.slice(-4)}`;
+  }
+
+  formatTransactionType(type: string): string {
+    return (type || '')
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (character) => character.toUpperCase());
+  }
+
+  getDirectionLabel(direction: string): string {
+    return direction === 'IN' ? 'Money In' : 'Money Out';
+  }
+
+  private getToday(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 }

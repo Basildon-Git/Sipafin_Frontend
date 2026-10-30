@@ -77,7 +77,7 @@
       <div class="search-box">
         <i class="bi bi-search"></i>
 
-        <input type="text" placeholder="Search accounts, banks..." (input)="onSearch($event)" />
+        <input type="text" placeholder="Search accounts, banks..." (input)="onSearch($event)"/>
       </div>
     </div>
 
@@ -85,16 +85,16 @@
     <div class="table-wrapper">
       <table>
         <thead>
-          <tr>
-            <th>Bank</th>
-            <th>Account</th>
-            <th>Account Number</th>
-            <th>Currency</th>
-            <th>Current Balance</th>
-            <th>Commission</th>
-            <th>Status</th>
-            <th class="actions-header">Actions</th>
-          </tr>
+        <tr>
+          <th>Bank</th>
+          <th>Account</th>
+          <th>Account Number</th>
+          <th>Currency</th>
+          <th>Current Balance</th>
+          <th>Commission</th>
+          <th>Status</th>
+          <th class="actions-header">Actions</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -188,14 +188,15 @@
               <!-- ACTIONS -->
               <td>
                 <div class="actions">
-                  <!-- <button
+                  <button
                     type="button"
                     class="action-button view"
-                    title="View account"
-                    (click)="viewAccount(account)"
+                    title="View daily transactions"
+                    (click)="openTransactionsModal(account)"
                   >
-                    <i class="bi bi-eye"></i>
-                  </button> -->
+                    <i class="bi bi-receipt"></i>
+                  </button>
+
                   <button
                     type="button"
                     class="action-button edit"
@@ -224,15 +225,6 @@
                       <i class="bi bi-play-circle"></i>
                     </button>
                   }
-                  <!-- 
-                  <button
-                    type="button"
-                    class="action-button delete"
-                    title="Delete account"
-                    (click)="deleteAccount(account)"
-                  >
-                    <i class="bi bi-trash"></i>
-                  </button> -->
                 </div>
               </td>
             </tr>
@@ -268,4 +260,184 @@
       </span>
     </div>
   </div>
+
+  @if (transactionsModalOpen(); as open) {
+    <div class="modal-backdrop" (click)="closeTransactionsModal()">
+      <div class="transactions-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2>Bank Account Transactions</h2>
+
+            @if (selectedAccount(); as account) {
+              <p>
+                {{ account.bankName }} —
+                {{ account.accountName }} —
+                {{ maskAccountNumber(account.accountNumber) }}
+              </p>
+            }
+          </div>
+
+          <button type="button" class="modal-close" (click)="closeTransactionsModal()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="modal-toolbar">
+          <div class="date-filter">
+            <label for="transactionDate">Transaction Date</label>
+
+            <input
+              id="transactionDate"
+              type="date"
+              [(ngModel)]="selectedTransactionDate"
+              (ngModelChange)="onTransactionDateChange()"
+            />
+          </div>
+
+          <button type="button" class="refresh-button" (click)="refreshTransactions()"
+                  [disabled]="transactionsLoading()">
+            <i class="bi bi-arrow-clockwise" [class.spinning]="transactionsLoading()"></i>
+            Refresh
+          </button>
+        </div>
+
+        <div class="transaction-summary-grid">
+          <div class="transaction-summary-card in">
+            <span>Total In</span>
+            <strong>
+              {{ selectedAccount()?.currency }}
+              {{ selectedDayInTotal() | number: '1.2-2' }}
+            </strong>
+          </div>
+
+          <div class="transaction-summary-card out">
+            <span>Total Out</span>
+            <strong>
+              {{ selectedAccount()?.currency }}
+              {{ selectedDayOutTotal() | number: '1.2-2' }}
+            </strong>
+          </div>
+
+          <div class="transaction-summary-card net">
+            <span>Net Movement</span>
+            <strong>
+              {{ selectedAccount()?.currency }}
+              {{ selectedDayNetTotal() | number: '1.2-2' }}
+            </strong>
+          </div>
+
+          <div class="transaction-summary-card count">
+            <span>Transactions</span>
+            <strong>{{ selectedDayTransactions().length }}</strong>
+          </div>
+        </div>
+
+        @if (transactionsLoading()) {
+          <div class="modal-loading">
+            <i class="bi bi-arrow-repeat spinning"></i>
+            Loading transactions...
+          </div>
+        } @else if (selectedDayTransactions().length === 0) {
+          <div class="modal-empty">
+            <i class="bi bi-receipt"></i>
+            <h3>No transactions found</h3>
+            <p>No bank transactions were recorded for this account on the selected day.</p>
+          </div>
+        } @else {
+          <div class="modal-table-wrapper">
+            <table class="transactions-table">
+              <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Direction</th>
+                <th>Amount</th>
+                <th>Balance After</th>
+                <th>Status</th>
+                <th>Reference</th>
+                <th>Description</th>
+                <th>Branch</th>
+                <th>Group ID</th>
+                <th>Actioned By</th>
+                <th>Created</th>
+              </tr>
+              </thead>
+
+              <tbody>
+                @for (transaction of selectedDayTransactions(); track transaction.id) {
+                  <tr>
+                    <td>#{{ transaction.id }}</td>
+
+                    <td>
+                      <span class="type-pill">
+                        {{ formatTransactionType(transaction.transactionType) }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span
+                        class="direction-pill"
+                        [class.in]="transaction.direction === 'IN'"
+                        [class.out]="transaction.direction === 'OUT'"
+                      >
+                        {{ getDirectionLabel(transaction.direction) }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <strong
+                        [class.amount-in]="transaction.direction === 'IN'"
+                        [class.amount-out]="transaction.direction === 'OUT'"
+                      >
+                        {{ transaction.currency }}
+                        {{ transaction.amount | number: '1.2-2' }}
+                      </strong>
+                    </td>
+
+                    <td>
+                      {{ transaction.currency }}
+                      {{ transaction.balanceAfter | number: '1.2-2' }}
+                    </td>
+
+                    <td>
+                      <span
+                        class="status-badge"
+                        [class.active]="transaction.status === 'POSTED'"
+                        [class.inactive]="transaction.status !== 'POSTED'"
+                      >
+                        <span class="status-dot"></span>
+                        {{ transaction.status }}
+                      </span>
+                    </td>
+
+                    <td>{{ transaction.reference || '—' }}</td>
+
+                    <td>
+                      <span class="description-cell">
+                        {{ transaction.description || '—' }}
+                      </span>
+                    </td>
+
+                    <td>{{ transaction.branchName || '—' }}</td>
+
+                    <td>
+                      <span class="group-id">
+                        {{ transaction.transactionGroupId || '—' }}
+                      </span>
+                    </td>
+
+                    <td>{{ transaction.actionedBy || '—' }}</td>
+
+                    <td>
+                      {{ transaction.createdAt | date: 'dd MMM yyyy, HH:mm' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
 </div>
