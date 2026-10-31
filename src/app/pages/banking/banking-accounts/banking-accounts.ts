@@ -1,10 +1,10 @@
-import {DecimalPipe, DatePipe} from '@angular/common';
-import {HttpClient} from '@angular/common/http';
-import {Component, computed, inject, signal} from '@angular/core';
-import {FormsModule} from '@angular/forms';
-import {Router} from '@angular/router';
-import {ToastrService} from 'ngx-toastr';
-import {Master} from '../../../core/services/master';
+import { DecimalPipe, DatePipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
+import { Master } from '../../../core/services/master';
 
 export interface BankingAccount {
   id: number;
@@ -59,6 +59,10 @@ interface BankTransaction {
   actionedBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface BankTransactionWithBalanceBefore extends BankTransaction {
+  balanceBefore: number;
 }
 
 interface BankingAccountsResponse {
@@ -125,18 +129,42 @@ export class BankingAccounts {
     );
   });
 
-  selectedDayTransactions = computed(() => {
+  selectedDayTransactions = computed<BankTransactionWithBalanceBefore[]>(() => {
     return this.accountTransactions()
       .filter((transaction) => transaction.transactionDate === this.selectedTransactionDate)
       .sort((a, b) => {
-        const createdCompare = (b.createdAt || '').localeCompare(a.createdAt || '');
+        const createdCompare = (a.createdAt || '').localeCompare(b.createdAt || '');
 
         if (createdCompare !== 0) {
           return createdCompare;
         }
 
-        return Number(b.id || 0) - Number(a.id || 0);
-      });
+        return Number(a.id || 0) - Number(b.id || 0);
+      })
+      .map((transaction) => ({
+        ...transaction,
+        balanceBefore: this.calculateBalanceBefore(transaction),
+      }));
+  });
+
+  selectedDayOpeningBalance = computed(() => {
+    const transactions = this.selectedDayTransactions();
+
+    if (transactions.length === 0) {
+      return 0;
+    }
+
+    return Number(transactions[0].balanceBefore || 0);
+  });
+
+  selectedDayClosingBalance = computed(() => {
+    const transactions = this.selectedDayTransactions();
+
+    if (transactions.length === 0) {
+      return 0;
+    }
+
+    return Number(transactions[transactions.length - 1].balanceAfter || 0);
   });
 
   selectedDayInTotal = computed(() =>
@@ -222,6 +250,9 @@ export class BankingAccounts {
 
         error: (error) => {
           console.error(`Failed to load commission account for bank account ${account.id}:`, error);
+          console.error('Status:', error.status);
+          console.error('URL:', error.url);
+          console.error('Response:', error.error);
 
           this.accounts.update((currentAccounts) =>
             currentAccounts.map((item) =>
@@ -272,8 +303,7 @@ export class BankingAccounts {
   }
 
   onTransactionDateChange(): void {
-    // Transactions are already loaded for the account/currency.
-    // This method exists for template consistency and future extension.
+    // Transactions are already loaded for the selected account/currency.
   }
 
   refreshTransactions(): void {
@@ -298,6 +328,7 @@ export class BankingAccounts {
         this.accountTransactions.set(response.data ?? []);
         this.transactionsLoading.set(false);
       },
+
       error: (error) => {
         this.transactionsLoading.set(false);
 
@@ -386,6 +417,10 @@ export class BankingAccounts {
   }
 
   maskAccountNumber(accountNumber: string): string {
+    if (!accountNumber) {
+      return '';
+    }
+
     if (accountNumber.length <= 4) {
       return accountNumber;
     }
@@ -402,6 +437,17 @@ export class BankingAccounts {
 
   getDirectionLabel(direction: string): string {
     return direction === 'IN' ? 'Money In' : 'Money Out';
+  }
+
+  private calculateBalanceBefore(transaction: BankTransaction): number {
+    const amount = Number(transaction.amount || 0);
+    const balanceAfter = Number(transaction.balanceAfter || 0);
+
+    if (transaction.direction === 'IN') {
+      return balanceAfter - amount;
+    }
+
+    return balanceAfter + amount;
   }
 
   private getToday(): string {

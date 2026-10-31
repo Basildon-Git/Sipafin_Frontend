@@ -560,7 +560,7 @@ tbody tr:last-child td {
 }
 
 .transactions-modal {
-  width: min(1400px, 100%);
+  width: min(1450px, 100%);
   max-height: calc(100vh - 56px);
   overflow: hidden;
   background: #ffffff;
@@ -679,7 +679,7 @@ tbody tr:last-child td {
 
 .transaction-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 12px;
   padding: 16px 22px;
   border-bottom: 1px solid #e2e8f0;
@@ -707,6 +707,10 @@ tbody tr:last-child td {
   font-weight: 700;
 }
 
+.transaction-summary-card.opening strong {
+  color: #0f172a;
+}
+
 .transaction-summary-card.in strong {
   color: #15803d;
 }
@@ -716,6 +720,10 @@ tbody tr:last-child td {
 }
 
 .transaction-summary-card.net strong {
+  color: #0756b8;
+}
+
+.transaction-summary-card.closing strong {
   color: #0756b8;
 }
 
@@ -760,7 +768,7 @@ tbody tr:last-child td {
 
 .transactions-table {
   width: 100%;
-  min-width: 1450px;
+  min-width: 1550px;
   border-collapse: collapse;
 }
 
@@ -853,6 +861,22 @@ tbody tr:last-child td {
   }
 }
 
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 1200px) {
+  .transaction-summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1000px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 900px) {
   .modal-backdrop {
     padding: 12px;
@@ -872,18 +896,6 @@ tbody tr:last-child td {
   }
 }
 
-@media (max-width: 520px) {
-  .transaction-summary-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 1000px) {
-  .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 768px) {
   .page-container {
     padding: 22px 16px 32px;
@@ -900,6 +912,12 @@ tbody tr:last-child td {
 
   .search-box {
     width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .transaction-summary-grid {
+    grid-template-columns: 1fr;
   }
 }
 
