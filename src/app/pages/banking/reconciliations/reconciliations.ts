@@ -90,9 +90,7 @@ export class Reconciliations implements OnInit {
     this.router.navigate(['/banking/new-bank-reconciliation/' + id + '/' + bankId]);
   }
 
-  // =====================================================
   // LOAD RECONCILIATIONS
-  // =====================================================
 
   loadReconciliations(): void {
     this.loading = true;
@@ -125,9 +123,7 @@ export class Reconciliations implements OnInit {
     });
   }
 
-  // =====================================================
   // FILTERING
-  // =====================================================
 
   applyFilters(): void {
     const search = this.searchTerm.trim().toLowerCase();
@@ -163,9 +159,7 @@ export class Reconciliations implements OnInit {
     this.updatePagedList();
   }
 
-  // =====================================================
   // PAGINATION
-  // =====================================================
 
   updatePagedList(): void {
     if (this.pageSize === 'All') {
@@ -214,9 +208,7 @@ export class Reconciliations implements OnInit {
     return Math.min(this.page * Number(this.pageSize), this.filteredList.length);
   }
 
-  // =====================================================
   // SUMMARY COUNTS
-  // =====================================================
 
   get totalRecords(): number {
     return this.reconciliations.length;
@@ -232,9 +224,7 @@ export class Reconciliations implements OnInit {
     ).length;
   }
 
-  // =====================================================
   // STATUS
-  // =====================================================
 
   getStatusClass(status: string): string {
     switch ((status || '').toUpperCase()) {
@@ -277,9 +267,7 @@ export class Reconciliations implements OnInit {
       .replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
-  // =====================================================
   // DETAILS
-  // =====================================================
 
   viewDetails(item: ReconciliationItem): void {
     this.selectedReconciliation = item;
@@ -291,9 +279,7 @@ export class Reconciliations implements OnInit {
     this.selectedReconciliation = null;
   }
 
-  // =====================================================
   // RESET
-  // =====================================================
 
   clearFilters(): void {
     this.searchTerm = '';
