@@ -1,149 +1,176 @@
 <div class="car-hire-page">
   <app-nav-bar></app-nav-bar>
 
-  <!-- Page hero -->
+  <!-- PAGE HERO -->
   <section class="page-hero">
-    <div class="background-shape shape-one"></div>
-    <div class="background-shape shape-two"></div>
+    <div class="aurora a-blue"></div>
+    <div class="aurora a-amber"></div>
+    <div class="aurora a-teal"></div>
+    <div class="grid-bg"></div>
 
-    <div class="page-hero-inner">
-      <span class="eyebrow eyebrow-light">Car Hire</span>
-      <h1>Reliable vehicles, ready when you are</h1>
-      <p>
+    <div class="wrap page-hero-inner">
+      <div class="hero-top intro" style="--d: 0ms">
+        <nav class="crumbs" aria-label="Breadcrumb">
+          <a href="/">Home</a>
+          <i class="bi bi-chevron-right"></i>
+          <span aria-current="page">Car Hire</span>
+        </nav>
+        <span class="badge"><i></i> Car Hire</span>
+      </div>
+
+      <h1 class="intro" style="--d: 120ms">
+        Reliable vehicles, <span class="grad">ready when you are</span>
+      </h1>
+
+      <p class="lead intro" style="--d: 220ms">
         Daily, weekly, monthly and corporate rentals — plus airport transfers and event
         transportation, backed by full insurance and careful vehicle maintenance.
       </p>
 
-      <div class="hero-actions">
-        <a href="#fleet" class="btn-primary">
-          View available vehicles
-          <i class="bi bi-arrow-right"></i>
+      <div class="hero-actions intro" style="--d: 320ms">
+        <a href="#fleet" class="btn btn-light magnetic">
+          View available vehicles <i class="bi bi-arrow-right"></i>
         </a>
-        <a href="#enquire" class="btn-secondary">Make an enquiry</a>
+        <a href="#enquire" class="btn btn-ghost magnetic">Make an enquiry</a>
       </div>
+
+      <ul class="facts intro" style="--d: 440ms">
+        <li><b data-count="6">6</b><span>rental options</span></li>
+        <li><b data-count="3">3</b><span>vehicle classes</span></li>
+        <li><b>Full</b><span>insurance cover</span></li>
+      </ul>
     </div>
   </section>
 
-  <!-- Rental types -->
+  <!-- RENTAL TYPES -->
   <section class="rental-types">
-    <div class="section-head centered">
-      <span class="eyebrow">Rental options</span>
-      <h2>Hire the way that suits you</h2>
-    </div>
+    <div class="wrap">
+      <div class="head center reveal">
+        <span class="kicker">Rental options</span>
+        <h2>Hire the way that <em>suits you</em></h2>
+      </div>
 
-    <div class="type-grid">
-      <div class="type-card">
-        <div class="type-icon"><i class="bi bi-calendar-day"></i></div>
-        <strong>Daily &amp; weekly</strong>
-        <p>Short-term hire for errands, trips or when your own car is off the road.</p>
-      </div>
-      <div class="type-card">
-        <div class="type-icon"><i class="bi bi-calendar-month"></i></div>
-        <strong>Monthly</strong>
-        <p>Longer-term rentals at a reduced rate for extended personal or business use.</p>
-      </div>
-      <div class="type-card">
-        <div class="type-icon"><i class="bi bi-briefcase"></i></div>
-        <strong>Corporate</strong>
-        <p>Fleet access for companies, NGOs and contractors with recurring transport needs.</p>
-      </div>
-      <div class="type-card">
-        <div class="type-icon"><i class="bi bi-airplane"></i></div>
-        <strong>Airport transfers</strong>
-        <p>Scheduled pickups and drop-offs, with chauffeur-driven service where permitted.</p>
-      </div>
-      <div class="type-card">
-        <div class="type-icon"><i class="bi bi-flower1"></i></div>
-        <strong>Events &amp; weddings</strong>
-        <p>Vehicles for weddings, ceremonies and other events that need dependable transport.</p>
-      </div>
-      <div class="type-card">
-        <div class="type-icon"><i class="bi bi-compass"></i></div>
-        <strong>Tourist transportation</strong>
-        <p>Comfortable, well-maintained vehicles for visitors exploring Zimbabwe.</p>
+      <div class="type-grid">
+        <article class="type-card c-blue tilt reveal" style="--d: 0ms">
+          <div class="type-icon"><i class="bi bi-calendar-day"></i></div>
+          <strong>Daily &amp; weekly</strong>
+          <p>Short-term hire for errands, trips or when your own car is off the road.</p>
+        </article>
+        <article class="type-card c-amber tilt reveal" style="--d: 100ms">
+          <div class="type-icon"><i class="bi bi-calendar-month"></i></div>
+          <strong>Monthly</strong>
+          <p>Longer-term rentals at a reduced rate for extended personal or business use.</p>
+        </article>
+        <article class="type-card c-teal tilt reveal" style="--d: 200ms">
+          <div class="type-icon"><i class="bi bi-briefcase"></i></div>
+          <strong>Corporate</strong>
+          <p>Fleet access for companies, NGOs and contractors with recurring transport needs.</p>
+        </article>
+        <article class="type-card c-teal tilt reveal" style="--d: 0ms">
+          <div class="type-icon"><i class="bi bi-airplane"></i></div>
+          <strong>Airport transfers</strong>
+          <p>Scheduled pickups and drop-offs, with chauffeur-driven service where permitted.</p>
+        </article>
+        <article class="type-card c-blue tilt reveal" style="--d: 100ms">
+          <div class="type-icon"><i class="bi bi-flower1"></i></div>
+          <strong>Events &amp; weddings</strong>
+          <p>Vehicles for weddings, ceremonies and other events that need dependable transport.</p>
+        </article>
+        <article class="type-card c-amber tilt reveal" style="--d: 200ms">
+          <div class="type-icon"><i class="bi bi-compass"></i></div>
+          <strong>Tourist transportation</strong>
+          <p>Comfortable, well-maintained vehicles for visitors exploring Zimbabwe.</p>
+        </article>
       </div>
     </div>
   </section>
 
-  <!-- Fleet -->
+  <!-- FLEET -->
   <section class="fleet" id="fleet">
-    <div class="section-head">
-      <span class="eyebrow">Our fleet</span>
-      <h2>Available vehicles</h2>
-      <p>Fleet is still growing — availability is confirmed at the time of booking.</p>
-    </div>
+    <div class="wrap">
+      <div class="head reveal">
+        <span class="kicker">Our fleet</span>
+        <h2>Available <em>vehicles</em></h2>
+        <p class="head-sub">
+          Fleet is still growing — availability is confirmed at the time of booking.
+        </p>
+      </div>
 
-    <div class="fleet-grid">
-      <article class="vehicle-card">
-        <div class="vehicle-media">
-          <i class="bi bi-car-front"></i>
-        </div>
-        <div class="vehicle-body">
-          <div class="vehicle-head">
-            <strong>Compact sedan</strong>
+      <div class="fleet-grid">
+        <article class="vehicle-card c-blue tilt reveal" style="--d: 0ms">
+          <div class="vehicle-media">
+            <i class="bi bi-car-front"></i>
             <span class="vehicle-price">From $35<small>/day</small></span>
           </div>
-          <p>Fuel-efficient and easy to park — ideal for city errands and short trips.</p>
-          <ul class="vehicle-specs">
-            <li><i class="bi bi-people"></i> 4 seats</li>
-            <li><i class="bi bi-gear"></i> Manual</li>
-            <li><i class="bi bi-fuel-pump"></i> Petrol</li>
-          </ul>
-          <a href="#enquire" class="btn-outline">Enquire</a>
-        </div>
-      </article>
+          <div class="vehicle-body">
+            <strong>Compact sedan</strong>
+            <p>Fuel-efficient and easy to park — ideal for city errands and short trips.</p>
+            <ul class="vehicle-specs">
+              <li><i class="bi bi-people"></i> 4 seats</li>
+              <li><i class="bi bi-gear"></i> Manual</li>
+              <li><i class="bi bi-fuel-pump"></i> Petrol</li>
+            </ul>
+            <a href="#enquire" class="btn btn-outline magnetic">
+              Enquire <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </article>
 
-      <article class="vehicle-card">
-        <div class="vehicle-media">
-          <i class="bi bi-truck-front"></i>
-        </div>
-        <div class="vehicle-body">
-          <div class="vehicle-head">
-            <strong>SUV</strong>
+        <article class="vehicle-card c-teal tilt reveal" style="--d: 120ms">
+          <div class="vehicle-media">
+            <i class="bi bi-truck-front"></i>
             <span class="vehicle-price">From $60<small>/day</small></span>
           </div>
-          <p>Extra space and clearance — a solid choice for families and longer routes.</p>
-          <ul class="vehicle-specs">
-            <li><i class="bi bi-people"></i> 5–7 seats</li>
-            <li><i class="bi bi-gear"></i> Automatic</li>
-            <li><i class="bi bi-fuel-pump"></i> Diesel</li>
-          </ul>
-          <a href="#enquire" class="btn-outline">Enquire</a>
-        </div>
-      </article>
+          <div class="vehicle-body">
+            <strong>SUV</strong>
+            <p>Extra space and clearance — a solid choice for families and longer routes.</p>
+            <ul class="vehicle-specs">
+              <li><i class="bi bi-people"></i> 5–7 seats</li>
+              <li><i class="bi bi-gear"></i> Automatic</li>
+              <li><i class="bi bi-fuel-pump"></i> Diesel</li>
+            </ul>
+            <a href="#enquire" class="btn btn-outline magnetic">
+              Enquire <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </article>
 
-      <article class="vehicle-card">
-        <div class="vehicle-media">
-          <i class="bi bi-car-front-fill"></i>
-        </div>
-        <div class="vehicle-body">
-          <div class="vehicle-head">
-            <strong>Executive sedan</strong>
+        <article class="vehicle-card c-amber tilt reveal" style="--d: 240ms">
+          <div class="vehicle-media">
+            <i class="bi bi-car-front-fill"></i>
             <span class="vehicle-price">From $80<small>/day</small></span>
           </div>
-          <p>Chauffeur-driven option available — suited to corporate travel and events.</p>
-          <ul class="vehicle-specs">
-            <li><i class="bi bi-people"></i> 4 seats</li>
-            <li><i class="bi bi-gear"></i> Automatic</li>
-            <li><i class="bi bi-fuel-pump"></i> Petrol</li>
-          </ul>
-          <a href="#enquire" class="btn-outline">Enquire</a>
-        </div>
-      </article>
-    </div>
+          <div class="vehicle-body">
+            <strong>Executive sedan <span class="tag">Chauffeur option</span></strong>
+            <p>Chauffeur-driven option available — suited to corporate travel and events.</p>
+            <ul class="vehicle-specs">
+              <li><i class="bi bi-people"></i> 4 seats</li>
+              <li><i class="bi bi-gear"></i> Automatic</li>
+              <li><i class="bi bi-fuel-pump"></i> Petrol</li>
+            </ul>
+            <a href="#enquire" class="btn btn-outline magnetic">
+              Enquire <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </article>
+      </div>
 
-    <p class="fleet-note">
-      <i class="bi bi-info-circle"></i>
-      Pricing shown is indicative and depends on rental duration, insurance and availability.
-    </p>
+      <p class="fleet-note reveal">
+        <i class="bi bi-info-circle"></i>
+        Pricing shown is indicative and depends on rental duration, insurance and availability.
+      </p>
+    </div>
   </section>
 
-  <!-- What's included -->
+  <!-- WHAT'S INCLUDED -->
   <section class="included">
-    <div class="included-inner">
-      <div class="included-copy">
-        <span class="eyebrow">What's included</span>
-        <h2>Every rental is covered</h2>
+    <div class="aurora a-blue"></div>
+    <div class="aurora a-teal"></div>
+
+    <div class="wrap included-inner">
+      <div class="included-copy reveal">
+        <span class="kicker kicker-light">What's included</span>
+        <h2>Every rental is <em>covered</em></h2>
         <p>
           Vehicles are properly insured, inspected before and after each rental, and maintained on a
           preventive schedule — so you can hire with confidence.
@@ -151,19 +178,19 @@
       </div>
 
       <div class="included-list">
-        <div class="included-item">
+        <div class="included-item reveal" style="--d: 0ms">
           <i class="bi bi-shield-check"></i>
           <span>Full insurance cover</span>
         </div>
-        <div class="included-item">
+        <div class="included-item reveal" style="--d: 100ms">
           <i class="bi bi-clipboard-check"></i>
           <span>Vehicle inspection at handover</span>
         </div>
-        <div class="included-item">
+        <div class="included-item reveal" style="--d: 200ms">
           <i class="bi bi-tools"></i>
           <span>Preventive maintenance</span>
         </div>
-        <div class="included-item">
+        <div class="included-item reveal" style="--d: 300ms">
           <i class="bi bi-person-check"></i>
           <span>Customer verification &amp; rental agreement</span>
         </div>
@@ -171,11 +198,11 @@
     </div>
   </section>
 
-  <!-- Enquiry CTA -->
+  <!-- ENQUIRY CTA -->
   <section class="enquire" id="enquire">
-    <div class="enquire-inner">
-      <div>
-        <span class="eyebrow eyebrow-light">Book a vehicle</span>
+    <div class="wrap enquire-inner reveal">
+      <div class="enquire-copy">
+        <span class="kicker kicker-dark">Book a vehicle</span>
         <h2>Tell us what you need</h2>
         <p>
           Reach out with your dates, vehicle preference and pickup location, and we'll confirm
@@ -184,19 +211,14 @@
 
         <div class="enquire-contact">
           <a href="mailto:info@shakenoak.co.zw" class="contact-chip">
-            <i class="bi bi-envelope"></i>
-            info@shakenoak.co.zw
+            <i class="bi bi-envelope"></i> info@shakenoak.co.zw
           </a>
-          <span class="contact-chip">
-            <i class="bi bi-geo-alt"></i>
-            Miekles Building, Harare
-          </span>
+          <span class="contact-chip"> <i class="bi bi-geo-alt"></i> Miekles Building, Harare </span>
         </div>
       </div>
 
-      <a href="/login" class="btn-primary btn-on-dark">
-        Login to Portal
-        <i class="bi bi-arrow-right"></i>
+      <a href="/login" class="btn btn-navy magnetic">
+        Login to Portal <i class="bi bi-arrow-right"></i>
       </a>
     </div>
   </section>

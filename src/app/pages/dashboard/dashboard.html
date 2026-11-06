@@ -1,45 +1,73 @@
 <div class="dashboard-page">
-  <!-- Hero Header -->
-  <div class="dashboard-hero">
-    <div class="hero-content">
-      <span class="hero-eyebrow">
-        <i class="bi bi-calendar3 me-1"></i>
-        {{ today | date: 'EEEE, dd MMMM yyyy' }}
-      </span>
+  <!-- Hero -->
+  <header class="dashboard-hero">
+    <div class="aurora a-blue"></div>
+    <div class="aurora a-amber"></div>
+    <div class="aurora a-teal"></div>
+    <div class="grid-bg"></div>
 
-      <h4 class="welcome-title">{{ greeting }}, {{ fullName }}</h4>
-      <p class="welcome-subtitle">Here's an overview of your financial position.</p>
-
-      @if (dashboard) {
-        <span class="date-range">
-          <i class="bi bi-clock-history me-1"></i>
-          Data period:
-          {{ dashboard.fromDate | date: 'dd MMM yyyy' }}
-          -
-          {{ dashboard.toDate | date: 'dd MMM yyyy' }}
+    <div class="hero-main">
+      <div class="hero-content">
+        <span class="hero-eyebrow">
+          <i class="pulse-dot"></i>
+          {{ today | date: 'EEEE, dd MMMM yyyy' }}
         </span>
-      }
+
+        <h1 class="welcome-title">
+          {{ greeting }}, <span class="grad">{{ fullName }}</span>
+        </h1>
+        <p class="welcome-subtitle">Here's an overview of your financial position.</p>
+
+        @if (dashboard) {
+          <span class="date-range">
+            <i class="bi bi-clock-history"></i>
+            Data period: {{ dashboard.fromDate | date: 'dd MMM yyyy' }} –
+            {{ dashboard.toDate | date: 'dd MMM yyyy' }}
+          </span>
+        }
+      </div>
+
+      <div class="header-actions">
+        <button
+          type="button"
+          class="btn hero-btn-ghost"
+          (click)="loadDashboard()"
+          [disabled]="loading"
+        >
+          <i class="bi bi-arrow-clockwise me-1" [class.spin]="loading"></i>
+          {{ loading ? 'Refreshing...' : 'Refresh' }}
+        </button>
+
+        <button type="button" class="btn hero-btn-solid" (click)="openNewTransaction()">
+          <i class="bi bi-plus-lg me-1"></i>
+          New Transaction
+        </button>
+      </div>
     </div>
 
-    <div class="header-actions">
-      <button
-        type="button"
-        class="btn hero-btn-ghost"
-        (click)="loadDashboard()"
-        [disabled]="loading"
-      >
-        <i class="bi bi-arrow-clockwise me-1" [class.spin]="loading"></i>
-        {{ loading ? 'Refreshing...' : 'Refresh' }}
-      </button>
+    @if (dashboard) {
+      <ul class="hero-kpis">
+        <li>
+          <b [class.kpi-alert]="unresolvedCount > 0">{{ unresolvedCount }}</b>
+          <span>Unresolved reconciliations</span>
+        </li>
+        <li>
+          <b>{{ balancedPercent }}%</b>
+          <span>Reconciliations balanced</span>
+        </li>
+        <li>
+          <b>{{ openLoanCount }}</b>
+          <span>Open loans</span>
+        </li>
+        <li>
+          <b>{{ totalLiquidity.length }}</b>
+          <span>{{ totalLiquidity.length === 1 ? 'Currency' : 'Currencies' }} held</span>
+        </li>
+      </ul>
+    }
+  </header>
 
-      <button type="button" class="btn hero-btn-solid" (click)="openNewTransaction()">
-        <i class="bi bi-plus-lg me-1"></i>
-        New Transaction
-      </button>
-    </div>
-  </div>
-
-  <!-- Loading Skeleton -->
+  <!-- Loading skeleton -->
   @if (loading && !dashboard) {
     <div class="row g-3 mb-4">
       @for (n of [1, 2, 3, 4]; track n) {
@@ -55,7 +83,7 @@
   }
 
   @if (errorMessage && !dashboard && !loading) {
-    <div class="dashboard-error">
+    <div class="dashboard-error" role="alert">
       <i class="bi bi-exclamation-circle"></i>
       <div>
         <strong>Unable to load dashboard</strong>
@@ -65,20 +93,119 @@
     </div>
   }
 
+  <!-- Reusable loan card -->
+  <ng-template #loanTpl let-loan let-kind="kind">
+    <div class="summary-card loan-card" [class.loan-client]="kind === 'client'">
+      <div class="loan-heading">
+        <div class="summary-icon" [class]="'summary-icon ' + kind + '-icon'">
+          <i
+            class="bi"
+            [class]="
+              kind === 'investor' ? 'bi bi-arrow-down-left-circle' : 'bi bi-arrow-up-right-circle'
+            "
+          ></i>
+        </div>
+        <div>
+          <h6>{{ kind === 'investor' ? 'Investor Loans' : 'Client Loans' }}</h6>
+          <p>
+            {{ kind === 'investor' ? 'Funds received from investors' : 'Funds issued to clients' }}
+          </p>
+        </div>
+        <span class="loan-count-pill">{{ loan.totalLoans }} loans</span>
+      </div>
+
+      <div class="progress-block">
+        <div class="progress-label">
+          <span>{{ kind === 'investor' ? 'Repayment progress' : 'Collection progress' }}</span>
+          <strong>{{ repaidPercent(loan) }}%</strong>
+        </div>
+        <div
+          class="progress-track"
+          role="progressbar"
+          [attr.aria-valuenow]="repaidPercent(loan)"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <span
+            class="progress-fill"
+            [class.fill-teal]="kind === 'client'"
+            [style.width.%]="repaidPercent(loan)"
+          ></span>
+        </div>
+      </div>
+
+      <div
+        class="status-bar"
+        title="Loan status distribution"
+        aria-label="Loan status distribution"
+      >
+        <span class="seg seg-active" [style.width.%]="segmentWidth(loan, loan.activeLoans)"></span>
+        <span
+          class="seg seg-partial"
+          [style.width.%]="segmentWidth(loan, loan.partiallyPaidLoans)"
+        ></span>
+        <span class="seg seg-paid" [style.width.%]="segmentWidth(loan, loan.paidLoans)"></span>
+        <span
+          class="seg seg-cancelled"
+          [style.width.%]="segmentWidth(loan, loan.cancelledLoans)"
+        ></span>
+      </div>
+
+      <div class="loan-stats">
+        <div>
+          <span><i class="dot dot-active"></i>Active</span>
+          <strong>{{ loan.activeLoans }}</strong>
+        </div>
+        <div>
+          <span><i class="dot dot-partial"></i>Partially Paid</span>
+          <strong>{{ loan.partiallyPaidLoans }}</strong>
+        </div>
+        <div>
+          <span><i class="dot dot-paid"></i>Paid</span>
+          <strong>{{ loan.paidLoans }}</strong>
+        </div>
+        <div>
+          <span><i class="dot dot-cancelled"></i>Cancelled</span>
+          <strong>{{ loan.cancelledLoans }}</strong>
+        </div>
+      </div>
+
+      <div class="loan-financials">
+        <div>
+          <span>Total Principal</span>
+          <strong>{{ formatAmount(loan.totalPrincipal) }}</strong>
+        </div>
+        <div>
+          <span>{{ kind === 'investor' ? 'Total Payable' : 'Total Receivable' }}</span>
+          <strong>{{
+            formatAmount(kind === 'investor' ? loan.totalPayable : loan.totalReceivable)
+          }}</strong>
+        </div>
+        <div>
+          <span>Outstanding</span>
+          <strong class="outstanding-value">{{ formatAmount(loan.totalOutstanding) }}</strong>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
   @if (dashboard; as d) {
-    <!-- Financial Position -->
+    <!-- Financial position -->
     <section class="dashboard-section">
       <div class="section-heading">
         <div>
-          <h5>Financial Position</h5>
+          <h2>Financial <em>Position</em></h2>
           <p>Available balances across your accounts and cash floats.</p>
         </div>
       </div>
 
       <div class="row g-3">
-        <!-- Total Liquidity -->
+        <!-- Total liquidity -->
         <div class="col-12 col-md-6 col-xl-4">
           <div class="summary-card liquidity-card">
+            <div class="aurora a-blue"></div>
+            <div class="aurora a-teal"></div>
+
             <div class="summary-card-top">
               <div>
                 <span class="summary-label">Total Liquidity</span>
@@ -114,7 +241,7 @@
           </div>
         </div>
 
-        <!-- Bank Balances -->
+        <!-- Bank balances -->
         <div class="col-12 col-md-6 col-xl-4">
           <div class="summary-card">
             <div class="summary-card-top">
@@ -144,7 +271,7 @@
           </div>
         </div>
 
-        <!-- Float Balances -->
+        <!-- Float balances -->
         <div class="col-12 col-md-12 col-xl-4">
           <div class="summary-card">
             <div class="summary-card-top">
@@ -172,197 +299,40 @@
       </div>
     </section>
 
-    <!-- Loan Overview -->
+    <!-- Loan overview -->
     <section class="dashboard-section">
       <div class="section-heading">
         <div>
-          <h5>Loan Overview</h5>
+          <h2>Loan <em>Overview</em></h2>
           <p>Track your investor liabilities and client receivables.</p>
         </div>
 
         <button class="btn btn-outline-primary btn-sm" (click)="openLoans()">
-          View Loans
-          <i class="bi bi-arrow-right ms-1"></i>
+          View Loans <i class="bi bi-arrow-right ms-1"></i>
         </button>
       </div>
 
       <div class="row g-3">
-        <!-- Investor Loans -->
         <div class="col-12 col-xl-6">
-          <div class="summary-card loan-card">
-            <div class="loan-heading">
-              <div class="summary-icon investor-icon">
-                <i class="bi bi-arrow-down-left-circle"></i>
-              </div>
-              <div>
-                <h6>Investor Loans</h6>
-                <p>Funds received from investors</p>
-              </div>
-              <span class="loan-count-pill">{{ d.investorLoans.totalLoans }} loans</span>
-            </div>
-
-            @if (d.investorLoans; as loan) {
-              <div class="progress-block">
-                <div class="progress-label">
-                  <span>Repayment progress</span>
-                  <strong>{{ repaidPercent(loan) }}%</strong>
-                </div>
-                <div class="progress-track">
-                  <span class="progress-fill" [style.width.%]="repaidPercent(loan)"></span>
-                </div>
-              </div>
-
-              <div class="status-bar" title="Loan status distribution">
-                <span
-                  class="seg seg-active"
-                  [style.width.%]="segmentWidth(loan, loan.activeLoans)"
-                ></span>
-                <span
-                  class="seg seg-partial"
-                  [style.width.%]="segmentWidth(loan, loan.partiallyPaidLoans)"
-                ></span>
-                <span
-                  class="seg seg-paid"
-                  [style.width.%]="segmentWidth(loan, loan.paidLoans)"
-                ></span>
-                <span
-                  class="seg seg-cancelled"
-                  [style.width.%]="segmentWidth(loan, loan.cancelledLoans)"
-                ></span>
-              </div>
-
-              <div class="loan-stats">
-                <div>
-                  <span><i class="dot dot-active"></i>Active</span>
-                  <strong>{{ loan.activeLoans }}</strong>
-                </div>
-                <div>
-                  <span><i class="dot dot-partial"></i>Partially Paid</span>
-                  <strong>{{ loan.partiallyPaidLoans }}</strong>
-                </div>
-                <div>
-                  <span><i class="dot dot-paid"></i>Paid</span>
-                  <strong>{{ loan.paidLoans }}</strong>
-                </div>
-                <div>
-                  <span><i class="dot dot-cancelled"></i>Cancelled</span>
-                  <strong>{{ loan.cancelledLoans }}</strong>
-                </div>
-              </div>
-
-              <div class="loan-financials">
-                <div>
-                  <span>Total Principal</span>
-                  <strong>{{ formatAmount(loan.totalPrincipal) }}</strong>
-                </div>
-                <div>
-                  <span>Total Payable</span>
-                  <strong>{{ formatAmount(loan.totalPayable) }}</strong>
-                </div>
-                <div>
-                  <span>Outstanding</span>
-                  <strong class="outstanding-value">
-                    {{ formatAmount(loan.totalOutstanding) }}
-                  </strong>
-                </div>
-              </div>
-            }
-          </div>
+          <ng-container
+            [ngTemplateOutlet]="loanTpl"
+            [ngTemplateOutletContext]="{ $implicit: d.investorLoans, kind: 'investor' }"
+          ></ng-container>
         </div>
-
-        <!-- Client Loans -->
         <div class="col-12 col-xl-6">
-          <div class="summary-card loan-card">
-            <div class="loan-heading">
-              <div class="summary-icon client-icon">
-                <i class="bi bi-arrow-up-right-circle"></i>
-              </div>
-              <div>
-                <h6>Client Loans</h6>
-                <p>Funds issued to clients</p>
-              </div>
-              <span class="loan-count-pill">{{ d.clientLoans.totalLoans }} loans</span>
-            </div>
-
-            @if (d.clientLoans; as loan) {
-              <div class="progress-block">
-                <div class="progress-label">
-                  <span>Collection progress</span>
-                  <strong>{{ repaidPercent(loan) }}%</strong>
-                </div>
-                <div class="progress-track">
-                  <span
-                    class="progress-fill fill-teal"
-                    [style.width.%]="repaidPercent(loan)"
-                  ></span>
-                </div>
-              </div>
-
-              <div class="status-bar" title="Loan status distribution">
-                <span
-                  class="seg seg-active"
-                  [style.width.%]="segmentWidth(loan, loan.activeLoans)"
-                ></span>
-                <span
-                  class="seg seg-partial"
-                  [style.width.%]="segmentWidth(loan, loan.partiallyPaidLoans)"
-                ></span>
-                <span
-                  class="seg seg-paid"
-                  [style.width.%]="segmentWidth(loan, loan.paidLoans)"
-                ></span>
-                <span
-                  class="seg seg-cancelled"
-                  [style.width.%]="segmentWidth(loan, loan.cancelledLoans)"
-                ></span>
-              </div>
-
-              <div class="loan-stats">
-                <div>
-                  <span><i class="dot dot-active"></i>Active</span>
-                  <strong>{{ loan.activeLoans }}</strong>
-                </div>
-                <div>
-                  <span><i class="dot dot-partial"></i>Partially Paid</span>
-                  <strong>{{ loan.partiallyPaidLoans }}</strong>
-                </div>
-                <div>
-                  <span><i class="dot dot-paid"></i>Paid</span>
-                  <strong>{{ loan.paidLoans }}</strong>
-                </div>
-                <div>
-                  <span><i class="dot dot-cancelled"></i>Cancelled</span>
-                  <strong>{{ loan.cancelledLoans }}</strong>
-                </div>
-              </div>
-
-              <div class="loan-financials">
-                <div>
-                  <span>Total Principal</span>
-                  <strong>{{ formatAmount(loan.totalPrincipal) }}</strong>
-                </div>
-                <div>
-                  <span>Total Receivable</span>
-                  <strong>{{ formatAmount(loan.totalReceivable) }}</strong>
-                </div>
-                <div>
-                  <span>Outstanding</span>
-                  <strong class="outstanding-value">
-                    {{ formatAmount(loan.totalOutstanding) }}
-                  </strong>
-                </div>
-              </div>
-            }
-          </div>
+          <ng-container
+            [ngTemplateOutlet]="loanTpl"
+            [ngTemplateOutletContext]="{ $implicit: d.clientLoans, kind: 'client' }"
+          ></ng-container>
         </div>
       </div>
     </section>
 
-    <!-- Activity Overview -->
+    <!-- Activity -->
     <section class="dashboard-section">
       <div class="section-heading">
         <div>
-          <h5>Transaction Activity</h5>
+          <h2>Transaction <em>Activity</em></h2>
           <p>Activity recorded for the selected dashboard period.</p>
         </div>
       </div>
@@ -370,7 +340,7 @@
       <div class="row g-3">
         @for (group of activityGroups; track group.title) {
           <div class="col-12 col-lg-6 col-xl-4">
-            <div class="activity-panel">
+            <div class="activity-panel" [class]="'activity-panel tone-' + group.tone">
               <div class="activity-panel-header">
                 <div class="activity-icon" [class]="'activity-icon ' + group.tone + '-icon'">
                   <i class="bi" [class]="'bi ' + group.icon"></i>
@@ -398,23 +368,22 @@
       </div>
     </section>
 
-    <!-- Reconciliation Summary -->
+    <!-- Reconciliation -->
     <section class="dashboard-section">
       <div class="section-heading">
         <div>
-          <h5>Bank Reconciliation Overview</h5>
+          <h2>Bank <em>Reconciliation</em></h2>
           <p>Monitor reconciliation status and outstanding differences.</p>
         </div>
 
         <button class="btn btn-outline-primary btn-sm" (click)="openReconciliations()">
-          View Reconciliations
-          <i class="bi bi-arrow-right ms-1"></i>
+          View Reconciliations <i class="bi bi-arrow-right ms-1"></i>
         </button>
       </div>
 
       @if (d.reconciliation; as r) {
         @if (r.unresolvedCount > 0) {
-          <div class="attention-banner">
+          <div class="attention-banner" role="alert">
             <i class="bi bi-exclamation-triangle-fill"></i>
             <div>
               <strong
@@ -438,7 +407,12 @@
               <p class="summary-description">Distribution across all records</p>
 
               <div class="donut-wrap">
-                <div class="donut" [style.background]="reconciliationDonut">
+                <div
+                  class="donut"
+                  [style.background]="reconciliationDonut"
+                  role="img"
+                  [attr.aria-label]="balancedPercent + '% of reconciliations balanced'"
+                >
                   <div class="donut-center">
                     <strong>{{ balancedPercent }}%</strong>
                     <span>Balanced</span>
@@ -469,25 +443,25 @@
             <div class="row g-3 h-100">
               <div class="col-12 col-md-6">
                 <div class="difference-card">
-                  <span>Total Difference</span>
+                  <span><i class="bi bi-plus-slash-minus"></i> Total Difference</span>
                   <strong>{{ formatAmount(r.totalDifference) }}</strong>
                 </div>
               </div>
               <div class="col-12 col-md-6">
-                <div class="difference-card">
-                  <span>Total Reconciled</span>
+                <div class="difference-card diff-good">
+                  <span><i class="bi bi-check2-circle"></i> Total Reconciled</span>
                   <strong class="text-success">{{ formatAmount(r.totalReconciledAmount) }}</strong>
                 </div>
               </div>
               <div class="col-12 col-md-6">
-                <div class="difference-card">
-                  <span>Total Short Amount</span>
+                <div class="difference-card diff-bad">
+                  <span><i class="bi bi-arrow-down-circle"></i> Total Short Amount</span>
                   <strong class="text-danger">{{ formatAmount(r.totalShortAmount) }}</strong>
                 </div>
               </div>
               <div class="col-12 col-md-6">
-                <div class="difference-card">
-                  <span>Unreconciled Amount</span>
+                <div class="difference-card diff-bad">
+                  <span><i class="bi bi-hourglass-split"></i> Unreconciled Amount</span>
                   <strong class="text-danger">{{ formatAmount(r.totalUnreconciledAmount) }}</strong>
                 </div>
               </div>
@@ -495,12 +469,14 @@
           </div>
         </div>
 
-        <!-- Tabbed Tables -->
+        <!-- Tabbed tables -->
         <div class="data-card">
-          <div class="tab-bar">
+          <div class="tab-bar" role="tablist">
             <button
               type="button"
               class="tab-btn"
+              role="tab"
+              [attr.aria-selected]="activeTab === 'unresolved'"
               [class.active]="activeTab === 'unresolved'"
               (click)="setTab('unresolved')"
             >
@@ -513,6 +489,8 @@
             <button
               type="button"
               class="tab-btn"
+              role="tab"
+              [attr.aria-selected]="activeTab === 'recent'"
               [class.active]="activeTab === 'recent'"
               (click)="setTab('recent')"
             >
@@ -523,6 +501,8 @@
             <button
               type="button"
               class="tab-btn"
+              role="tab"
+              [attr.aria-selected]="activeTab === 'health'"
               [class.active]="activeTab === 'health'"
               (click)="setTab('health')"
             >
@@ -578,7 +558,7 @@
                       <td>
                         <span
                           class="status-badge"
-                          [class]="statusClass(item.status || 'UNRESOLVED')"
+                          [class]="'status-badge ' + statusClass(item.status || 'UNRESOLVED')"
                         >
                           {{ statusLabel(item.status || 'UNRESOLVED') }}
                         </span>
@@ -642,7 +622,10 @@
                       </td>
                       <td>{{ formatAmount(item.reconciledAmount) }}</td>
                       <td>
-                        <span class="status-badge" [class]="statusClass(item.status)">
+                        <span
+                          class="status-badge"
+                          [class]="'status-badge ' + statusClass(item.status)"
+                        >
                           {{ statusLabel(item.status) }}
                         </span>
                       </td>
@@ -707,7 +690,10 @@
                         {{ formatAmount(item.lastUnreconciledAmount) }}
                       </td>
                       <td>
-                        <span class="status-badge" [class]="statusClass(item.healthStatus)">
+                        <span
+                          class="status-badge"
+                          [class]="'status-badge ' + statusClass(item.healthStatus)"
+                        >
                           {{ healthLabel(item.healthStatus) }}
                         </span>
                       </td>

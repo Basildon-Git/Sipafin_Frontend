@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { finalize } from 'rxjs';
@@ -138,7 +138,7 @@ type ReconciliationTab = 'unresolved' | 'recent' | 'health';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, NgTemplateOutlet],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -162,7 +162,9 @@ export class Dashboard implements OnInit {
   }
 
   private loadWelcomeName(): void {
-    const storedName = localStorage.getItem('fullName');
+    // Guarded so it is safe if the page is ever rendered on the server
+    const storedName =
+      typeof localStorage !== 'undefined' ? localStorage.getItem('fullName') : null;
 
     this.fullName = storedName?.trim() || 'User';
   }
@@ -251,6 +253,22 @@ export class Dashboard implements OnInit {
 
   get bankAccountHealth(): BankAccountHealth[] {
     return this.reconciliation?.bankAccountHealth ?? [];
+  }
+
+  /** Hero KPI: open (unresolved) reconciliations */
+  get unresolvedCount(): number {
+    return this.reconciliation?.unresolvedCount ?? 0;
+  }
+
+  /** Hero KPI: loans still running across both books */
+  get openLoanCount(): number {
+    const i = this.investorLoans;
+    const c = this.clientLoans;
+
+    return (
+      (i ? i.activeLoans + i.partiallyPaidLoans : 0) +
+      (c ? c.activeLoans + c.partiallyPaidLoans : 0)
+    );
   }
 
   get activityGroups(): ActivityGroup[] {
