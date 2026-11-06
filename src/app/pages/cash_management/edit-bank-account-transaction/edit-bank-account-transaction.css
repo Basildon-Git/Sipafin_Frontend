@@ -392,6 +392,25 @@ textarea.form-control {
   box-shadow: none;
 }
 
+.calculated-balance {
+  min-height: 41px;
+  padding: 10px 12px;
+  border: 1px solid #d7dee8;
+  border-radius: 7px;
+  background: #f8f9fb;
+  color: var(--primary-dark);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.negative-balance {
+  border-color: #f1c7cc;
+  background: #fff0f1;
+  color: var(--red);
+}
+
 .field-error {
   display: block;
   margin-top: 6px;

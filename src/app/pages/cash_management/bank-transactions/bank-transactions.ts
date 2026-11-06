@@ -27,9 +27,9 @@ interface BankTransaction {
   bankId: number;
   bankName: string;
   bankCode: string;
-  branchId: number;
-  branchName: string;
-  branchCode: string;
+  branchId: number | null;
+  branchName: string | null;
+  branchCode: string | null;
   currency: string;
   transactionType: string;
   direction: 'IN' | 'OUT';
@@ -67,6 +67,8 @@ export class BankTransactions implements OnInit {
 
   selectedBranchId = signal<number | null>(null);
   selectedCurrency = signal('USD');
+  fromDate = signal('');
+  toDate = signal('');
   searchTerm = signal('');
 
   loadingBranches = signal(false);
@@ -76,11 +78,21 @@ export class BankTransactions implements OnInit {
   filteredTransactions = computed(() => {
     const search = this.searchTerm().trim().toLowerCase();
 
+    const list = [...this.transactions()].sort((a, b) => {
+      const dateCompare = a.transactionDate.localeCompare(b.transactionDate);
+
+      if (dateCompare !== 0) {
+        return dateCompare;
+      }
+
+      return Number(a.id) - Number(b.id);
+    });
+
     if (!search) {
-      return this.transactions();
+      return list;
     }
 
-    return this.transactions().filter((transaction) =>
+    return list.filter((transaction) =>
       [
         transaction.accountName,
         transaction.accountNumber,
@@ -104,21 +116,41 @@ export class BankTransactions implements OnInit {
     );
   });
 
-  totalTransactions = computed(() => this.transactions().length);
+  totalTransactions = computed(() => this.filteredTransactions().length);
 
   totalIn = computed(() =>
-    this.transactions()
+    this.filteredTransactions()
       .filter((transaction) => transaction.direction === 'IN')
       .reduce((total, transaction) => total + Number(transaction.amount || 0), 0),
   );
 
   totalOut = computed(() =>
-    this.transactions()
+    this.filteredTransactions()
       .filter((transaction) => transaction.direction === 'OUT')
       .reduce((total, transaction) => total + Number(transaction.amount || 0), 0),
   );
 
   netMovement = computed(() => this.totalIn() - this.totalOut());
+
+  overallBalanceBefore = computed(() => {
+    const transactions = this.filteredTransactions();
+
+    if (transactions.length === 0) {
+      return 0;
+    }
+
+    return this.getBalanceBefore(transactions[0]);
+  });
+
+  overallBalanceAfter = computed(() => {
+    const transactions = this.filteredTransactions();
+
+    if (transactions.length === 0) {
+      return 0;
+    }
+
+    return Number(transactions[transactions.length - 1].balanceAfter || 0);
+  });
 
   ngOnInit(): void {
     this.loadBranches();
@@ -135,25 +167,13 @@ export class BankTransactions implements OnInit {
         this.branches.set(activeBranches);
         this.loadingBranches.set(false);
 
-        if (activeBranches.length > 0) {
-          const currentId = this.selectedBranchId();
-
-          const branchExists =
-            currentId !== null && activeBranches.some((branch) => branch.id === currentId);
-
-          const branchId = branchExists ? currentId : activeBranches[0].id;
-
-          this.selectedBranchId.set(branchId);
-          this.loadTransactions();
-        } else {
-          this.transactions.set([]);
-          this.errorMessage.set('No active branches were found.');
-        }
+        this.selectedBranchId.set(null);
+        this.loadTransactions();
       },
       error: (error) => {
         this.loadingBranches.set(false);
         this.transactions.set([]);
-        this.errorMessage = error?.error?.message ?? 'Failed to load active branches.';
+        this.errorMessage.set(error?.error?.message ?? 'Failed to load active branches.');
       },
     });
   }
@@ -161,8 +181,10 @@ export class BankTransactions implements OnInit {
   loadTransactions(): void {
     const branchId = this.selectedBranchId();
     const currency = this.selectedCurrency();
+    const fromDate = this.fromDate();
+    const toDate = this.toDate();
 
-    if (branchId === null || !currency) {
+    if (!currency) {
       this.transactions.set([]);
       return;
     }
@@ -171,7 +193,25 @@ export class BankTransactions implements OnInit {
     this.errorMessage.set('');
     this.transactions.set([]);
 
-    const url = `${this.transactionsUrl}/branch/${branchId}/currency/${encodeURIComponent(currency)}`;
+    let url = '';
+
+    if (branchId === null) {
+      if (fromDate && toDate) {
+        url =
+          `${this.transactionsUrl}/currency/${encodeURIComponent(currency)}/date-range` +
+          `?fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}`;
+      } else {
+        url = `${this.transactionsUrl}/currency/${encodeURIComponent(currency)}`;
+      }
+    } else {
+      if (fromDate && toDate) {
+        url =
+          `${this.transactionsUrl}/branch/${branchId}/currency/${encodeURIComponent(currency)}/date-range` +
+          `?fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}`;
+      } else {
+        url = `${this.transactionsUrl}/branch/${branchId}/currency/${encodeURIComponent(currency)}`;
+      }
+    }
 
     this.http.get<ApiResponse<BankTransaction[]>>(url).subscribe({
       next: (response) => {
@@ -181,19 +221,45 @@ export class BankTransactions implements OnInit {
       error: (error) => {
         this.transactions.set([]);
         this.loadingTransactions.set(false);
-        this.errorMessage = error?.error?.message ?? 'Failed to load bank transactions.';
+        this.errorMessage.set(error?.error?.message ?? 'Failed to load bank transactions.');
       },
     });
   }
 
   onBranchChange(value: string): void {
     const branchId = value ? Number(value) : null;
+
     this.selectedBranchId.set(branchId !== null && Number.isFinite(branchId) ? branchId : null);
     this.loadTransactions();
   }
 
   onCurrencyChange(value: string): void {
     this.selectedCurrency.set(value);
+    this.loadTransactions();
+  }
+
+  onDateFilterChange(): void {
+    const fromDate = this.fromDate();
+    const toDate = this.toDate();
+
+    if ((fromDate && !toDate) || (!fromDate && toDate)) {
+      return;
+    }
+
+    this.loadTransactions();
+  }
+
+  clearDateFilters(): void {
+    this.fromDate.set('');
+    this.toDate.set('');
+    this.loadTransactions();
+  }
+
+  clearAllFilters(): void {
+    this.selectedBranchId.set(null);
+    this.fromDate.set('');
+    this.toDate.set('');
+    this.searchTerm.set('');
     this.loadTransactions();
   }
 
@@ -209,16 +275,15 @@ export class BankTransactions implements OnInit {
     this.router.navigate(['/bank-transactions/edit', id]);
   }
 
-  deleteTransaction(id: number): void {
-    const confirmed = confirm('Are you sure you want to delete this bank transaction?');
+  getBalanceBefore(transaction: BankTransaction): number {
+    const balanceAfter = Number(transaction.balanceAfter || 0);
+    const amount = Number(transaction.amount || 0);
 
-    if (!confirmed) {
-      return;
+    if (transaction.direction === 'IN') {
+      return balanceAfter - amount;
     }
 
-    // Connect this to the backend DELETE endpoint before using it
-    // to delete persistent records.
-    alert('Backend delete endpoint has not been configured yet.');
+    return balanceAfter + amount;
   }
 
   formatTransactionType(type: string): string {
@@ -243,18 +308,22 @@ export class BankTransactions implements OnInit {
   getTransactionClass(type: string): string {
     switch (type) {
       case 'CASH_DEPOSIT':
-      case 'BANK_DEPOSIT':
-      case 'LOAN_RECEIVED':
-      case 'LOAN_REPAYMENT':
-      case 'COMMISSION_RECEIVED':
+      case 'TRANSFER_IN':
+      case 'COMMISSION_CREDIT':
+      case 'CURRENCY_EXCHANGE_IN':
+      case 'CLIENT_LOAN_REPAYMENT':
+      case 'REVENUE_RECEIPT':
         return 'transaction-in';
 
       case 'CASH_WITHDRAWAL':
-      case 'BANK_WITHDRAWAL':
-      case 'EXPENSE':
+      case 'TRANSFER_OUT':
+      case 'EXPENSE_PAYMENT':
+      case 'CURRENCY_EXCHANGE_OUT':
+      case 'CLIENT_LOAN_ISSUED':
         return 'transaction-out';
 
       case 'ADJUSTMENT':
+      case 'RECONCILIATION_ADJUSTMENT':
         return 'transaction-adjustment';
 
       case 'REVERSAL':
@@ -269,12 +338,15 @@ export class BankTransactions implements OnInit {
     switch ((status ?? '').toUpperCase()) {
       case 'POSTED':
         return 'status-posted';
+
       case 'PENDING':
         return 'status-pending';
+
       case 'REVERSED':
       case 'CANCELLED':
       case 'FAILED':
         return 'status-failed';
+
       default:
         return 'status-default';
     }

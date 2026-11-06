@@ -1,25 +1,86 @@
-<header class="site-header">
-  <div class="header-inner">
-    <div class="logo">
+<header
+  class="site-header"
+  [class.scrolled]="scrolled"
+  [class.hidden]="hidden"
+  [class.menu-open]="open"
+>
+  <div class="pill">
+    <a href="/" class="logo" aria-label="Shakenoak home">
       <div class="logo-mark">
         <span></span>
         <span></span>
         <span></span>
       </div>
-      <span class="logo-text">Shakenoak</span>
-    </div>
+      <span class="logo-text">Shakenoak<i class="logo-dot"></i></span>
+    </a>
 
-    <nav class="main-nav">
-      <a href="#services">Services</a>
-      <a href="#agency">Financial Agency</a>
-      <a href="/car-hire">Car Hire</a>
-      <a href="/about">About</a>
-      <a href="#contact">Contact</a>
+    <nav class="main-nav" #nav (mouseleave)="rest()" aria-label="Primary">
+      <span class="indicator" aria-hidden="true"></span>
+      <a
+        href="#services"
+        data-id="services"
+        [class.active]="active === 'services'"
+        (mouseenter)="hover($event)"
+        >Services</a
+      >
+      <a
+        href="#agency"
+        data-id="agency"
+        [class.active]="active === 'agency'"
+        (mouseenter)="hover($event)"
+        >Financial Agency</a
+      >
+      <a href="/car-hire" data-id="car-hire" (mouseenter)="hover($event)">
+        Car Hire <em class="tag-new">New</em>
+      </a>
+      <a href="/about" data-id="about" (mouseenter)="hover($event)">About</a>
+      <a
+        href="#contact"
+        data-id="contact"
+        [class.active]="active === 'contact'"
+        (mouseenter)="hover($event)"
+        >Contact</a
+      >
     </nav>
 
     <a href="/login" class="nav-login-btn">
-      <i class="bi bi-shield-lock"></i>
+      <i class="bi bi-shield-lock lock"></i>
       <span>Login to Portal</span>
+      <i class="bi bi-arrow-right arrow"></i>
     </a>
+
+    <button
+      class="burger"
+      type="button"
+      (click)="toggle()"
+      [attr.aria-expanded]="open"
+      aria-controls="mobile-menu"
+      aria-label="Toggle menu"
+    >
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="progress" aria-hidden="true"><b></b></div>
+  </div>
+
+  <!-- Mobile overlay -->
+  <div class="mobile-menu" id="mobile-menu" [class.show]="open" [attr.aria-hidden]="!open">
+    <div class="mm-glow mm-glow-1"></div>
+    <div class="mm-glow mm-glow-2"></div>
+
+    <nav class="mm-links" aria-label="Mobile">
+      <a href="#services" style="--i: 0" (click)="close()"><small>01</small> Services</a>
+      <a href="#agency" style="--i: 1" (click)="close()"><small>02</small> Financial Agency</a>
+      <a href="/car-hire" style="--i: 2" (click)="close()"><small>03</small> Car Hire</a>
+      <a href="/about" style="--i: 3" (click)="close()"><small>04</small> About</a>
+      <a href="#contact" style="--i: 4" (click)="close()"><small>05</small> Contact</a>
+    </nav>
+
+    <div class="mm-foot" style="--i: 5">
+      <a href="/login" class="mm-login" (click)="close()">
+        <i class="bi bi-shield-lock"></i> Login to Portal
+      </a>
+      <a href="mailto:info@shakenoak.co.zw" class="mm-mail">info@shakenoak.co.zw</a>
+    </div>
   </div>
 </header>

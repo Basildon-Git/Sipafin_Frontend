@@ -7,7 +7,7 @@
 
       <div>
         <h1>Bank Transactions</h1>
-        <p>Track bank movements by branch, account and currency.</p>
+        <p>Track bank movements by branch, account, currency and date.</p>
       </div>
     </div>
 
@@ -17,16 +17,18 @@
     </button>
   </div>
 
-  <!-- FILTERS -->
   <div class="filter-card">
     <div class="filter-field">
       <label for="branch">Branch</label>
+
       <select
         id="branch"
         [value]="selectedBranchId() ?? ''"
         (change)="onBranchChange($any($event.target).value)"
-        [disabled]="loadingBranches() || branches().length === 0"
+        [disabled]="loadingBranches()"
       >
+        <option value="">All Branches</option>
+
         @for (branch of branches(); track branch.id) {
           <option [value]="branch.id">{{ branch.name }} ({{ branch.code }})</option>
         }
@@ -35,6 +37,7 @@
 
     <div class="filter-field">
       <label for="currency">Currency</label>
+
       <select
         id="currency"
         [value]="selectedCurrency()"
@@ -46,16 +49,51 @@
       </select>
     </div>
 
+    <div class="filter-field">
+      <label for="fromDate">From Date</label>
+
+      <input
+        id="fromDate"
+        type="date"
+        [value]="fromDate()"
+        (input)="fromDate.set($any($event.target).value)"
+        (change)="onDateFilterChange()"
+      />
+    </div>
+
+    <div class="filter-field">
+      <label for="toDate">To Date</label>
+
+      <input
+        id="toDate"
+        type="date"
+        [value]="toDate()"
+        (input)="toDate.set($any($event.target).value)"
+        (change)="onDateFilterChange()"
+      />
+    </div>
+
     <button
       type="button"
       class="refresh-btn"
       (click)="loadTransactions()"
-      [disabled]="loadingTransactions() || selectedBranchId() === null"
+      [disabled]="loadingTransactions()"
     >
       <i class="bi bi-arrow-clockwise"></i>
       Refresh
     </button>
+
+    <button type="button" class="secondary-btn" (click)="clearAllFilters()">
+      Clear Filters
+    </button>
   </div>
+
+  @if ((fromDate() && !toDate()) || (!fromDate() && toDate())) {
+    <div class="alert-warning">
+      <i class="bi bi-info-circle"></i>
+      Select both From Date and To Date to apply date filtering.
+    </div>
+  }
 
   @if (errorMessage()) {
     <div class="alert-error">
@@ -65,12 +103,12 @@
     </div>
   }
 
-  <!-- SUMMARY -->
   <div class="summary-grid">
     <div class="summary-card">
       <div class="summary-icon blue">
         <i class="bi bi-list-ul"></i>
       </div>
+
       <div>
         <span class="summary-label">Transactions</span>
         <strong>{{ totalTransactions() }}</strong>
@@ -78,9 +116,21 @@
     </div>
 
     <div class="summary-card">
+      <div class="summary-icon cyan">
+        <i class="bi bi-wallet2"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Balance Before ({{ selectedCurrency() }})</span>
+        <strong>{{ overallBalanceBefore() | number: '1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
       <div class="summary-icon green">
         <i class="bi bi-arrow-down-left"></i>
       </div>
+
       <div>
         <span class="summary-label">Total In ({{ selectedCurrency() }})</span>
         <strong>{{ totalIn() | number: '1.2-2' }}</strong>
@@ -91,6 +141,7 @@
       <div class="summary-icon red">
         <i class="bi bi-arrow-up-right"></i>
       </div>
+
       <div>
         <span class="summary-label">Total Out ({{ selectedCurrency() }})</span>
         <strong>{{ totalOut() | number: '1.2-2' }}</strong>
@@ -101,14 +152,25 @@
       <div class="summary-icon purple">
         <i class="bi bi-arrow-left-right"></i>
       </div>
+
       <div>
         <span class="summary-label">Net Movement ({{ selectedCurrency() }})</span>
         <strong>{{ netMovement() | number: '1.2-2' }}</strong>
       </div>
     </div>
+
+    <div class="summary-card">
+      <div class="summary-icon indigo">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+
+      <div>
+        <span class="summary-label">Balance After ({{ selectedCurrency() }})</span>
+        <strong>{{ overallBalanceAfter() | number: '1.2-2' }}</strong>
+      </div>
+    </div>
   </div>
 
-  <!-- LEDGER -->
   <div class="table-card">
     <div class="table-toolbar">
       <div class="toolbar-title">
@@ -118,6 +180,7 @@
 
       <div class="search-box">
         <i class="bi bi-search"></i>
+
         <input
           type="text"
           placeholder="Search account, bank, reference..."
@@ -126,12 +189,7 @@
         />
 
         @if (searchTerm()) {
-          <button
-            type="button"
-            class="clear-search"
-            (click)="searchTerm.set('')"
-            title="Clear search"
-          >
+          <button type="button" class="clear-search" (click)="searchTerm.set('')" title="Clear search">
             <i class="bi bi-x-lg"></i>
           </button>
         }
@@ -141,26 +199,27 @@
     <div class="table-wrapper">
       <table>
         <thead>
-          <tr>
-            <th>Bank / Account</th>
-            <th>Branch</th>
-            <th>Transaction</th>
-            <th>Direction</th>
-            <th>Amount</th>
-            <th>Balance After</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Reference</th>
-            <th>Description</th>
-            <th>Actioned By</th>
-            <th class="actions-column">Actions</th>
-          </tr>
+        <tr>
+          <th>Bank / Account</th>
+          <th>Branch</th>
+          <th>Transaction</th>
+          <th>Direction</th>
+          <th class="amount-column">Amount</th>
+          <th class="amount-column">Balance Before</th>
+          <th class="amount-column">Balance After</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Reference</th>
+          <th>Description</th>
+          <th>Actioned By</th>
+          <th class="actions-column">Actions</th>
+        </tr>
         </thead>
 
         <tbody>
           @if (loadingBranches() || loadingTransactions()) {
             <tr>
-              <td colspan="12">
+              <td colspan="13">
                 <div class="loading-state">
                   <span class="spinner"></span>
                   Loading bank transactions...
@@ -175,6 +234,7 @@
                     <div class="account-icon">
                       <i class="bi bi-bank"></i>
                     </div>
+
                     <div>
                       <span class="primary-text">{{ transaction.accountName }}</span>
                       <span class="secondary-text">
@@ -188,8 +248,8 @@
 
                 <td>
                   <div class="branch-cell">
-                    <span class="primary-text">{{ transaction.branchName }}</span>
-                    <span class="secondary-text">{{ transaction.branchCode }}</span>
+                    <span class="primary-text">{{ transaction.branchName || 'Shared Account' }}</span>
+                    <span class="secondary-text">{{ transaction.branchCode || '—' }}</span>
                   </div>
                 </td>
 
@@ -203,10 +263,7 @@
                 </td>
 
                 <td>
-                  <span
-                    class="direction-badge"
-                    [ngClass]="getDirectionClass(transaction.direction)"
-                  >
+                  <span class="direction-badge" [ngClass]="getDirectionClass(transaction.direction)">
                     @if (transaction.direction === 'IN') {
                       <i class="bi bi-arrow-down-left"></i> In
                     } @else {
@@ -215,7 +272,7 @@
                   </span>
                 </td>
 
-                <td>
+                <td class="amount-column">
                   <span
                     class="amount"
                     [class.amount-in]="transaction.direction === 'IN'"
@@ -226,7 +283,11 @@
                   </span>
                 </td>
 
-                <td class="balance-cell">
+                <td class="balance-cell amount-column">
+                  {{ getBalanceBefore(transaction) | number: '1.2-2' }}
+                </td>
+
+                <td class="balance-cell amount-column">
                   {{ transaction.balanceAfter | number: '1.2-2' }}
                 </td>
 
@@ -261,14 +322,14 @@
 
                 <td>
                   <div class="actions">
-                    <button
-                      type="button"
-                      class="action-btn view"
-                      title="View"
-                      (click)="viewTransaction(transaction.id)"
-                    >
-                      <i class="bi bi-eye"></i>
-                    </button>
+<!--                    <button-->
+<!--                      type="button"-->
+<!--                      class="action-btn view"-->
+<!--                      title="View"-->
+<!--                      (click)="viewTransaction(transaction.id)"-->
+<!--                    >-->
+<!--                      <i class="bi bi-eye"></i>-->
+<!--                    </button>-->
 
                     <button
                       type="button"
@@ -285,16 +346,18 @@
 
             @if (filteredTransactions().length === 0) {
               <tr>
-                <td colspan="12">
+                <td colspan="13">
                   <div class="empty-state">
                     <div class="empty-icon">
                       <i class="bi bi-bank"></i>
                     </div>
+
                     <h3>No bank transactions found</h3>
+
                     <p>
-                      No transactions were returned for the selected branch and currency, or none
-                      match your search.
+                      No transactions were returned for the selected filters, or none match your search.
                     </p>
+
                     @if (searchTerm()) {
                       <button type="button" class="secondary-btn" (click)="searchTerm.set('')">
                         Clear Search

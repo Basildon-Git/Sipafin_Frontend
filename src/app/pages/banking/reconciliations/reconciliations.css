@@ -124,6 +124,11 @@
   flex: 0 1 165px;
 }
 
+.date-filter {
+  width: 155px;
+  flex: 0 1 155px;
+}
+
 .filter-grid .form-control:focus,
 .filter-grid .form-select:focus {
   border-color: var(--primary-blue);
@@ -149,6 +154,47 @@
 }
 
 /* =====================================================
+   SUMMARY STRIP
+===================================================== */
+
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.summary-box {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.summary-box span {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.summary-box strong {
+  font-size: 20px;
+  color: var(--primary-dark);
+}
+
+.summary-box.unresolved strong {
+  color: #b91c1c;
+}
+
+.summary-box.reconciled strong {
+  color: #166534;
+}
+
+/* =====================================================
    TABLE CONTAINER
 ===================================================== */
 
@@ -165,12 +211,12 @@
 }
 
 /* =====================================================
-   TABLE
+   RECONCILIATION TABLE
 ===================================================== */
 
 .reconciliation-table {
   width: 100%;
-  min-width: 1700px;
+  min-width: 1780px;
   border-collapse: collapse;
   margin-bottom: 0;
   font-size: 12px;
@@ -203,7 +249,8 @@
   border-bottom: none;
 }
 
-.reconciliation-table .text-end {
+.reconciliation-table .text-end,
+.transactions-table .text-end {
   text-align: right !important;
 }
 
@@ -265,11 +312,12 @@
 }
 
 /* =====================================================
-   STATUS
+   BADGES / STATUS
 ===================================================== */
 
 .status-badge,
-.difference-badge {
+.difference-badge,
+.direction-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -293,6 +341,11 @@
 .status-partial {
   background: #fef3c7;
   color: #92400e;
+}
+
+.status-cancelled {
+  background: #e2e8f0;
+  color: #475569;
 }
 
 .status-default {
@@ -324,9 +377,23 @@
   background: #dcfce7;
 }
 
+.direction-in {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.direction-out {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 /* =====================================================
-   ACTION
+   ACTIONS
 ===================================================== */
+
+.action-buttons {
+  white-space: nowrap;
+}
 
 .btn-view {
   width: 30px;
@@ -343,6 +410,17 @@
 
 .btn-view:hover {
   background: var(--primary-blue);
+  color: #fff;
+}
+
+.btn-transactions {
+  border-color: #bbf7d0;
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.btn-transactions:hover {
+  background: #15803d;
   color: #fff;
 }
 
@@ -442,7 +520,7 @@
 }
 
 /* =====================================================
-   DETAILS MODAL
+   DETAILS / MODAL BASE
 ===================================================== */
 
 .details-overlay {
@@ -456,9 +534,9 @@
   padding: 20px;
 }
 
-.details-modal {
+.details-modal,
+.transactions-modal {
   width: 100%;
-  max-width: 850px;
   max-height: 90vh;
   background: #fff;
   border-radius: 8px;
@@ -466,6 +544,16 @@
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 15px 45px rgba(0, 0, 0, 0.16);
+}
+
+.details-modal {
+  max-width: 850px;
+}
+
+.transactions-modal {
+  width: min(96vw, 1450px);
+  max-width: 1450px;
+  max-height: 94vh;
 }
 
 .details-header {
@@ -496,6 +584,7 @@
   background: #f1f5f9;
   color: #475569;
   border-radius: 5px;
+  flex: 0 0 auto;
 }
 
 .modal-close:hover {
@@ -592,6 +681,7 @@
   justify-content: flex-end;
   padding: 13px 20px;
   border-top: 1px solid var(--border-color);
+  background: #fff;
 }
 
 .btn-close-details {
@@ -609,6 +699,134 @@
 }
 
 /* =====================================================
+   TRANSACTIONS MODAL
+===================================================== */
+
+.transactions-filter {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background: #f8fafc;
+}
+
+.transactions-filter label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.transactions-filter .form-control {
+  width: 180px;
+  min-height: 36px;
+  border: 1px solid #d5dce5;
+  border-radius: 5px;
+  font-size: 12px;
+  box-shadow: none;
+}
+
+.transactions-filter .form-control:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 2px rgba(7, 86, 184, 0.08);
+}
+
+.transaction-totals {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.transaction-totals span {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 5px;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.balance-before {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.balance-after {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.total-in {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.total-out {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.transactions-body {
+  padding: 0;
+  overflow: auto;
+  max-height: calc(94vh - 180px);
+}
+
+.transaction-loading {
+  padding: 35px;
+}
+
+.transaction-error {
+  margin: 20px;
+  padding: 14px;
+  border-radius: 5px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.transactions-table {
+  min-width: 1250px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.transactions-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #e2e8f0;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 11px 10px;
+  white-space: nowrap;
+}
+
+.transactions-table tbody td {
+  padding: 10px;
+  border-bottom: 1px solid #edf1f5;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.transactions-table tbody tr:hover td {
+  background: #f5f9ff;
+}
+
+.transactions-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* =====================================================
    RESPONSIVE
 ===================================================== */
 
@@ -617,9 +835,14 @@
     padding: 14px;
   }
 
-  .filter-grid > .form-select {
+  .filter-grid > .form-select,
+  .date-filter {
     flex: 1 1 150px;
     width: auto;
+  }
+
+  .summary-strip {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -646,8 +869,31 @@
     padding: 10px;
   }
 
-  .details-modal {
-    max-height: 95vh;
+  .details-modal,
+  .transactions-modal {
+    max-height: 96vh;
+  }
+
+  .transactions-modal {
+    width: 98vw;
+    max-width: 98vw;
+  }
+
+  .transactions-body {
+    max-height: calc(96vh - 220px);
+  }
+
+  .transactions-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .transactions-filter .form-control {
+    width: 100%;
+  }
+
+  .transaction-totals {
+    justify-content: flex-start;
   }
 }
 
@@ -659,6 +905,7 @@
 
   .search-box,
   .filter-grid > .form-select,
+  .date-filter,
   .btn-clear {
     width: 100%;
     flex: none;
@@ -672,5 +919,18 @@
   .details-body,
   .details-footer {
     padding: 14px;
+  }
+
+  .transactions-filter {
+    padding: 14px;
+  }
+
+  .transaction-totals {
+    gap: 7px;
+  }
+
+  .transaction-totals span {
+    width: 100%;
+    justify-content: space-between;
   }
 }

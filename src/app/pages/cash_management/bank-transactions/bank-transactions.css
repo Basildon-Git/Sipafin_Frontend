@@ -1,10 +1,7 @@
 .page-container {
-  /* max-width: 1250px; */
   margin: 0 auto;
   padding: 28px 24px 40px;
 }
-
-/* HEADER */
 
 .page-header {
   display: flex;
@@ -45,8 +42,6 @@
   font-size: 13px;
 }
 
-/* BUTTON */
-
 .primary-btn {
   height: 40px;
   padding: 0 16px;
@@ -68,7 +63,7 @@
 }
 
 .secondary-btn {
-  height: 38px;
+  height: 39px;
   padding: 0 14px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -79,11 +74,115 @@
   cursor: pointer;
 }
 
-/* SUMMARY */
+.secondary-btn:hover {
+  background: #f8fafc;
+}
+
+.filter-card {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px;
+  margin-bottom: 22px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 11px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 190px;
+}
+
+.filter-field label {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.filter-field select,
+.filter-field input {
+  min-width: 190px;
+  height: 39px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  outline: none;
+}
+
+.filter-field select:focus,
+.filter-field input:focus {
+  border-color: #0756b8;
+  box-shadow: 0 0 0 3px rgba(7, 86, 184, 0.08);
+}
+
+.refresh-btn {
+  height: 39px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.refresh-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.alert-error,
+.alert-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.alert-error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.alert-warning {
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.alert-error button {
+  margin-left: auto;
+  padding: 5px 10px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fff;
+  color: #b91c1c;
+  cursor: pointer;
+}
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 22px;
 }
@@ -96,11 +195,13 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
 }
 
 .summary-icon {
   width: 42px;
   height: 42px;
+  flex: 0 0 auto;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -111,6 +212,11 @@
 .summary-icon.blue {
   background: #eaf3ff;
   color: #0756b8;
+}
+
+.summary-icon.cyan {
+  background: #ecfeff;
+  color: #0891b2;
 }
 
 .summary-icon.green {
@@ -128,6 +234,11 @@
   color: #7c3aed;
 }
 
+.summary-icon.indigo {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
 .summary-label {
   display: block;
   margin-bottom: 4px;
@@ -138,10 +249,9 @@
 .summary-card strong {
   display: block;
   color: #0f172a;
-  font-size: 20px;
+  font-size: 18px;
+  overflow-wrap: anywhere;
 }
-
-/* TABLE CARD */
 
 .table-card {
   background: #fff;
@@ -181,8 +291,6 @@
   font-size: 10px;
   font-weight: 600;
 }
-
-/* SEARCH */
 
 .search-box {
   position: relative;
@@ -227,8 +335,6 @@
   cursor: pointer;
 }
 
-/* TABLE */
-
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -236,7 +342,7 @@
 
 table {
   width: 100%;
-  min-width: 1250px;
+  min-width: 1450px;
   border-collapse: collapse;
 }
 
@@ -267,8 +373,6 @@ td {
 tbody tr:hover {
   background: #f8fafc;
 }
-
-/* ACCOUNT */
 
 .account-cell {
   display: flex;
@@ -302,15 +406,11 @@ tbody tr:hover {
   font-size: 10px;
 }
 
-/* BRANCH */
-
 .branch-cell {
   display: flex;
   flex-direction: column;
   gap: 1px;
 }
-
-/* TRANSACTION */
 
 .transaction-badge {
   display: inline-flex;
@@ -342,8 +442,6 @@ tbody tr:hover {
   color: #dc2626;
 }
 
-/* DIRECTION */
-
 .direction-badge {
   display: inline-flex;
   align-items: center;
@@ -364,8 +462,6 @@ tbody tr:hover {
   color: #dc2626;
 }
 
-/* AMOUNT */
-
 .amount {
   font-weight: 700;
   white-space: nowrap;
@@ -379,7 +475,10 @@ tbody tr:hover {
   color: #dc2626;
 }
 
-/* DATE */
+.amount-column {
+  text-align: right;
+  white-space: nowrap;
+}
 
 .date-cell {
   display: flex;
@@ -393,8 +492,6 @@ tbody tr:hover {
   color: #94a3b8;
 }
 
-/* REFERENCE */
-
 .reference {
   color: #475569;
   font-family: monospace;
@@ -402,24 +499,18 @@ tbody tr:hover {
   white-space: nowrap;
 }
 
-/* DESCRIPTION */
-
 .description {
   display: block;
-  max-width: 200px;
+  max-width: 220px;
   overflow: hidden;
   color: #64748b;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* MUTED */
-
 .muted {
   color: #cbd5e1;
 }
-
-/* ACTIONS */
 
 .actions-column {
   text-align: right;
@@ -455,12 +546,6 @@ tbody tr:hover {
   color: #64748b;
 }
 
-.action-btn.delete {
-  color: #dc2626;
-}
-
-/* FOOTER */
-
 .table-footer {
   min-height: 52px;
   padding: 12px 18px;
@@ -479,8 +564,6 @@ tbody tr:hover {
 .net-movement strong {
   color: #0756b8;
 }
-
-/* EMPTY */
 
 .empty-state {
   min-height: 300px;
@@ -518,77 +601,6 @@ tbody tr:hover {
   font-size: 12px;
 }
 
-/* BRANCH AND CURRENCY FILTERS */
-
-.filter-card {
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 18px;
-  margin-bottom: 22px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 11px;
-}
-
-.filter-field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 220px;
-}
-
-.filter-field label {
-  color: #475569;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.filter-field select {
-  min-width: 220px;
-  height: 39px;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  color: #334155;
-  font-size: 12px;
-  outline: none;
-}
-
-.filter-field select:focus {
-  border-color: #0756b8;
-  box-shadow: 0 0 0 3px rgba(7, 86, 184, 0.08);
-}
-
-.refresh-btn {
-  height: 39px;
-  padding: 0 15px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: #f8fafc;
-}
-
-.refresh-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-/* LOADING AND ERRORS */
-
 .loading-state {
   min-height: 180px;
   display: flex;
@@ -614,38 +626,11 @@ tbody tr:hover {
   }
 }
 
-.alert-error {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px 16px;
-  margin-bottom: 20px;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
-  font-size: 13px;
-}
-
-.alert-error button {
-  margin-left: auto;
-  padding: 5px 10px;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  background: #fff;
-  color: #b91c1c;
-  cursor: pointer;
-}
-
-/* BALANCE */
-
 .balance-cell {
   font-weight: 600;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-
-/* TRANSACTION STATUS */
 
 .status-badge {
   display: inline-flex;
@@ -677,27 +662,9 @@ tbody tr:hover {
   color: #475569;
 }
 
-/* RESPONSIVE FILTERS */
-
-@media (max-width: 768px) {
-  .filter-card {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .filter-field,
-  .filter-field select {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .refresh-btn {
-    width: 100%;
-  }
-
-  .alert-error {
-    align-items: flex-start;
-    flex-wrap: wrap;
+@media (max-width: 1300px) {
+  .summary-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -719,6 +686,29 @@ tbody tr:hover {
 
   .primary-btn {
     width: 100%;
+  }
+
+  .filter-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filter-field,
+  .filter-field select,
+  .filter-field input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .refresh-btn,
+  .secondary-btn {
+    width: 100%;
+  }
+
+  .alert-error,
+  .alert-warning {
+    align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .table-toolbar {

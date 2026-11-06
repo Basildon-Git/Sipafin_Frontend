@@ -36,6 +36,32 @@ interface ReconciliationItem {
   items: any[];
 }
 
+interface BankTransaction {
+  id: number;
+  bankAccountId: number;
+  accountName: string;
+  accountNumber: string;
+  bankId: number;
+  bankName: string;
+  bankCode: string;
+  branchId: number | null;
+  branchName: string | null;
+  branchCode: string | null;
+  currency: string;
+  transactionType: string;
+  direction: string;
+  amount: number;
+  balanceAfter: number;
+  transactionDate: string;
+  transactionGroupId: string;
+  status: string;
+  reference: string;
+  description: string;
+  actionedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface ApiResponse<T> {
   status: number;
   message: string;
@@ -66,16 +92,34 @@ export class Reconciliations implements OnInit {
   searchTerm = '';
   selectedStatus = '';
   selectedCurrency = '';
+  fromDate = '';
+  toDate = '';
 
   page = 1;
   pageSize: number | string = 10;
-
   pageSizeOptions: (number | string)[] = [5, 10, 20, 50, 100, 'All'];
 
   selectedReconciliation: ReconciliationItem | null = null;
   showDetails = false;
 
-  readonly statuses = ['UNRESOLVED', 'PARTIALLY_RECONCILED', 'RECONCILED', 'RESOLVED'];
+  selectedTransactionReconciliation: ReconciliationItem | null = null;
+  showTransactions = false;
+  transactionLoading = false;
+  transactionError = '';
+  transactionDateFilter = '';
+  bankTransactions: BankTransaction[] = [];
+  filteredBankTransactions: BankTransaction[] = [];
+
+  readonly statuses = [
+    'DRAFT',
+    'BALANCED',
+    'PARTIALLY_RECONCILED',
+    'UNRESOLVED',
+    'CANCELLED',
+    'RECONCILED',
+    'RESOLVED',
+  ];
+
   readonly currencies = ['USD', 'ZIG', 'ZAR', 'EUR'];
 
   ngOnInit(): void {
@@ -90,8 +134,6 @@ export class Reconciliations implements OnInit {
     this.router.navigate(['/banking/new-bank-reconciliation/' + id + '/' + bankId]);
   }
 
-  // LOAD RECONCILIATIONS
-
   loadReconciliations(): void {
     this.loading = true;
     this.errorMessage = '';
@@ -101,29 +143,22 @@ export class Reconciliations implements OnInit {
     this.http.get<ApiResponse<ReconciliationItem[]>>(url).subscribe({
       next: (response) => {
         this.reconciliations = Array.isArray(response.data) ? response.data : [];
-
         this.loading = false;
-
         this.applyFilters();
       },
-
       error: (error) => {
         console.error('Error loading bank reconciliations:', error);
 
         this.loading = false;
-
         this.reconciliations = [];
         this.filteredList = [];
         this.pagedList = [];
 
         this.errorMessage = error?.error?.message || 'Failed to load bank reconciliations.';
-
         this.toastr.error(this.errorMessage, 'Error');
       },
     });
   }
-
-  // FILTERING
 
   applyFilters(): void {
     const search = this.searchTerm.trim().toLowerCase();
@@ -149,17 +184,16 @@ export class Reconciliations implements OnInit {
         );
 
       const matchesStatus = !this.selectedStatus || item.status === this.selectedStatus;
-
       const matchesCurrency = !this.selectedCurrency || item.currency === this.selectedCurrency;
+      const matchesFromDate = !this.fromDate || item.reconciliationDate >= this.fromDate;
+      const matchesToDate = !this.toDate || item.reconciliationDate <= this.toDate;
 
-      return matchesSearch && matchesStatus && matchesCurrency;
+      return matchesSearch && matchesStatus && matchesCurrency && matchesFromDate && matchesToDate;
     });
 
     this.page = 1;
     this.updatePagedList();
   }
-
-  // PAGINATION
 
   updatePagedList(): void {
     if (this.pageSize === 'All') {
@@ -168,7 +202,6 @@ export class Reconciliations implements OnInit {
     }
 
     const size = Number(this.pageSize);
-
     const start = (this.page - 1) * size;
 
     this.pagedList = this.filteredList.slice(start, start + size);
@@ -208,8 +241,6 @@ export class Reconciliations implements OnInit {
     return Math.min(this.page * Number(this.pageSize), this.filteredList.length);
   }
 
-  // SUMMARY COUNTS
-
   get totalRecords(): number {
     return this.reconciliations.length;
   }
@@ -220,16 +251,18 @@ export class Reconciliations implements OnInit {
 
   get reconciledCount(): number {
     return this.reconciliations.filter(
-      (item) => item.status === 'RECONCILED' || item.status === 'RESOLVED',
+      (item) =>
+        item.status === 'RECONCILED' ||
+        item.status === 'RESOLVED' ||
+        item.status === 'BALANCED',
     ).length;
   }
-
-  // STATUS
 
   getStatusClass(status: string): string {
     switch ((status || '').toUpperCase()) {
       case 'RECONCILED':
       case 'RESOLVED':
+      case 'BALANCED':
         return 'status-reconciled';
 
       case 'PARTIALLY_RECONCILED':
@@ -237,6 +270,9 @@ export class Reconciliations implements OnInit {
 
       case 'UNRESOLVED':
         return 'status-unresolved';
+
+      case 'CANCELLED':
+        return 'status-cancelled';
 
       default:
         return 'status-default';
@@ -249,11 +285,16 @@ export class Reconciliations implements OnInit {
         return 'difference-short';
 
       case 'OVER':
+      case 'EXCESS':
         return 'difference-over';
 
       default:
         return 'difference-balanced';
     }
+  }
+
+  getDirectionClass(direction: string): string {
+    return direction === 'IN' ? 'direction-in' : 'direction-out';
   }
 
   formatLabel(value: string | null | undefined): string {
@@ -267,8 +308,6 @@ export class Reconciliations implements OnInit {
       .replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
-  // DETAILS
-
   viewDetails(item: ReconciliationItem): void {
     this.selectedReconciliation = item;
     this.showDetails = true;
@@ -279,21 +318,140 @@ export class Reconciliations implements OnInit {
     this.selectedReconciliation = null;
   }
 
-  // RESET
+  openTransactions(item: ReconciliationItem): void {
+    this.selectedTransactionReconciliation = item;
+    this.transactionDateFilter = item.reconciliationDate;
+    this.showTransactions = true;
+    this.loadBankTransactions(item);
+  }
+
+  closeTransactions(): void {
+    this.showTransactions = false;
+    this.selectedTransactionReconciliation = null;
+    this.transactionDateFilter = '';
+    this.bankTransactions = [];
+    this.filteredBankTransactions = [];
+    this.transactionError = '';
+  }
+
+  loadBankTransactions(item: ReconciliationItem): void {
+    this.transactionLoading = true;
+    this.transactionError = '';
+    this.bankTransactions = [];
+    this.filteredBankTransactions = [];
+
+    const url =
+      this.masterService.getBackendService() +
+      `api/v1/money-movements/bank/account/${item.bankAccountId}/currency/${item.currency}`;
+
+    this.http.get<ApiResponse<BankTransaction[]>>(url).subscribe({
+      next: (response) => {
+        this.bankTransactions = Array.isArray(response.data) ? response.data : [];
+        this.transactionLoading = false;
+        this.applyTransactionDateFilter();
+      },
+      error: (error) => {
+        console.error('Error loading bank transactions:', error);
+
+        this.transactionLoading = false;
+        this.transactionError = error?.error?.message || 'Failed to load bank transactions.';
+        this.toastr.error(this.transactionError, 'Error');
+      },
+    });
+  }
+
+  applyTransactionDateFilter(): void {
+    this.filteredBankTransactions = this.bankTransactions
+      .filter((transaction) => {
+        if (!this.transactionDateFilter) {
+          return true;
+        }
+
+        return transaction.transactionDate === this.transactionDateFilter;
+      })
+      .sort((a, b) => {
+        const dateCompare = a.transactionDate.localeCompare(b.transactionDate);
+
+        if (dateCompare !== 0) {
+          return dateCompare;
+        }
+
+        return Number(a.id) - Number(b.id);
+      });
+  }
+
+  get transactionInTotal(): number {
+    return this.filteredBankTransactions
+      .filter((transaction) => transaction.direction === 'IN')
+      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+  }
+
+  get transactionOutTotal(): number {
+    return this.filteredBankTransactions
+      .filter((transaction) => transaction.direction === 'OUT')
+      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+  }
+
+  get transactionBalanceBefore(): number {
+    if (this.filteredBankTransactions.length === 0) {
+      return 0;
+    }
+
+    return this.getTransactionBalanceBefore(this.filteredBankTransactions[0]);
+  }
+
+  get transactionBalanceAfter(): number {
+    if (this.filteredBankTransactions.length === 0) {
+      return 0;
+    }
+
+    const lastTransaction = this.filteredBankTransactions[this.filteredBankTransactions.length - 1];
+
+    return Number(lastTransaction.balanceAfter || 0);
+  }
+
+  getTransactionBalanceBefore(transaction: BankTransaction): number {
+    const balanceAfter = Number(transaction.balanceAfter || 0);
+    const amount = Number(transaction.amount || 0);
+
+    if (transaction.direction === 'IN') {
+      return balanceAfter - amount;
+    }
+
+    return balanceAfter + amount;
+  }
 
   clearFilters(): void {
     this.searchTerm = '';
     this.selectedStatus = '';
     this.selectedCurrency = '';
+    this.fromDate = '';
+    this.toDate = '';
 
     this.applyFilters();
   }
 
+  clearDateFilters(): void {
+    this.fromDate = '';
+    this.toDate = '';
+    this.applyFilters();
+  }
+
   get hasActiveFilters(): boolean {
-    return !!(this.searchTerm || this.selectedStatus || this.selectedCurrency);
+    return !!(
+      this.searchTerm ||
+      this.selectedStatus ||
+      this.selectedCurrency ||
+      this.fromDate ||
+      this.toDate
+    );
   }
 
   trackById(index: number, item: ReconciliationItem): number {
+    return item.id;
+  }
+
+  trackByTransactionId(index: number, item: BankTransaction): number {
     return item.id;
   }
 }

@@ -1,20 +1,12 @@
 <div class="reconciliation-page">
-  <!-- PAGE HEADER -->
-
   <div class="page-header">
     <div>
       <h4 class="page-title">Bank Reconciliations</h4>
-
       <p class="page-subtitle">View and monitor bank reconciliation records.</p>
     </div>
 
     <div>
-      <button
-        type="button"
-        class="btn-refresh"
-        (click)="loadReconciliations()"
-        [disabled]="loading"
-      >
+      <button type="button" class="btn-refresh" (click)="loadReconciliations()" [disabled]="loading">
         <i class="bi bi-arrow-clockwise"></i>
         Refresh
       </button>
@@ -25,8 +17,6 @@
       </button>
     </div>
   </div>
-
-  <!-- FILTERS -->
 
   <div class="filter-section">
     <div class="filter-grid">
@@ -62,6 +52,22 @@
         }
       </select>
 
+      <input
+        type="date"
+        class="form-control date-filter"
+        [(ngModel)]="fromDate"
+        (ngModelChange)="applyFilters()"
+        title="From date"
+      />
+
+      <input
+        type="date"
+        class="form-control date-filter"
+        [(ngModel)]="toDate"
+        (ngModelChange)="applyFilters()"
+        title="To date"
+      />
+
       @if (hasActiveFilters) {
         <button type="button" class="btn-clear" (click)="clearFilters()">
           <i class="bi bi-x-circle"></i>
@@ -71,29 +77,44 @@
     </div>
   </div>
 
-  <!-- TABLE -->
+  <div class="summary-strip">
+    <div class="summary-box">
+      <span>Total Records</span>
+      <strong>{{ totalRecords }}</strong>
+    </div>
+
+    <div class="summary-box unresolved">
+      <span>Unresolved</span>
+      <strong>{{ unresolvedCount }}</strong>
+    </div>
+
+    <div class="summary-box reconciled">
+      <span>Reconciled</span>
+      <strong>{{ reconciledCount }}</strong>
+    </div>
+  </div>
 
   <div class="table-container">
     <div class="table-responsive">
       <table class="table reconciliation-table">
         <thead>
-          <tr>
-            <th>#</th>
-            <th>Bank / Account</th>
-            <th>Branch</th>
-            <th>Currency</th>
-            <th>Reconciliation Date</th>
-            <th class="text-end">System Balance</th>
-            <th class="text-end">Statement Balance</th>
-            <th class="text-end">Difference</th>
-            <th>Difference Type</th>
-            <th class="text-end">Reconciled</th>
-            <th class="text-end">Unreconciled</th>
-            <th class="text-end">Balance After</th>
-            <th>Status</th>
-            <th>Reference</th>
-            <th class="text-center">Action</th>
-          </tr>
+        <tr>
+          <th>#</th>
+          <th>Bank / Account</th>
+          <th>Branch</th>
+          <th>Currency</th>
+          <th>Reconciliation Date</th>
+          <th class="text-end">System Balance</th>
+          <th class="text-end">Statement Balance</th>
+          <th class="text-end">Difference</th>
+          <th>Difference Type</th>
+          <th class="text-end">Reconciled</th>
+          <th class="text-end">Unreconciled</th>
+          <th class="text-end">Balance After</th>
+          <th>Status</th>
+          <th>Reference</th>
+          <th class="text-center">Action</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -102,7 +123,6 @@
               <td colspan="15" class="table-message">
                 <div class="loading-state">
                   <span class="spinner-border spinner-border-sm"></span>
-
                   Loading reconciliations...
                 </div>
               </td>
@@ -112,109 +132,64 @@
               <td colspan="15" class="table-message">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
-
-                  <span> No reconciliation records found. </span>
+                  <span>No reconciliation records found.</span>
                 </div>
               </td>
             </tr>
           } @else {
             @for (item of pagedList; track item.id; let i = $index) {
               <tr>
-                <!-- ROW NUMBER -->
-
                 <td class="row-number">
                   {{ pageSize === 'All' ? i + 1 : (page - 1) * paginationSize + i + 1 }}
                 </td>
 
-                <!-- BANK ACCOUNT -->
-
                 <td>
                   <div class="account-info">
-                    <span class="bank-name">
-                      {{ item.bankName }}
-                    </span>
-
-                    <span class="account-name">
-                      {{ item.accountName }}
-                    </span>
-
-                    <small class="account-number">
-                      {{ item.accountNumber }}
-                    </small>
+                    <span class="bank-name">{{ item.bankName }}</span>
+                    <span class="account-name">{{ item.accountName }}</span>
+                    <small class="account-number">{{ item.accountNumber }}</small>
                   </div>
                 </td>
 
-                <!-- BRANCH -->
+                <td>{{ item.branchName || 'Shared Account' }}</td>
 
                 <td>
-                  {{ item.branchName || 'Shared Account' }}
+                  <span class="currency-label">{{ item.currency }}</span>
                 </td>
-
-                <!-- CURRENCY -->
-
-                <td>
-                  <span class="currency-label">
-                    {{ item.currency }}
-                  </span>
-                </td>
-
-                <!-- DATE -->
 
                 <td class="date-cell">
                   {{ item.reconciliationDate | date: 'dd MMM yyyy' }}
                 </td>
 
-                <!-- SYSTEM BALANCE -->
-
                 <td class="text-end amount-cell">
                   {{ item.systemBalanceBefore | number: '1.2-2' }}
                 </td>
-
-                <!-- STATEMENT BALANCE -->
 
                 <td class="text-end amount-cell">
                   {{ item.statementBalance | number: '1.2-2' }}
                 </td>
 
-                <!-- DIFFERENCE -->
-
-                <td
-                  class="text-end amount-cell fw-semibold"
-                  [ngClass]="getDifferenceClass(item.differenceType)"
-                >
+                <td class="text-end amount-cell fw-semibold" [ngClass]="getDifferenceClass(item.differenceType)">
                   {{ item.difference | number: '1.2-2' }}
                 </td>
 
-                <!-- DIFFERENCE TYPE -->
-
                 <td>
-                  <span
-                    class="difference-badge"
-                    [ngClass]="getDifferenceClass(item.differenceType)"
-                  >
+                  <span class="difference-badge" [ngClass]="getDifferenceClass(item.differenceType)">
                     {{ formatLabel(item.differenceType) }}
                   </span>
                 </td>
-
-                <!-- RECONCILED AMOUNT -->
 
                 <td class="text-end amount-cell">
                   {{ item.reconciledAmount | number: '1.2-2' }}
                 </td>
 
-                <!-- UNRECONCILED AMOUNT -->
-
                 <td class="text-end amount-cell">
                   {{ item.unreconciledAmount | number: '1.2-2' }}
                 </td>
 
-                <!-- SYSTEM BALANCE AFTER -->
-
                 <td class="text-end amount-cell fw-semibold">
                   {{ item.systemBalanceAfter | number: '1.2-2' }}
                 </td>
-
-                <!-- STATUS -->
 
                 <td>
                   <span class="status-badge" [ngClass]="getStatusClass(item.status)">
@@ -222,15 +197,9 @@
                   </span>
                 </td>
 
-                <!-- REFERENCE -->
+                <td>{{ item.reference || 'N/A' }}</td>
 
-                <td>
-                  {{ item.reference || 'N/A' }}
-                </td>
-
-                <!-- ACTION -->
-
-                <td class="text-center">
+                <td class="text-center action-buttons">
                   <button
                     type="button"
                     class="btn-view"
@@ -248,6 +217,15 @@
                   >
                     <i class="bi bi-arrow-repeat"></i>
                   </button>
+
+                  <button
+                    type="button"
+                    class="btn-view btn-transactions"
+                    title="View bank transactions for reconciliation date"
+                    (click)="openTransactions(item)"
+                  >
+                    <i class="bi bi-list-ul"></i>
+                  </button>
                 </td>
               </tr>
             }
@@ -256,17 +234,11 @@
       </table>
     </div>
 
-    <!-- PAGINATION FOOTER -->
-
     <div class="pagination-footer">
       <div class="page-size-control">
-        <label> Show </label>
+        <label>Show</label>
 
-        <select
-          class="form-select form-select-sm"
-          [(ngModel)]="pageSize"
-          (ngModelChange)="onPageSizeChange()"
-        >
+        <select class="form-select form-select-sm" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
           @for (option of pageSizeOptions; track option) {
             <option [ngValue]="option">
               {{ option }}
@@ -274,7 +246,7 @@
           }
         </select>
 
-        <span> entries </span>
+        <span>entries</span>
       </div>
 
       <div class="pagination-center">
@@ -305,15 +277,12 @@
     </div>
   </div>
 
-  <!-- DETAILS MODAL -->
-
   @if (showDetails && selectedReconciliation) {
     <div class="details-overlay" (click)="closeDetails()">
       <div class="details-modal" (click)="$event.stopPropagation()">
         <div class="details-header">
           <div>
             <h5>Reconciliation Details</h5>
-
             <small>
               {{ selectedReconciliation.bankName }}
               —
@@ -330,63 +299,46 @@
           <div class="details-grid">
             <div class="detail-field">
               <label>Bank</label>
-              <span>
-                {{ selectedReconciliation.bankName }}
-              </span>
+              <span>{{ selectedReconciliation.bankName }}</span>
             </div>
 
             <div class="detail-field">
               <label>Account Name</label>
-              <span>
-                {{ selectedReconciliation.accountName }}
-              </span>
+              <span>{{ selectedReconciliation.accountName }}</span>
             </div>
 
             <div class="detail-field">
               <label>Account Number</label>
-              <span>
-                {{ selectedReconciliation.accountNumber }}
-              </span>
+              <span>{{ selectedReconciliation.accountNumber }}</span>
             </div>
 
             <div class="detail-field">
               <label>Currency</label>
-              <span>
-                {{ selectedReconciliation.currency }}
-              </span>
+              <span>{{ selectedReconciliation.currency }}</span>
             </div>
 
             <div class="detail-field">
               <label>Branch</label>
-              <span>
-                {{ selectedReconciliation.branchName || 'Shared Account' }}
-              </span>
+              <span>{{ selectedReconciliation.branchName || 'Shared Account' }}</span>
             </div>
 
             <div class="detail-field">
               <label>Reconciliation Date</label>
-              <span>
-                {{ selectedReconciliation.reconciliationDate | date: 'dd MMM yyyy' }}
-              </span>
+              <span>{{ selectedReconciliation.reconciliationDate | date: 'dd MMM yyyy' }}</span>
             </div>
 
             <div class="detail-field">
               <label>System Balance Before</label>
-              <span>
-                {{ selectedReconciliation.systemBalanceBefore | number: '1.2-2' }}
-              </span>
+              <span>{{ selectedReconciliation.systemBalanceBefore | number: '1.2-2' }}</span>
             </div>
 
             <div class="detail-field">
               <label>Statement Balance</label>
-              <span>
-                {{ selectedReconciliation.statementBalance | number: '1.2-2' }}
-              </span>
+              <span>{{ selectedReconciliation.statementBalance | number: '1.2-2' }}</span>
             </div>
 
             <div class="detail-field">
               <label>Difference</label>
-
               <span [ngClass]="getDifferenceClass(selectedReconciliation.differenceType)">
                 {{ selectedReconciliation.difference | number: '1.2-2' }}
               </span>
@@ -394,35 +346,26 @@
 
             <div class="detail-field">
               <label>Difference Type</label>
-              <span>
-                {{ formatLabel(selectedReconciliation.differenceType) }}
-              </span>
+              <span>{{ formatLabel(selectedReconciliation.differenceType) }}</span>
             </div>
 
             <div class="detail-field">
               <label>Reconciled Amount</label>
-              <span>
-                {{ selectedReconciliation.reconciledAmount | number: '1.2-2' }}
-              </span>
+              <span>{{ selectedReconciliation.reconciledAmount | number: '1.2-2' }}</span>
             </div>
 
             <div class="detail-field">
               <label>Unreconciled Amount</label>
-              <span>
-                {{ selectedReconciliation.unreconciledAmount | number: '1.2-2' }}
-              </span>
+              <span>{{ selectedReconciliation.unreconciledAmount | number: '1.2-2' }}</span>
             </div>
 
             <div class="detail-field">
               <label>System Balance After</label>
-              <span>
-                {{ selectedReconciliation.systemBalanceAfter | number: '1.2-2' }}
-              </span>
+              <span>{{ selectedReconciliation.systemBalanceAfter | number: '1.2-2' }}</span>
             </div>
 
             <div class="detail-field">
               <label>Status</label>
-
               <span class="status-badge" [ngClass]="getStatusClass(selectedReconciliation.status)">
                 {{ formatLabel(selectedReconciliation.status) }}
               </span>
@@ -430,34 +373,24 @@
 
             <div class="detail-field">
               <label>Reference</label>
-              <span>
-                {{ selectedReconciliation.reference || 'N/A' }}
-              </span>
+              <span>{{ selectedReconciliation.reference || 'N/A' }}</span>
             </div>
 
             <div class="detail-field">
               <label>Actioned By</label>
-              <span>
-                {{ selectedReconciliation.actionedBy || 'N/A' }}
-              </span>
+              <span>{{ selectedReconciliation.actionedBy || 'N/A' }}</span>
             </div>
 
             <div class="detail-field full-width">
               <label>Reason</label>
-              <span>
-                {{ selectedReconciliation.reason || 'N/A' }}
-              </span>
+              <span>{{ selectedReconciliation.reason || 'N/A' }}</span>
             </div>
 
             <div class="detail-field full-width">
               <label>Transaction Group</label>
-              <span class="group-reference">
-                {{ selectedReconciliation.transactionGroupId }}
-              </span>
+              <span class="group-reference">{{ selectedReconciliation.transactionGroupId }}</span>
             </div>
           </div>
-
-          <!-- RECONCILIATION ITEMS -->
 
           <div class="items-section">
             <h6>Reconciliation Items ({{ selectedReconciliation.items?.length || 0 }})</h6>
@@ -476,6 +409,143 @@
 
         <div class="details-footer">
           <button type="button" class="btn-close-details" (click)="closeDetails()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showTransactions && selectedTransactionReconciliation) {
+    <div class="details-overlay" (click)="closeTransactions()">
+      <div class="transactions-modal" (click)="$event.stopPropagation()">
+        <div class="details-header">
+          <div>
+            <h5>Bank Transactions</h5>
+            <small>
+              {{ selectedTransactionReconciliation.bankName }}
+              —
+              {{ selectedTransactionReconciliation.accountNumber }}
+              —
+              {{ selectedTransactionReconciliation.currency }}
+            </small>
+          </div>
+
+          <button type="button" class="modal-close" (click)="closeTransactions()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="transactions-filter">
+          <div>
+            <label>Transaction Date</label>
+            <input
+              type="date"
+              class="form-control"
+              [(ngModel)]="transactionDateFilter"
+              (ngModelChange)="applyTransactionDateFilter()"
+            />
+          </div>
+
+          <div class="transaction-totals">
+          <span class="balance-before">
+            Balance Before: {{ transactionBalanceBefore | number: '1.2-2' }}
+          </span>
+
+            <span class="total-in">
+            IN: {{ transactionInTotal | number: '1.2-2' }}
+          </span>
+
+            <span class="total-out">
+            OUT: {{ transactionOutTotal | number: '1.2-2' }}
+          </span>
+
+            <span class="balance-after">
+            Balance After: {{ transactionBalanceAfter | number: '1.2-2' }}
+          </span>
+          </div>
+        </div>
+
+        <div class="transactions-body">
+          @if (transactionLoading) {
+            <div class="loading-state transaction-loading">
+              <span class="spinner-border spinner-border-sm"></span>
+              Loading bank transactions...
+            </div>
+          } @else if (transactionError) {
+            <div class="transaction-error">
+              {{ transactionError }}
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table transactions-table">
+                <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Direction</th>
+                  <th class="text-end">Amount</th>
+                  <th class="text-end">Balance Before</th>
+                  <th class="text-end">Balance After</th>
+                  <th>Status</th>
+                  <th>Reference</th>
+                  <th>Description</th>
+                  <th>Actioned By</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                  @if (filteredBankTransactions.length === 0) {
+                    <tr>
+                      <td colspan="10" class="table-message">
+                        <div class="empty-state">
+                          <i class="bi bi-inbox"></i>
+                          <span>No bank transactions found for selected date.</span>
+                        </div>
+                      </td>
+                    </tr>
+                  } @else {
+                    @for (transaction of filteredBankTransactions; track transaction.id) {
+                      <tr>
+                        <td>{{ transaction.transactionDate | date: 'dd MMM yyyy' }}</td>
+                        <td>{{ formatLabel(transaction.transactionType) }}</td>
+
+                        <td>
+                        <span class="direction-badge" [ngClass]="getDirectionClass(transaction.direction)">
+                          {{ transaction.direction }}
+                        </span>
+                        </td>
+
+                        <td class="text-end amount-cell">
+                          {{ transaction.amount | number: '1.2-2' }}
+                        </td>
+
+                        <td class="text-end amount-cell">
+                          {{ getTransactionBalanceBefore(transaction) | number: '1.2-2' }}
+                        </td>
+
+                        <td class="text-end amount-cell fw-semibold">
+                          {{ transaction.balanceAfter | number: '1.2-2' }}
+                        </td>
+
+                        <td>
+                        <span class="status-badge" [ngClass]="getStatusClass(transaction.status)">
+                          {{ formatLabel(transaction.status) }}
+                        </span>
+                        </td>
+
+                        <td>{{ transaction.reference || 'N/A' }}</td>
+                        <td>{{ transaction.description || 'N/A' }}</td>
+                        <td>{{ transaction.actionedBy || 'N/A' }}</td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+
+        <div class="details-footer">
+          <button type="button" class="btn-close-details" (click)="closeTransactions()">Close</button>
         </div>
       </div>
     </div>

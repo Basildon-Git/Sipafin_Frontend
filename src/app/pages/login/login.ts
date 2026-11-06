@@ -1,4 +1,13 @@
-import { Component, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,11 +23,14 @@ import { Master } from '../../core/services/master';
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login {
+export class Login implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('brand', { static: true }) brand!: ElementRef<HTMLElement>;
+
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
   private readonly toastr = inject(ToastrService);
   private readonly masterService = inject(Master);
+  private readonly zone = inject(NgZone);
 
   username = '';
   password = '';
@@ -27,10 +39,45 @@ export class Login {
   showPassword = false;
   loading = false;
 
+  capsLock = false;
+  shake = false;
+
+  private readonly rememberKey = 'rememberedUsername';
+  private cleanup: Array<() => void> = [];
+
+  ngOnInit(): void {
+    const saved = localStorage.getItem(this.rememberKey);
+    if (saved) {
+      this.username = saved;
+      this.rememberMe = true;
+    }
+  }
+
+  ngAfterViewInit(): void {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+
+    // Hero glows drift with the pointer (outside Angular, so no change detection per move)
+    this.zone.runOutsideAngular(() => {
+      const el = this.brand.nativeElement;
+      const move = (ev: PointerEvent): void => {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--px', `${((ev.clientX - r.left) / r.width - 0.5) * 50}px`);
+        el.style.setProperty('--py', `${((ev.clientY - r.top) / r.height - 0.5) * 50}px`);
+      };
+      el.addEventListener('pointermove', move);
+      this.cleanup.push(() => el.removeEventListener('pointermove', move));
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.cleanup.forEach((fn) => fn());
+  }
+
   onLogin(): void {
     if (!this.username.trim() || !this.password) {
       this.toastr.warning('Please enter your username and password', 'Login');
-
+      this.triggerShake();
       return;
     }
 
@@ -69,6 +116,13 @@ export class Login {
             localStorage.removeItem('branchName');
           }
 
+          // Remember only the username (never the password)
+          if (this.rememberMe) {
+            localStorage.setItem(this.rememberKey, this.username.trim());
+          } else {
+            localStorage.removeItem(this.rememberKey);
+          }
+
           this.loading = false;
           this.toastr.success('Login successful!', 'Success');
           this.masterService.onLogin.next(true);
@@ -78,6 +132,7 @@ export class Login {
         error: (error) => {
           console.error('Login failed:', error);
           this.loading = false;
+          this.triggerShake();
 
           const message =
             error?.error?.message || error?.error?.error || 'Invalid username or password';
@@ -89,5 +144,18 @@ export class Login {
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
+  }
+
+  checkCaps(ev: KeyboardEvent): void {
+    this.capsLock = ev.getModifierState?.('CapsLock') ?? false;
+  }
+
+  private triggerShake(): void {
+    this.shake = false;
+    // restart the animation if it is already running
+    setTimeout(() => {
+      this.shake = true;
+      setTimeout(() => (this.shake = false), 600);
+    }, 0);
   }
 }

@@ -12,6 +12,9 @@ interface ApiResponse<T> {
   timestamp?: string;
 }
 
+type Direction = 'IN' | 'OUT';
+type TransactionStatus = 'POSTED' | 'REVERSED' | 'CANCELLED' | 'PENDING' | 'FAILED';
+
 interface BankTransaction {
   id: number;
   bankAccountId: number;
@@ -20,17 +23,17 @@ interface BankTransaction {
   bankId: number;
   bankName: string;
   bankCode: string;
-  branchId: number;
-  branchName: string;
-  branchCode: string;
+  branchId: number | null;
+  branchName: string | null;
+  branchCode: string | null;
   currency: string;
   transactionType: string;
-  direction: 'IN' | 'OUT';
+  direction: Direction;
   amount: number;
   balanceAfter: number;
   transactionDate: string;
   transactionGroupId: string;
-  status: 'POSTED' | 'REVERSED' | 'CANCELLED';
+  status: TransactionStatus;
   reference: string | null;
   description: string | null;
   actionedBy: string;
@@ -39,10 +42,11 @@ interface BankTransaction {
 }
 
 interface UpdateBankTransactionRequest {
-  direction: 'IN' | 'OUT';
+  direction: Direction;
   amount: number;
+  balanceBefore: number;
   transactionDate: string;
-  status: 'POSTED' | 'REVERSED' | 'CANCELLED';
+  status: TransactionStatus;
   reference: string;
   description: string;
   actionedBy: string;
@@ -72,8 +76,14 @@ export class EditBankAccountTransaction implements OnInit {
   errorMessage = signal('');
   successMessage = signal('');
 
+  statuses: TransactionStatus[] = ['POSTED', 'REVERSED', 'CANCELLED'];
+
   form = {
+    direction: 'IN' as Direction,
     amount: 0,
+    balanceBefore: 0,
+    transactionDate: '',
+    status: 'POSTED' as TransactionStatus,
     reference: '',
     description: '',
     actionedBy: '',
@@ -124,7 +134,11 @@ export class EditBankAccountTransaction implements OnInit {
         this.transaction.set(record);
 
         this.form = {
-          amount: Number(record.amount),
+          direction: record.direction,
+          amount: Number(record.amount || 0),
+          balanceBefore: this.getBalanceBefore(record),
+          transactionDate: record.transactionDate,
+          status: record.status,
           reference: record.reference ?? '',
           description: record.description ?? '',
           actionedBy: this.getActionedBy(),
@@ -141,6 +155,28 @@ export class EditBankAccountTransaction implements OnInit {
     });
   }
 
+  get computedBalanceAfter(): number {
+    const balanceBefore = Number(this.form.balanceBefore || 0);
+    const amount = Number(this.form.amount || 0);
+
+    if (this.form.direction === 'IN') {
+      return balanceBefore + amount;
+    }
+
+    return balanceBefore - amount;
+  }
+
+  getBalanceBefore(record: BankTransaction): number {
+    const balanceAfter = Number(record.balanceAfter || 0);
+    const amount = Number(record.amount || 0);
+
+    if (record.direction === 'IN') {
+      return balanceAfter - amount;
+    }
+
+    return balanceAfter + amount;
+  }
+
   saveChanges(): void {
     const id = this.transactionId();
     const record = this.transaction();
@@ -153,6 +189,7 @@ export class EditBankAccountTransaction implements OnInit {
     this.successMessage.set('');
 
     const amount = Number(this.form.amount);
+    const balanceBefore = Number(this.form.balanceBefore);
 
     if (!Number.isFinite(amount)) {
       this.errorMessage.set('Amount must be a valid number.');
@@ -164,6 +201,26 @@ export class EditBankAccountTransaction implements OnInit {
       return;
     }
 
+    if (!Number.isFinite(balanceBefore)) {
+      this.errorMessage.set('Balance before must be a valid number.');
+      return;
+    }
+
+    if (balanceBefore < 0) {
+      this.errorMessage.set('Balance before cannot be negative.');
+      return;
+    }
+
+    if (this.computedBalanceAfter < 0) {
+      this.errorMessage.set('Balance after cannot be negative.');
+      return;
+    }
+
+    if (!this.form.transactionDate) {
+      this.errorMessage.set('Transaction date is required.');
+      return;
+    }
+
     const actionedBy = this.getActionedBy();
 
     if (!actionedBy.trim()) {
@@ -172,10 +229,11 @@ export class EditBankAccountTransaction implements OnInit {
     }
 
     const payload: UpdateBankTransactionRequest = {
-      direction: record.direction,
+      direction: this.form.direction,
       amount,
-      transactionDate: record.transactionDate,
-      status: record.status,
+      balanceBefore,
+      transactionDate: this.form.transactionDate,
+      status: this.form.status,
       reference: this.form.reference.trim(),
       description: this.form.description.trim(),
       actionedBy,
@@ -192,7 +250,11 @@ export class EditBankAccountTransaction implements OnInit {
           this.transaction.set(response.data);
 
           this.form = {
-            amount: Number(response.data.amount),
+            direction: response.data.direction,
+            amount: Number(response.data.amount || 0),
+            balanceBefore: this.getBalanceBefore(response.data),
+            transactionDate: response.data.transactionDate,
+            status: response.data.status,
             reference: response.data.reference ?? '',
             description: response.data.description ?? '',
             actionedBy: this.getActionedBy(),

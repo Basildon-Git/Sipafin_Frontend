@@ -1,45 +1,89 @@
-<!-- Footer -->
 <footer class="site-footer" id="contact">
-  <div class="footer-inner">
-    <div class="footer-brand">
-      <div class="logo">
-        <div class="logo-mark">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        <span class="logo-text">Shakenoak</span>
+  <div class="glow glow-blue"></div>
+  <div class="glow glow-amber"></div>
+
+  <div class="wrap">
+    <!-- CTA strip -->
+    <div class="cta reveal">
+      <div>
+        <h2>Ready to get it all done <em>in one visit?</em></h2>
+        <p>Drop in, call or email us. We're happy to help.</p>
       </div>
-      <p>Insuring a future of endless possibilities.</p>
+      <a href="mailto:info@shakenoak.co.zw" class="cta-btn magnetic">
+        <i class="bi bi-envelope-fill"></i> Email us <i class="bi bi-arrow-right"></i>
+      </a>
     </div>
 
-    <div class="footer-col">
-      <strong>Visit us</strong>
-      <p>
-        Suite 31, First Floor<br />
-        Miekles Building<br />
-        Cnr Orr Street &amp; Robert Mugabe<br />
-        Harare, Zimbabwe
-      </p>
+    <!-- Columns -->
+    <div class="footer-inner">
+      <div class="footer-brand reveal" style="--d: 0ms">
+        <a href="/" class="logo" aria-label="Shakenoak home">
+          <div class="logo-mark">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <span class="logo-text">Shakenoak<i class="logo-dot"></i></span>
+        </a>
+        <p>Insuring a future of endless possibilities.</p>
+      </div>
+
+      <div class="footer-col reveal" style="--d: 100ms">
+        <strong>Visit us</strong>
+        <address>
+          <i class="bi bi-geo-alt-fill"></i>
+          <span>
+            Suite 31, First Floor<br />
+            Miekles Building<br />
+            Cnr Orr Street &amp; Robert Mugabe<br />
+            Harare, Zimbabwe
+          </span>
+        </address>
+      </div>
+
+      <div class="footer-col reveal" style="--d: 200ms">
+        <strong>Get in touch</strong>
+        <a href="mailto:info@shakenoak.co.zw" class="contact-link">
+          <i class="bi bi-envelope-fill"></i> info@shakenoak.co.zw
+        </a>
+      </div>
+
+      <div class="footer-col reveal" style="--d: 300ms">
+        <strong>Explore</strong>
+        <nav class="links">
+          <a href="#services">Services</a>
+          <a href="#agency">Financial Agency</a>
+          <a href="#car-hire">Car Hire</a>
+          <a href="/login">Login to Portal <i class="bi bi-arrow-up-right"></i></a>
+        </nav>
+      </div>
     </div>
 
-    <div class="footer-col">
-      <strong>Get in touch</strong>
-      <p>
-        <a href="mailto:info@shakenoak.co.zw">info@shakenoak.co.zw</a>
-      </p>
-    </div>
+    <!-- Giant wordmark -->
+    <div class="wordmark" aria-hidden="true">Shakenoak</div>
 
-    <div class="footer-col">
-      <strong>Explore</strong>
-      <p>
-        <a href="#services">Services</a><br />
-        <a href="#agency">Financial Agency</a><br />
-        <a href="#car-hire">Car Hire</a><br />
-        <a href="/login">Login to Portal</a>
-      </p>
+    <!-- Bottom bar -->
+    <div class="footer-bottom">
+      <span>© {{ year }} Shakenoak Investments. All rights reserved.</span>
+      <a
+        class="credit"
+        href="https://www.basildon.co.zw"
+        target="_blank"
+        rel="noopener"
+        aria-label="Designed by Basildon Digital (opens in a new tab)"
+      >
+        Designed by <b>Basildon Digital</b> <i class="bi bi-arrow-up-right"></i>
+      </a>
     </div>
   </div>
 
-  <div class="footer-bottom">© 2026 Shakenoak Investments. All rights reserved.</div>
+  <button
+    type="button"
+    class="to-top"
+    [class.show]="showTop"
+    (click)="scrollTop()"
+    aria-label="Back to top"
+  >
+    <i class="bi bi-arrow-up"></i>
+  </button>
 </footer>

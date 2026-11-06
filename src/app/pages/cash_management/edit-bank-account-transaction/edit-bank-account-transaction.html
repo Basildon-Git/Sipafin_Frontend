@@ -1,12 +1,7 @@
 <div class="edit-transaction-page">
   <div class="page-header">
     <div class="page-heading">
-      <button
-        type="button"
-        class="back-button"
-        (click)="cancel()"
-        aria-label="Back to bank transactions"
-      >
+      <button type="button" class="back-button" (click)="cancel()" aria-label="Back to bank transactions">
         <i class="bi bi-arrow-left"></i>
       </button>
 
@@ -16,7 +11,7 @@
 
       <div>
         <h2>Edit Bank Transaction</h2>
-        <p>Update the transaction amount and additional information.</p>
+        <p>Update amount, balance before and transaction information.</p>
       </div>
     </div>
   </div>
@@ -72,8 +67,8 @@
 
         <div class="summary-item">
           <span class="field-label">Branch</span>
-          <strong>{{ record.branchName }}</strong>
-          <small>Branch Code: {{ record.branchCode }}</small>
+          <strong>{{ record.branchName || 'Shared Account' }}</strong>
+          <small>Branch Code: {{ record.branchCode || '—' }}</small>
         </div>
 
         <div class="summary-item">
@@ -87,7 +82,7 @@
         </div>
 
         <div class="summary-item">
-          <span class="field-label">Direction</span>
+          <span class="field-label">Original Direction</span>
           <strong
             class="direction-value"
             [class.direction-in]="record.direction === 'IN'"
@@ -98,12 +93,15 @@
         </div>
 
         <div class="summary-item">
-          <span class="field-label">Transaction Date</span>
-          <strong>{{ record.transactionDate | date: 'dd MMM yyyy' }}</strong>
+          <span class="field-label">Original Balance Before</span>
+          <strong>
+            {{ getBalanceBefore(record) | number: '1.2-2' }}
+            {{ record.currency }}
+          </strong>
         </div>
 
         <div class="summary-item">
-          <span class="field-label">Balance After</span>
+          <span class="field-label">Original Balance After</span>
           <strong>
             {{ record.balanceAfter | number: '1.2-2' }}
             {{ record.currency }}
@@ -112,9 +110,8 @@
       </div>
 
       <div class="readonly-notice">
-        <i class="bi bi-lock-fill"></i>
-        Bank account, bank, branch, currency, transaction type, direction, transaction date, status
-        and balance cannot be edited.
+        <i class="bi bi-info-circle-fill"></i>
+        Updating balance before will recalculate this transaction and all later balances for this bank account.
       </div>
     </div>
 
@@ -122,14 +119,69 @@
       <div class="form-card-header">
         <div>
           <h3>Editable Transaction Details</h3>
-          <p>Only the amount, reference and description can be changed.</p>
+          <p>Change balance before, amount, direction, date, status, reference and description.</p>
         </div>
 
-        <span class="required-note"> <span>*</span> Required fields </span>
+        <span class="required-note"><span>*</span> Required fields</span>
       </div>
 
       <div class="form-content">
         <div class="form-grid">
+          <div class="form-field">
+            <label for="direction">
+              Direction <span class="required">*</span>
+            </label>
+
+            <select
+              id="direction"
+              name="direction"
+              class="form-control"
+              [(ngModel)]="form.direction"
+              required
+            >
+              <option value="IN">IN</option>
+              <option value="OUT">OUT</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="status">
+              Status <span class="required">*</span>
+            </label>
+
+            <select id="status" name="status" class="form-control" [(ngModel)]="form.status" required>
+              @for (status of statuses; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="balanceBefore">
+              Balance Before ({{ record.currency }}) <span class="required">*</span>
+            </label>
+
+            <div class="amount-input-wrapper">
+              <span class="currency-prefix">{{ record.currency }}</span>
+
+              <input
+                id="balanceBefore"
+                name="balanceBefore"
+                type="number"
+                class="form-control amount-input"
+                [(ngModel)]="form.balanceBefore"
+                min="0"
+                step="0.01"
+                required
+                #balanceBefore="ngModel"
+              />
+            </div>
+
+            @if (balanceBefore.invalid && balanceBefore.touched) {
+              <small class="field-error">Enter a valid balance before.</small>
+            }
+          </div>
+
           <div class="form-field">
             <label for="amount">
               Amount ({{ record.currency }}) <span class="required">*</span>
@@ -151,9 +203,37 @@
               />
             </div>
 
-            <!-- @if (amount.invalid && amount.touched) {
-              <small class="field-error"> Enter an amount greater than zero. </small>
-            } -->
+            @if (amount.invalid && amount.touched) {
+              <small class="field-error">Enter a valid amount.</small>
+            }
+          </div>
+
+          <div class="form-field">
+            <label for="balanceAfter">Calculated Balance After</label>
+
+            <div class="calculated-balance" [class.negative-balance]="computedBalanceAfter < 0">
+              {{ computedBalanceAfter | number: '1.2-2' }}
+              {{ record.currency }}
+            </div>
+
+            <small class="field-hint">
+              Balance After = Balance Before {{ form.direction === 'IN' ? '+' : '-' }} Amount.
+            </small>
+          </div>
+
+          <div class="form-field">
+            <label for="transactionDate">
+              Transaction Date <span class="required">*</span>
+            </label>
+
+            <input
+              id="transactionDate"
+              name="transactionDate"
+              type="date"
+              class="form-control"
+              [(ngModel)]="form.transactionDate"
+              required
+            />
           </div>
 
           <div class="form-field">
@@ -165,7 +245,7 @@
               type="text"
               class="form-control"
               [(ngModel)]="form.reference"
-              maxlength="150"
+              maxlength="100"
               placeholder="Enter transaction reference"
             />
           </div>
@@ -179,11 +259,11 @@
               class="form-control"
               [(ngModel)]="form.description"
               rows="4"
-              maxlength="1000"
+              maxlength="255"
               placeholder="Enter transaction description"
             ></textarea>
 
-            <small class="field-hint"> Provide a clear explanation of the bank transaction. </small>
+            <small class="field-hint">Provide a clear explanation of the bank transaction correction.</small>
           </div>
         </div>
 
@@ -201,16 +281,12 @@
 
             <div class="system-info-item">
               <span>Created At</span>
-              <strong>
-                {{ record.createdAt | date: 'dd MMM yyyy, HH:mm' }}
-              </strong>
+              <strong>{{ record.createdAt | date: 'dd MMM yyyy, HH:mm' }}</strong>
             </div>
 
             <div class="system-info-item">
               <span>Last Updated</span>
-              <strong>
-                {{ record.updatedAt | date: 'dd MMM yyyy, HH:mm' }}
-              </strong>
+              <strong>{{ record.updatedAt | date: 'dd MMM yyyy, HH:mm' }}</strong>
             </div>
 
             <div class="system-info-item">
