@@ -210,13 +210,23 @@
   overflow-x: auto;
 }
 
+.system-closing-cell {
+  color: var(--primary-dark) !important;
+  background: #f0f7ff;
+}
+
+.system-closing-detail {
+  color: var(--primary-dark) !important;
+  font-weight: 700;
+}
+
 /* =====================================================
    RECONCILIATION TABLE
 ===================================================== */
 
 .reconciliation-table {
   width: 100%;
-  min-width: 1780px;
+  min-width: 1900px;
   border-collapse: collapse;
   margin-bottom: 0;
   font-size: 12px;
