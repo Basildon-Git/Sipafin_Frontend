@@ -104,14 +104,13 @@
           <th>Branch</th>
           <th>Currency</th>
           <th>Reconciliation Date</th>
-          <th class="text-end">System Balance</th>
           <th class="text-end">System Closing Balance</th>
           <th class="text-end">Statement Balance</th>
           <th class="text-end">Difference</th>
           <th>Difference Type</th>
           <th class="text-end">Reconciled</th>
           <th class="text-end">Unreconciled</th>
-          <th class="text-end">Balance After</th>
+          <th class="text-end">Balance After Reconciliation</th>
           <th>Status</th>
           <th>Reference</th>
           <th class="text-center">Action</th>
@@ -121,7 +120,7 @@
         <tbody>
           @if (loading) {
             <tr>
-              <td colspan="16" class="table-message">
+              <td colspan="15" class="table-message">
                 <div class="loading-state">
                   <span class="spinner-border spinner-border-sm"></span>
                   Loading reconciliations...
@@ -130,7 +129,7 @@
             </tr>
           } @else if (pagedList.length === 0) {
             <tr>
-              <td colspan="16" class="table-message">
+              <td colspan="15" class="table-message">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <span>No reconciliation records found.</span>
@@ -162,12 +161,8 @@
                   {{ item.reconciliationDate | date: 'dd MMM yyyy' }}
                 </td>
 
-                <td class="text-end amount-cell">
-                  {{ item.systemBalanceBefore | number: '1.2-2' }}
-                </td>
-
                 <td class="text-end amount-cell fw-semibold system-closing-cell">
-                  {{ item.systemBalanceAfter | number: '1.2-2' }}
+                  {{ item.systemBalanceBefore | number: '1.2-2' }}
                 </td>
 
                 <td class="text-end amount-cell">
@@ -179,9 +174,9 @@
                 </td>
 
                 <td>
-          <span class="difference-badge" [ngClass]="getDifferenceClass(item.differenceType)">
-            {{ formatLabel(item.differenceType) }}
-          </span>
+                  <span class="difference-badge" [ngClass]="getDifferenceClass(item.differenceType)">
+                    {{ formatLabel(item.differenceType) }}
+                  </span>
                 </td>
 
                 <td class="text-end amount-cell">
@@ -197,9 +192,9 @@
                 </td>
 
                 <td>
-          <span class="status-badge" [ngClass]="getStatusClass(item.status)">
-            {{ formatLabel(item.status) }}
-          </span>
+                  <span class="status-badge" [ngClass]="getStatusClass(item.status)">
+                    {{ formatLabel(item.status) }}
+                  </span>
                 </td>
 
                 <td>{{ item.reference || 'N/A' }}</td>
@@ -333,15 +328,10 @@
             </div>
 
             <div class="detail-field">
-              <label>System Balance Before</label>
-              <span>{{ selectedReconciliation.systemBalanceBefore | number: '1.2-2' }}</span>
-            </div>
-
-            <div class="detail-field">
               <label>System Closing Balance</label>
               <span class="system-closing-detail">
-    {{ selectedReconciliation.systemBalanceAfter | number: '1.2-2' }}
-  </span>
+                {{ selectedReconciliation.systemBalanceBefore | number: '1.2-2' }}
+              </span>
             </div>
 
             <div class="detail-field">
@@ -372,7 +362,7 @@
             </div>
 
             <div class="detail-field">
-              <label>System Balance After</label>
+              <label>System Balance After Reconciliation</label>
               <span>{{ selectedReconciliation.systemBalanceAfter | number: '1.2-2' }}</span>
             </div>
 
@@ -458,21 +448,21 @@
           </div>
 
           <div class="transaction-totals">
-          <span class="balance-before">
-            Balance Before: {{ transactionBalanceBefore | number: '1.2-2' }}
-          </span>
+            <span class="balance-before">
+              Balance Before: {{ transactionBalanceBefore | number: '1.2-2' }}
+            </span>
 
             <span class="total-in">
-            IN: {{ transactionInTotal | number: '1.2-2' }}
-          </span>
+              IN: {{ transactionInTotal | number: '1.2-2' }}
+            </span>
 
             <span class="total-out">
-            OUT: {{ transactionOutTotal | number: '1.2-2' }}
-          </span>
+              OUT: {{ transactionOutTotal | number: '1.2-2' }}
+            </span>
 
             <span class="balance-after">
-            Balance After: {{ transactionBalanceAfter | number: '1.2-2' }}
-          </span>
+              Balance After: {{ transactionBalanceAfter | number: '1.2-2' }}
+            </span>
           </div>
         </div>
 
@@ -521,9 +511,9 @@
                         <td>{{ formatLabel(transaction.transactionType) }}</td>
 
                         <td>
-                        <span class="direction-badge" [ngClass]="getDirectionClass(transaction.direction)">
-                          {{ transaction.direction }}
-                        </span>
+                          <span class="direction-badge" [ngClass]="getDirectionClass(transaction.direction)">
+                            {{ transaction.direction }}
+                          </span>
                         </td>
 
                         <td class="text-end amount-cell">
@@ -539,9 +529,9 @@
                         </td>
 
                         <td>
-                        <span class="status-badge" [ngClass]="getStatusClass(transaction.status)">
-                          {{ formatLabel(transaction.status) }}
-                        </span>
+                          <span class="status-badge" [ngClass]="getStatusClass(transaction.status)">
+                            {{ formatLabel(transaction.status) }}
+                          </span>
                         </td>
 
                         <td>{{ transaction.reference || 'N/A' }}</td>
